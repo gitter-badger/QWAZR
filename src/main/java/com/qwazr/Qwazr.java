@@ -53,8 +53,8 @@ import com.qwazr.search.index.IndexServiceImpl;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServletApplication;
-import com.qwazr.webapps.RendererServer;
-import com.qwazr.webapps.RendererServer.RendererApplication;
+import com.qwazr.webapps.WebappServer;
+import com.qwazr.webapps.WebappServer.WebappApplication;
 
 public class Qwazr extends AbstractServer {
 
@@ -63,7 +63,7 @@ public class Qwazr extends AbstractServer {
 	private final static String MAIN_JAR = "qwazr.jar";
 	public final static String DEFAULT_DATADIR_NAME = "qwazr";
 
-	private final static String RENDERER_CONTEXT_PATH = "/";
+	private final static String WEBAPPS_CONTEXT_PATH = "/";
 
 	private final static String SERVER_YAML_NAME = "server.yaml";
 	private static ServerConfiguration serverConfiguration = null;
@@ -83,9 +83,9 @@ public class Qwazr extends AbstractServer {
 			classes.add(ClusterServiceImpl.class);
 			if (ServiceEnum.extractor.isActive(serverConfiguration))
 				classes.add(ExtractorServiceImpl.class);
-			if (ServiceEnum.script.isActive(serverConfiguration))
+			if (ServiceEnum.scripts.isActive(serverConfiguration))
 				classes.add(ScriptServiceImpl.class);
-			if (ServiceEnum.scheduler.isActive(serverConfiguration))
+			if (ServiceEnum.schedulers.isActive(serverConfiguration))
 				classes.add(SchedulerServiceImpl.class);
 			if (ServiceEnum.webcrawler.isActive(serverConfiguration))
 				classes.add(WebCrawlerServiceImpl.class);
@@ -140,21 +140,21 @@ public class Qwazr extends AbstractServer {
 			services.add(ServiceEnum.extractor.name());
 		}
 
-		if (ServiceEnum.renderer.isActive(serverConfiguration)) {
-			RendererServer.load(RENDERER_CONTEXT_PATH, null, 1,
-					subDir(data_directory, "renderer"));
+		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
+			WebappServer.load(WEBAPPS_CONTEXT_PATH, null, 1,
+					subDir(data_directory, "webapps"));
 			services.add(ServiceEnum.extractor.name());
 		}
 
-		if (ServiceEnum.script.isActive(serverConfiguration)) {
+		if (ServiceEnum.scripts.isActive(serverConfiguration)) {
 			JobServer.loadScript(this);
-			services.add(ServiceEnum.script.name());
+			services.add(ServiceEnum.scripts.name());
 		}
 
-		if (ServiceEnum.scheduler.isActive(serverConfiguration)) {
+		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
 			JobServer.loadScheduler(this,
 					serverConfiguration.getSchedulerMaxThreads());
-			services.add(ServiceEnum.scheduler.name());
+			services.add(ServiceEnum.schedulers.name());
 		}
 
 		if (ServiceEnum.webcrawler.isActive(serverConfiguration)) {
@@ -176,8 +176,8 @@ public class Qwazr extends AbstractServer {
 
 	@Override
 	public ServletApplication getServletApplication() {
-		if (ServiceEnum.renderer.isActive(serverConfiguration))
-			return new RendererApplication(RENDERER_CONTEXT_PATH);
+		if (ServiceEnum.webapps.isActive(serverConfiguration))
+			return new WebappApplication(WEBAPPS_CONTEXT_PATH);
 		return null;
 	}
 

@@ -9,9 +9,9 @@
 services:
 - webcrawler
 - extractor
-- script
-- scheduler
-- renderer
+- scripts
+- schedulers
+- webapps
 - graph
 - search
 
