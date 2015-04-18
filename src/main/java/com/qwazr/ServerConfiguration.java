@@ -43,11 +43,11 @@ public class ServerConfiguration {
 
 		extractor,
 
-		script,
+		scripts,
 
-		scheduler,
+		schedulers,
 
-		renderer,
+		webapps,
 
 		search,
 
