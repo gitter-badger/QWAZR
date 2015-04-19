@@ -1,17 +1,9 @@
 QWAZR
 =====
 
-A Javascript based distributed and scalable application server
+QWAZR is a an application server dedicated to distributed projects. The server provides a set of JSON web services which manages distributed jobs and web applications written in Javascript.
 
-QWAZR includes the following components:
-
-- [Cluster](https://github.com/qwazr/qwazr-cluster) : Management of the nodes of the cluster
-- [Job](https://github.com/qwazr/qwazr-job): Scheduler and distributed Javascript execution service
-- [Crawlers](https://github.com/qwazr/qwazr-crawlers) : A Web and a File crawler
-- [Extractor](https://github.com/qwazr/qwazr-extractor) : Text extraction from various binaries files
-- [Webapp](https://github.com/qwazr/qwazr-webapp) : Web application server with Javascript controllers
-- [Connectors](https://github.com/qwazr/qwazr-connectors) : Several connectors (Cassandra, MongoDB, MySQL, HDFS)
-
+The main [documentation of QWAZR is available here](https://github.com/qwazr/QWAZR/wiki).
 
 License GPL V3
 --------------
