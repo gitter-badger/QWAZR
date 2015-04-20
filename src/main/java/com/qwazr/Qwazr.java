@@ -58,10 +58,13 @@ import com.qwazr.webapps.WebappServer.WebappApplication;
 
 public class Qwazr extends AbstractServer {
 
-	private final static int DEFAULT_PORT = 9090;
-	private final static String DEFAULT_HOSTNAME = "0.0.0.0";
-	private final static String MAIN_JAR = "qwazr.jar";
-	public final static String DEFAULT_DATADIR_NAME = "qwazr";
+	private final static ServerDefinition serverDefinition = new ServerDefinition();
+	static {
+		serverDefinition.defaultWebApplicationTcpPort = 9090;
+		serverDefinition.defaultWebServiceTcpPort = 9091;
+		serverDefinition.mainJarPath = "qwazr.jar";
+		serverDefinition.defaultDataDirName = "qwazr";
+	}
 
 	private final static String WEBAPPS_CONTEXT_PATH = "/";
 
@@ -71,7 +74,7 @@ public class Qwazr extends AbstractServer {
 	private final HashSet<String> services = new HashSet<String>();
 
 	private Qwazr() {
-		super(DEFAULT_HOSTNAME, DEFAULT_PORT, MAIN_JAR, DEFAULT_DATADIR_NAME);
+		super(serverDefinition);
 	}
 
 	@ApplicationPath("/")
