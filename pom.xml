@@ -336,7 +336,7 @@
 									<mapper>
 										<type>perm</type>
 										<prefix>/usr/share/qwazr</prefix>
-										<user>daemon</user>
+										<user>qwazr</user>
 										<group>daemon</group>
 									</mapper>
 								</data>
@@ -375,7 +375,7 @@
 									</paths>
 									<mapper>
 										<type>perm</type>
-										<user>opensearchserver</user>
+										<user>qwazr</user>
 										<group>daemon</group>
 									</mapper>
 								</data>
