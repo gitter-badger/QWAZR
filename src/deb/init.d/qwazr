@@ -66,7 +66,13 @@ stop)
 status)
         if [ -f $OSS_PID ]; then
             PID=`cat $OSS_PID`
-            echo "$OSS_NAME pid: $PID"
+            if kill -0 $PID; then
+                echo "$OSS_NAME pid: $PID"
+            else
+                echo "PID not valid"
+                rm $OSS_PID
+                $0 start
+            fi
         else
             echo "$OSS_NAME is not running ..."
         fi
@@ -74,6 +80,6 @@ status)
 restart|force-reload)
         $0 stop
         $0 start
-		;;
+        ;;
 esac
 exit 0
