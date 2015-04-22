@@ -367,14 +367,6 @@
 									</mapper>
 								</data>
 								<data>
-									<src>${basedir}/src/pkgs/linux/qwazr-check</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/etc/cron.d</prefix>
-									</mapper>
-								</data>
-								<data>
 									<type>template</type>
 									<paths>
 										<path>/var/lib/${project.artifactId}</path>
@@ -440,14 +432,6 @@
 							<sources>
 								<source>
 									<location>src/deb/etc/qwazr.conf</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
-							<directory>/etc/cron.d</directory>
-							<sources>
-								<source>
-									<location>src/pkgs/linux/qwazr-check</location>
 								</source>
 							</sources>
 						</mapping>
