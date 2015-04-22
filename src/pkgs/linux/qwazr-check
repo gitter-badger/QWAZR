@@ -1,2 +1,0 @@
-# Check if QWAZR is running
-*/3 * * * * root service qwazr status

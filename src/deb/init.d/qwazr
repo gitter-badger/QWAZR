@@ -71,7 +71,6 @@ status)
             else
                 echo "PID not valid"
                 rm $OSS_PID
-                $0 start
             fi
         else
             echo "$OSS_NAME is not running ..."
