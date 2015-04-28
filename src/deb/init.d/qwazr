@@ -18,6 +18,10 @@ if [ -f "$CONFIGFILE" ]; then
     . "$CONFIGFILE"
 fi
 
+if [ -z "$PUBLIC_ADDR" ]; then
+    PUBLIC_ADDR=`hostname`
+fi
+
 OSS_SHARE=/usr/share/qwazr
 OSS_JAR=$OSS_SHARE/$OSS_NAME.jar
 JAVA_OPTS="$JAVA_OPTS -Dlog4j.configuration=file:$QWAZR_DATA/log4j.properties"
