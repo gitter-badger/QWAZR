@@ -21,22 +21,18 @@
  *  along with QWAZR. 
  *  If not, see <http://www.gnu.org/licenses/>.
  **/
-package com.qwazr.connectors;
+package com.qwazr.analyzer.markdown;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.pegdown.Extensions;
 import org.pegdown.PegDownProcessor;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PegDownConnector extends AbstractConnector {
+public class MarkdownProcessorDefinition {
 
 	public List<ExtensionEnum> extensions;
 
@@ -63,37 +59,13 @@ public class PegDownConnector extends AbstractConnector {
 		}
 	}
 
-	private PegDownProcessor pegdownProcessor = null;
-	private File viewDir = null;
-
-	@Override
-	public void load(ConnectorContext context) {
+	@JsonIgnore
+	PegDownProcessor getNewPegdownProcessor() {
 		int extensionsValue = 0;
 		if (extensions != null)
 			for (ExtensionEnum extensionEnum : extensions)
 				extensionsValue |= extensionEnum.value;
-		pegdownProcessor = new PegDownProcessor(extensionsValue);
-		viewDir = new File(context.getContextDirectory(), "view");
+		return new PegDownProcessor(extensionsValue);
 	}
 
-	@Override
-	public void unload(ConnectorContext context) {
-	}
-
-	public String toHtml(String path) throws IOException {
-		FileInputStream fileInputStream = null;
-		File file = new File(viewDir, path);
-		try {
-			if (!file.exists())
-				throw new FileNotFoundException("File not found: " + path);
-			fileInputStream = new FileInputStream(file);
-			String content = IOUtils.toString(fileInputStream, "UTF-8");
-			synchronized (pegdownProcessor) {
-				return pegdownProcessor.markdownToHtml(content);
-			}
-		} finally {
-			if (fileInputStream != null)
-				IOUtils.closeQuietly(fileInputStream);
-		}
-	}
 }

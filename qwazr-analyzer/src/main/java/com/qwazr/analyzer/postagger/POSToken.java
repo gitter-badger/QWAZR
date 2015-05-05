@@ -21,7 +21,7 @@
  *  along with QWAZR. 
  *  If not, see <http://www.gnu.org/licenses/>.
  **/
-package com.qwazr.analyze.postagger;
+package com.qwazr.analyzer.postagger;
 
 import java.util.ArrayList;
 import java.util.List;

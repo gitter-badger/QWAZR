@@ -31,9 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({ @Type(value = CassandraConnector.class),
 		@Type(value = DatabaseConnector.class),
 		@Type(value = HdfsConnector.class),
-		@Type(value = MaxentTaggerConnector.class),
-		@Type(value = OpenSearchServerConnector.class),
-		@Type(value = PegDownConnector.class) })
+		@Type(value = OpenSearchServerConnector.class) })
 public abstract class AbstractConnector {
 
 	public final String name = null;

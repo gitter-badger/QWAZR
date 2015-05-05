@@ -60,7 +60,10 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 		// Read the bases present in the remote nodes
 		try {
-			GraphMultiClient client = GraphManager.INSTANCE.getClient(true);
+			GraphServiceInterface client = GraphManager.INSTANCE
+					.getMultiClient(60000, true);
+			if (client == null)
+				return globalSet;
 			set = client.list(false);
 			if (set != null)
 				globalSet.addAll(set);
@@ -76,9 +79,12 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		try {
 			GraphManager.INSTANCE.set(db_name, base);
 			GraphProcess.createDataIndex(db_name, base);
-			if (local == null || !local)
-				GraphManager.INSTANCE.getClient(true).createUpdateBase(db_name,
-						base, false);
+			if (local == null || !local) {
+				GraphMultiClient client = GraphManager.INSTANCE.getMultiClient(
+						60000, true);
+				if (client != null)
+					client.createUpdateBase(db_name, base, false);
+			}
 			return base;
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
@@ -99,26 +105,38 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		try {
 			if (local != null && local)
 				return getBaseOrNotFound(db_name);
-			else
-				return GraphManager.INSTANCE.getClient(false).getBase(db_name,
-						false);
+			else {
+				GraphMultiClient client = GraphManager.INSTANCE.getMultiClient(
+						60000, false);
+				if (client != null)
+					return getBase(db_name, false);
+				return getBaseOrNotFound(db_name);
+			}
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}
 
+	private GraphBase deleteBaseLocal(String db_name) throws IOException,
+			URISyntaxException, ServerException {
+		GraphBase base = getBaseOrNotFound(db_name);
+		GraphProcess.deleteDataIndex(db_name, base);
+		GraphManager.INSTANCE.delete(db_name);
+		return base;
+	}
+
 	@Override
 	public GraphBase deleteBase(String db_name, Boolean local) {
 		try {
-			if (local != null && local) {
-				GraphBase base = getBaseOrNotFound(db_name);
-				GraphProcess.deleteDataIndex(db_name, base);
-				GraphManager.INSTANCE.delete(db_name);
-				return base;
-			} else {
-				return GraphManager.INSTANCE.getClient(false).deleteBase(
-						db_name, false);
+			if (local != null && local)
+				return deleteBaseLocal(db_name);
+			else {
+				GraphMultiClient client = GraphManager.INSTANCE.getMultiClient(
+						60000, false);
+				if (client != null)
+					return client.deleteBase(db_name, false);
+				return deleteBaseLocal(db_name);
 			}
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);

@@ -18,7 +18,7 @@
         },
         {
             "name": "oss",
-            "class": "com.qwazr.connectors.OpenSearchServerV1Connector",
+            "class": "com.qwazr.connectors.OpenSearchServerConnector",
             "url": "http://localhost:9090"
         },
         {

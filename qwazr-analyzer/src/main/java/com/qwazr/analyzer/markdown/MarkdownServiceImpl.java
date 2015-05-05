@@ -21,7 +21,7 @@
  *  along with QWAZR. 
  *  If not, see <http://www.gnu.org/licenses/>.
  **/
-package com.qwazr.analyze.markdown;
+package com.qwazr.analyzer.markdown;
 
 import java.io.InputStream;
 import java.util.Map;

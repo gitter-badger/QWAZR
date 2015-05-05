@@ -40,7 +40,6 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.opensearchserver.client.ServerResource;
 import com.qwarz.graph.GraphServer;
 import com.qwarz.graph.model.GraphBase;
 import com.qwarz.graph.model.GraphBase.PropertyTypeEnum;
@@ -54,8 +53,8 @@ public class FullTest {
 
 	public static final String BASE_URL = "http://localhost:9091/graph";
 	public static final String TEST_BASE = "graph-test";
-	public static final int PRODUCT_NUMBER = 200;
-	public static final int VISIT_NUMBER = 10000;
+	public static final int PRODUCT_NUMBER = 100;
+	public static final int VISIT_NUMBER = 200;
 
 	public static final ContentType APPLICATION_JSON_UTF8 = ContentType.create(
 			"application/json", Consts.UTF_8);
@@ -73,8 +72,6 @@ public class FullTest {
 	public void test000CreateDatabase() throws IOException {
 
 		GraphBase base = new GraphBase();
-		base.data = new ServerResource();
-		base.data.name = TEST_BASE;
 		base.node_properties = new HashMap<String, PropertyTypeEnum>();
 		base.node_properties.put("type", PropertyTypeEnum.indexed);
 		base.node_properties.put("date", PropertyTypeEnum.indexed);

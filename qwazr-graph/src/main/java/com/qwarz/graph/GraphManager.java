@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwarz.graph.model.GraphBase;
 import com.qwarz.graph.process.GraphProcess;
+import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.json.DirectoryJsonManager;
 import com.qwazr.utils.server.ServerException;
@@ -61,12 +62,16 @@ public class GraphManager extends DirectoryJsonManager<GraphBase> {
 		});
 	}
 
-	GraphMultiClient getClient(boolean removeMe) throws URISyntaxException {
-		HashSet<String> nodes = new HashSet<String>(ClusterManager.INSTANCE
-				.getClusterClient().getActiveNodes(
-						GraphServer.SERVICE_NAME_GRAPH));
+	GraphMultiClient getMultiClient(int msTimeOut, boolean removeMe)
+			throws URISyntaxException {
+		ClusterMultiClient clusterClient = ClusterManager.INSTANCE
+				.getClusterClient();
+		if (clusterClient == null)
+			return null;
+		HashSet<String> nodes = new HashSet<String>(
+				clusterClient.getActiveNodes(GraphServer.SERVICE_NAME_GRAPH));
 		if (removeMe)
 			nodes.remove(ClusterManager.INSTANCE.myAddress);
-		return new GraphMultiClient(executor, nodes, 60000);
+		return new GraphMultiClient(executor, nodes, msTimeOut);
 	}
 }

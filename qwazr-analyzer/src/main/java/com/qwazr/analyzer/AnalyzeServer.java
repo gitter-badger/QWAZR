@@ -21,7 +21,7 @@
  *  along with QWAZR. 
  *  If not, see <http://www.gnu.org/licenses/>.
  **/
-package com.qwazr.analyze;
+package com.qwazr.analyzer;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,10 +33,10 @@ import javax.ws.rs.ApplicationPath;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 
-import com.qwazr.analyze.markdown.MarkdownProcessManager;
-import com.qwazr.analyze.markdown.MarkdownServiceImpl;
-import com.qwazr.analyze.postagger.LanguageManager;
-import com.qwazr.analyze.postagger.POSTaggerServiceImpl;
+import com.qwazr.analyzer.markdown.MarkdownProcessManager;
+import com.qwazr.analyzer.markdown.MarkdownServiceImpl;
+import com.qwazr.analyzer.postagger.LanguageManager;
+import com.qwazr.analyzer.postagger.POSTaggerServiceImpl;
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.server.AbstractServer;
