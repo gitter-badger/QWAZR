@@ -1,0 +1,354 @@
+/**   
+ * License Agreement for QWAZR
+ *
+ * Copyright (C) 2014-2015 OpenSearchServer Inc.
+ * 
+ * http://www.qwazr.com
+ * 
+ * This file is part of QWAZR.
+ *
+ * QWAZR is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * QWAZR is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with QWAZR. 
+ *  If not, see <http://www.gnu.org/licenses/>.
+ **/
+package com.qwazr.job.script;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.ws.rs.core.Response.Status;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.FileFileFilter;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.connectors.ConnectorContextAbstract;
+import com.qwazr.connectors.ConnectorsConfigurationFile;
+import com.qwazr.job.JobServer;
+import com.qwazr.utils.LockUtils.ReadWriteLock;
+import com.qwazr.utils.json.JsonMapper;
+import com.qwazr.utils.server.AbstractServer;
+import com.qwazr.utils.server.ServerException;
+
+public class ScriptManager extends ConnectorContextAbstract {
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(ScriptManager.class);
+
+	public static volatile ScriptManager INSTANCE = null;
+
+	public static void load(AbstractServer server, File directory)
+			throws IOException {
+		if (INSTANCE != null)
+			throw new IOException("Already loaded");
+		try {
+			INSTANCE = new ScriptManager(server, directory);
+		} catch (URISyntaxException e) {
+			throw new IOException(e);
+		}
+	}
+
+	private final static String SCRIPT_DIRNAME = "scripts";
+	private final static String CONNECTORS_CONF_FILENAME = "connectors.json";
+	private final File scriptDirectory;
+	private final ScriptEngine scriptEngine;
+
+	private final ReadWriteLock runsMapLock = new ReadWriteLock();
+	private final HashMap<String, HashMap<String, ScriptRunThread>> runsMap;
+	private final ExecutorService executorService;
+
+	private ScriptManager(AbstractServer server, File rootDirectory)
+			throws IOException, URISyntaxException {
+
+		// Load Nashorn
+		ScriptEngineManager manager = new ScriptEngineManager();
+		scriptEngine = manager.getEngineByName("nashorn");
+		scriptDirectory = new File(rootDirectory, SCRIPT_DIRNAME);
+		if (!scriptDirectory.exists())
+			scriptDirectory.mkdir();
+
+		runsMap = new HashMap<String, HashMap<String, ScriptRunThread>>();
+		executorService = Executors.newFixedThreadPool(100);
+
+		// Load the providers
+		File providerFile = new File(rootDirectory, CONNECTORS_CONF_FILENAME);
+		if (providerFile.exists() && providerFile.isFile()) {
+			logger.info("Loading provider configuration file: "
+					+ rootDirectory.getPath());
+			ConnectorsConfigurationFile providerconfigurationFile = JsonMapper.MAPPER
+					.readValue(providerFile, ConnectorsConfigurationFile.class);
+			ConnectorsConfigurationFile.load(this, providerconfigurationFile);
+		} else {
+			logger.info("No provider to load");
+		}
+	}
+
+	public TreeMap<String, ScriptFileStatus> getScripts() {
+		TreeMap<String, ScriptFileStatus> map = new TreeMap<String, ScriptFileStatus>();
+		File[] files = scriptDirectory
+				.listFiles((FileFilter) FileFileFilter.FILE);
+		if (files == null)
+			return map;
+		for (File file : files)
+			if (!file.isHidden())
+				map.put(file.getName(), new ScriptFileStatus(file));
+		return map;
+	}
+
+	private File getScriptFile(String script_name) throws ServerException {
+		if (StringUtils.isEmpty(script_name))
+			throw new ServerException(Status.NOT_ACCEPTABLE,
+					"No script name given");
+		File scriptFile = new File(scriptDirectory, script_name);
+		if (!scriptFile.exists())
+			throw new ServerException(Status.NOT_FOUND, "Script not found: "
+					+ script_name);
+		if (!scriptFile.isFile())
+			throw new ServerException(Status.NOT_ACCEPTABLE,
+					"Script is not a file: " + script_name);
+		return scriptFile;
+	}
+
+	public String getScript(String script_name) throws IOException,
+			ServerException {
+		File scriptFile = getScriptFile(script_name);
+		FileReader fileReader = new FileReader(scriptFile);
+		try {
+			return IOUtils.toString(fileReader);
+		} finally {
+			if (fileReader != null)
+				IOUtils.closeQuietly(fileReader);
+		}
+	}
+
+	public void deleteScript(String script_name) throws ServerException {
+		getScriptFile(script_name).delete();
+	}
+
+	public long setScript(String script_name, Long last_modified, String script)
+			throws IOException {
+		File scriptFile = new File(scriptDirectory, script_name);
+		FileWriter fileWriter = new FileWriter(scriptFile);
+		try {
+			fileWriter.write(script);
+			IOUtils.closeQuietly(fileWriter);
+			fileWriter = null;
+			if (last_modified != null)
+				scriptFile.setLastModified(last_modified);
+			return scriptFile.lastModified();
+		} finally {
+			if (fileWriter != null)
+				IOUtils.closeQuietly(fileWriter);
+		}
+	}
+
+	private ScriptRunThread getNewScriptRunThread(String script_name,
+			Map<String, ? extends Object> objects) throws ServerException {
+		ScriptRunThread scriptRunThread = new ScriptRunThread(scriptEngine,
+				getScriptFile(script_name), objects, getReadOnlyMap());
+		addScriptRunThread(script_name, scriptRunThread);
+		return scriptRunThread;
+	}
+
+	public ScriptRunThread runSync(String script_name, Map<String, ?> objects)
+			throws ServerException {
+		logger.info("Run sync: " + script_name);
+		ScriptRunThread scriptRunThread = getNewScriptRunThread(script_name,
+				objects);
+		scriptRunThread.run();
+		expireScriptRunThread(script_name);
+		return scriptRunThread;
+	}
+
+	public ScriptRunStatus runAsync(String script_name,
+			Map<String, ? extends Object> objects) throws ServerException {
+		logger.info("Run async: " + script_name);
+		ScriptRunThread scriptRunThread = getNewScriptRunThread(script_name,
+				objects);
+		executorService.execute(scriptRunThread);
+		expireScriptRunThread(script_name);
+		return scriptRunThread.getStatus();
+	}
+
+	private void addScriptRunThread(String script_name,
+			ScriptRunThread scriptRunThread) {
+		if (scriptRunThread == null)
+			return;
+		runsMapLock.w.lock();
+		try {
+			HashMap<String, ScriptRunThread> scriptRunThreadMap = runsMap
+					.get(script_name);
+			if (scriptRunThreadMap == null) {
+				scriptRunThreadMap = new HashMap<String, ScriptRunThread>();
+				runsMap.put(script_name, scriptRunThreadMap);
+			}
+			scriptRunThreadMap.put(scriptRunThread.getUUID().toString(),
+					scriptRunThread);
+		} finally {
+			runsMapLock.w.unlock();
+		}
+	}
+
+	private void expireScriptRunThread(String script_name) {
+		runsMapLock.w.lock();
+		try {
+			HashMap<String, ScriptRunThread> scriptRunThreadMap = runsMap
+					.get(script_name);
+			if (scriptRunThreadMap == null)
+				return;
+			List<String> uuidsToDelete = new ArrayList<String>();
+			for (ScriptRunThread scriptRunThread : scriptRunThreadMap.values())
+				if (scriptRunThread.hasExpired())
+					uuidsToDelete.add(scriptRunThread.getUUID().toString());
+			for (String uuid : uuidsToDelete)
+				scriptRunThreadMap.remove(uuid);
+			logger.info("Expire " + script_name + ": " + uuidsToDelete.size());
+			if (scriptRunThreadMap.isEmpty())
+				runsMap.remove(script_name);
+		} finally {
+			runsMapLock.w.unlock();
+		}
+	}
+
+	public Map<String, ScriptRunStatus> getRunsStatus(String script_name) {
+		runsMapLock.r.lock();
+		try {
+			Map<String, ScriptRunThread> runThreadMap = runsMap
+					.get(script_name);
+			if (runThreadMap == null)
+				return null;
+			LinkedHashMap<String, ScriptRunStatus> runStatusMap = new LinkedHashMap<String, ScriptRunStatus>();
+			for (Map.Entry<String, ScriptRunThread> entry : runThreadMap
+					.entrySet())
+				runStatusMap.put(entry.getKey(), entry.getValue().getStatus());
+			return runStatusMap;
+		} finally {
+			runsMapLock.r.unlock();
+		}
+	}
+
+	public ScriptRunThread getRunThread(String script_name, String uuid) {
+		runsMapLock.r.lock();
+		try {
+			Map<String, ScriptRunThread> runs = runsMap.get(script_name);
+			if (runs == null)
+				return null;
+			return runs.get(uuid);
+		} finally {
+			runsMapLock.r.unlock();
+		}
+	}
+
+	@Override
+	public String getContextId() {
+		return null;
+	}
+
+	@Override
+	public File getContextDirectory() {
+		return scriptDirectory;
+	}
+
+	/**
+	 * Copy the missing files on the nodes
+	 * 
+	 * @param client
+	 *            the current client
+	 * @param globalFiles
+	 *            a map with the files of all the cluster
+	 * @throws ServerException
+	 *             if any server exception occurs
+	 * @throws IOException
+	 *             if any I/O exception occurs
+	 */
+	public void repair(ScriptMultiClient client,
+			TreeMap<String, ScriptFileStatus> globalFiles) throws IOException,
+			ServerException {
+		if (globalFiles == null)
+			return;
+		int size = client.size() + 1;
+		Set<String> repairSet = new HashSet<String>();
+		for (Map.Entry<String, ScriptFileStatus> entry : globalFiles.entrySet()) {
+
+			String scriptName = entry.getKey();
+			ScriptFileStatus fileStatus = entry.getValue();
+
+			// Check if this file should be synchronized with any node
+			if (!fileStatus.isRepairRequired(size))
+				continue;
+
+			// Find the leading version of the script file
+			Map.Entry<String, ScriptFileStatus> leadEntry = fileStatus
+					.findLead();
+			// Lead entry can be null if a file is empty (length == 0)
+			if (leadEntry == null)
+				continue;
+			String leadNode = leadEntry.getKey();
+			ScriptFileStatus leadFileStatus = leadEntry.getValue();
+
+			// Find which node must be repaired
+			repairSet.clear();
+			repairSet.add(ClusterManager.INSTANCE.myAddress);
+			client.fillClientUrls(repairSet);
+			fileStatus.buildRepairSet(leadFileStatus, repairSet);
+
+			// Read the script content
+			String content;
+			if (leadNode.equals(ClusterManager.INSTANCE.myAddress))
+				content = getScript(scriptName);
+			else
+				content = client.getClientByUrl(leadNode).getScript(scriptName);
+
+			// Write the script content to the node to repair
+			for (String repair : repairSet) {
+				if (repair.equals(ClusterManager.INSTANCE.myAddress))
+					setScript(scriptName,
+							leadFileStatus.last_modified.getTime(), content);
+				else
+					client.getClientByUrl(repair).setScript(scriptName,
+							leadFileStatus.last_modified.getTime(), true,
+							content);
+			}
+
+		}
+	}
+
+	public static ScriptMultiClient getClient(boolean removeMe)
+			throws URISyntaxException {
+		HashSet<String> nodes = new HashSet<String>(ClusterManager.INSTANCE
+				.getClusterClient().getActiveNodes(
+						JobServer.SERVICE_NAME_SCRIPT));
+		if (removeMe)
+			nodes.remove(ClusterManager.INSTANCE.myAddress);
+		return new ScriptMultiClient(nodes, 60000);
+	}
+}

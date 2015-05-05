@@ -1,0 +1,12 @@
+Package: qwazr
+Version: [[version]]
+Section: java
+Priority: optional
+Architecture: all
+Description: A Javascript based distributed and scalable application server
+ QWAZR is an enterprise-class application server. The platform includes a set
+ of distributed services: cluster, search, job, graph, affinities, store and crawlers.
+Depends: default-jre-headless | java7-runtime-headless | java7-runtime | java8-runtime-headless | java8-runtime
+Maintainer: Emmanuel Keller <ekeller@opensearchserver.com>
+Homepage: http://www.qwazr.com
+Vcs-Git: https://github.com/qwazr/QWAZR.git

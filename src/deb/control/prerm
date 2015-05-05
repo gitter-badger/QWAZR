@@ -1,9 +1,0 @@
-#!/bin/sh
-
-if [ -f /etc/init.d/qwazr ]; then
-	if which invoke-rc.d >/dev/null 2>&1; then
-		invoke-rc.d qwazr stop
-	else
-		/etc/init.d/qwazr stop
-	fi
-fi
