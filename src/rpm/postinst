@@ -1,1 +1,0 @@
-cp -f /usr/share/qwazr/qwazr /etc/init.d/qwazr && chmod a+x /etc/init.d/qwazr

@@ -1,53 +1,48 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.opensearchserver</groupId>
-	<artifactId>qwazr</artifactId>
-	<name>QWAZR</name>
-	<description>A Javascript based distributed and scalable application server</description>
-	<packaging>jar</packaging>
+
 	<prerequisites>
 		<maven>3.0</maven>
 	</prerequisites>
-	<url>http://www.qwazr.Com</url>
+
+	<groupId>com.opensearchserver</groupId>
+	<artifactId>qwazr-parent</artifactId>
+	<packaging>pom</packaging>
+	<version>1.0.0-SNAPSHOT</version>
+	<name>QWAZR Parent Project</name>
+
+	<url>https://github.com/qwazr</url>
 	<licenses>
 		<license>
-			<name>General Public License, Version 2.0</name>
-			<url>http://www.gnu.org/licenses/gpl.html</url>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	<version>1.0.0-SNAPSHOT</version>
 	<organization>
 		<name>OpenSearchServer Inc.</name>
 		<url>http://www.opensearchserver.com</url>
 	</organization>
 	<scm>
-		<connection>scm:git:git@github.com:qwazr/QWAZR.git</connection>
-		<developerConnection>scm:git:git@github.com:qwazr/QWAZR.git</developerConnection>
-		<url>git@github.com:qwazr/QWAZR.git</url>
+		<connection>scm:git:git@github.com:qwazr/qwazr.git</connection>
+		<developerConnection>scm:git:git@github.com:qwazr/qwazr.git</developerConnection>
+		<url>git@github.com:qwazr/qwazr.git</url>
 	</scm>
 	<issueManagement>
-		<url>https://github.com/qwazr/QWAZR/issues</url>
+		<url>https://github.com/qwazr/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<url>http://jenkins.opensearchserver.com/view/QWAZR/</url>
 	</ciManagement>
+
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
 		<version>7</version>
 	</parent>
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<resteasy.version>3.0.11.Final</resteasy.version>
-		<undertow.version>1.1.3.Final</undertow.version>
-		<poi.version>3.11</poi.version>
-		<httpclient.version>4.4</httpclient.version>
-		<httpcore.version>4.4.1</httpcore.version>
-		<jackson.version>2.5.1</jackson.version>
-	</properties>
+
 	<repositories>
 		<repository>
 			<id>oss-sonatype</id>
@@ -58,144 +53,35 @@
 			</snapshots>
 		</repository>
 	</repositories>
-	<dependencies>
-		<dependency>
-			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>jaxrs-api</artifactId>
-			<version>${resteasy.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-jaxrs</artifactId>
-			<version>${resteasy.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-jackson2-provider</artifactId>
-			<version>${resteasy.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jboss.resteasy</groupId>
-			<artifactId>resteasy-undertow</artifactId>
-			<version>${resteasy.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.undertow</groupId>
-			<artifactId>undertow-core</artifactId>
-			<version>${undertow.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>io.undertow</groupId>
-			<artifactId>undertow-servlet</artifactId>
-			<version>${undertow.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-utils</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-cluster</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-extractor</artifactId>
-			<version>1.2-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-webapps</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-job</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-crawlers</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-search</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-graph</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>qwazr-connectors</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>com.opensearchserver</groupId>
-			<artifactId>oss-java-client</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpclient</artifactId>
-			<version>${httpclient.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>fluent-hc</artifactId>
-			<version>${httpclient.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.httpcomponents</groupId>
-			<artifactId>httpcore</artifactId>
-			<version>${httpcore.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-core</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.jaxrs</groupId>
-			<artifactId>jackson-jaxrs-base</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.jaxrs</groupId>
-			<artifactId>jackson-jaxrs-json-provider</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-annotations</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.dataformat</groupId>
-			<artifactId>jackson-dataformat-yaml</artifactId>
-			<version>${jackson.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.7.12</version>
-		</dependency>
-	</dependencies>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<resteasy.version>3.0.11.Final</resteasy.version>
+		<undertow.version>1.1.3.Final</undertow.version>
+		<poi.version>3.11</poi.version>
+		<httpclient.version>4.4</httpclient.version>
+		<httpcore.version>4.4.1</httpcore.version>
+		<jackson.version>2.5.1</jackson.version>
+	</properties>
+
+	<modules>
+		<module>qwazr</module>
+		<module>qwazr-affinities</module>
+		<module>qwazr-analyzer</module>
+		<module>qwazr-cluster</module>
+		<module>qwazr-connectors</module>
+		<module>qwazr-crawlers</module>
+		<module>qwazr-extractor</module>
+		<module>qwazr-graph</module>
+		<module>qwazr-job</module>
+		<module>qwazr-native</module>
+		<module>qwazr-search</module>
+		<module>qwazr-store</module>
+		<module>qwazr-utils</module>
+		<module>qwazr-webapps</module>
+	</modules>
+
 	<build>
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<plugins>
@@ -266,203 +152,6 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.18.1</version>
-				<configuration>
-					<skipTests>${skipTests}</skipTests>
-				</configuration>
-				<dependencies>
-					<dependency>
-						<groupId>org.apache.maven.surefire</groupId>
-						<artifactId>surefire-junit47</artifactId>
-						<version>2.18.1</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.3</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<shadedArtifactAttached>true</shadedArtifactAttached>
-							<shadedClassifierName>exec</shadedClassifierName>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<manifestEntries>
-										<Main-Class>com.qwazr.Qwazr</Main-Class>
-									</manifestEntries>
-								</transformer>
-							</transformers>
-							<filters>
-								<filter>
-									<artifact>*:*</artifact>
-									<excludes>
-										<exclude>META-INF/*.SF</exclude>
-										<exclude>META-INF/*.DSA</exclude>
-										<exclude>META-INF/*.RSA</exclude>
-									</excludes>
-								</filter>
-							</filters>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>jdeb</artifactId>
-				<groupId>org.vafer</groupId>
-				<version>1.4</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>jdeb</goal>
-						</goals>
-						<configuration>
-							<deb>${project.build.directory}/${project.build.finalName}.deb</deb>
-							<controlDir>${basedir}/src/deb/control</controlDir>
-							<dataSet>
-								<data>
-									<src>${project.build.directory}/${project.build.finalName}-exec.jar</src>
-									<dst>qwazr.jar</dst>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/usr/share/qwazr</prefix>
-										<user>qwazr</user>
-										<group>daemon</group>
-									</mapper>
-								</data>
-								<data>
-									<src>${basedir}/src/deb/data/copyright</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/usr/share/doc/qwazr</prefix>
-									</mapper>
-								</data>
-								<data>
-									<src>${basedir}/src/deb/etc/qwazr.conf</src>
-									<type>file</type>
-									<conffile>true</conffile>
-									<mapper>
-										<type>perm</type>
-										<prefix>/etc</prefix>
-									</mapper>
-								</data>
-								<data>
-									<src>${basedir}/src/deb/init.d</src>
-									<type>directory</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>/etc/init.d</prefix>
-										<filemode>755</filemode>
-									</mapper>
-								</data>
-								<data>
-									<type>template</type>
-									<paths>
-										<path>/var/lib/${project.artifactId}</path>
-										<path>/var/log/${project.artifactId}</path>
-										<path>/var/run/${project.artifactId}</path>
-									</paths>
-									<mapper>
-										<type>perm</type>
-										<user>qwazr</user>
-										<group>daemon</group>
-									</mapper>
-								</data>
-								<data>
-									<src>${basedir}/src/pkgs/linux/log4j.properties</src>
-									<type>file</type>
-									<conffile>true</conffile>
-									<mapper>
-										<type>perm</type>
-										<prefix>/var/lib/${project.artifactId}</prefix>
-									</mapper>
-								</data>
-							</dataSet>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>rpm-maven-plugin</artifactId>
-				<version>2.1.2</version>
-				<executions>
-					<execution>
-						<id>generate-rpm</id>
-						<goals>
-							<goal>rpm</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<license>GPLv3 (c) 2014-2015, OpenSearchServer Inc.</license>
-					<group>Application/Internet</group>
-					<packager>OpenSearchServer</packager>
-					<version>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}</version>
-					<prefix>/usr/local</prefix>
-					<mappings>
-						<mapping>
-							<directory>/usr/share/qwazr</directory>
-							<username>qwazr</username>
-							<groupname>daemon</groupname>
-							<sources>
-								<source>
-									<location>${project.build.directory}/${project.build.finalName}-exec.jar</location>
-									<destination>qwazr.jar</destination>
-								</source>
-								<source>
-									<location>src/deb/init.d/qwazr</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
-							<directory>/etc</directory>
-							<configuration>true</configuration>
-							<sources>
-								<source>
-									<location>src/deb/etc/qwazr.conf</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
-							<directory>/var/log/qwazr</directory>
-							<username>qwazr</username>
-						</mapping>
-						<mapping>
-							<directory>/var/lib/qwazr</directory>
-							<username>qwazr</username>
-							<groupname>daemon</groupname>
-							<configuration>true</configuration>
-							<sources>
-								<source>
-									<location>src/pkgs/linux/log4j.properties</location>
-								</source>
-							</sources>
-						</mapping>
-					</mappings>
-					<requires>
-						<require>java-headless &gt;= 1.8.0</require>
-					</requires>
-					<preinstallScriptlet>
-						<scriptFile>src/rpm/preinst</scriptFile>
-					</preinstallScriptlet>
-					<postinstallScriptlet>
-						<scriptFile>src/rpm/postinst</scriptFile>
-					</postinstallScriptlet>
-				</configuration>
-			</plugin>
-			<plugin>
 				<groupId>org.jasig.maven</groupId>
 				<artifactId>maven-notice-plugin</artifactId>
 				<version>1.0.6.1</version>
@@ -477,4 +166,13 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 </project>

@@ -1,0 +1,1 @@
+getent passwd qwazr >/dev/null || useradd -r -g daemon -d /var/lib/qwazr -s /bin/bash -c "Qwazr" qwazr
