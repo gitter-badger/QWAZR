@@ -47,7 +47,6 @@ import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.job.JobServer;
 import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.LockUtils.ReadWriteLock;
-import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServerException;
 
 public class ScriptManager {
@@ -57,12 +56,11 @@ public class ScriptManager {
 
 	public static volatile ScriptManager INSTANCE = null;
 
-	public static void load(AbstractServer server, File directory)
-			throws IOException {
+	public static void load(File directory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
-			INSTANCE = new ScriptManager(server, directory);
+			INSTANCE = new ScriptManager(directory);
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
@@ -76,8 +74,8 @@ public class ScriptManager {
 	private final HashMap<String, HashMap<String, ScriptRunThread>> runsMap;
 	private final ExecutorService executorService;
 
-	private ScriptManager(AbstractServer server, File rootDirectory)
-			throws IOException, URISyntaxException {
+	private ScriptManager(File rootDirectory) throws IOException,
+			URISyntaxException {
 
 		// Load Nashorn
 		ScriptEngineManager manager = new ScriptEngineManager();

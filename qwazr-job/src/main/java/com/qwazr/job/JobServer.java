@@ -87,15 +87,14 @@ public class JobServer extends AbstractServer {
 		maxThreads = Integer.parseInt(THREADS_OPTION.getValue("1000"));
 	}
 
-	public static void loadScript(AbstractServer server) throws IOException {
-		ScriptManager.load(server, server.getCurrentDataDir());
+	public static void loadScript(File dataDir) throws IOException {
+		ScriptManager.load(dataDir);
 	}
 
-	public static void loadScheduler(AbstractServer server, int maxThreads)
+	public static void loadScheduler(File dataDirectory, int maxThreads)
 			throws IOException {
 		try {
-			SchedulerManager.load(server, server.getCurrentDataDir(),
-					maxThreads);
+			SchedulerManager.load(dataDirectory, maxThreads);
 		} catch (SchedulerException | ServerException e) {
 			throw new IOException(e);
 		}
@@ -104,11 +103,12 @@ public class JobServer extends AbstractServer {
 	@Override
 	public void load() throws IOException {
 		File currentDataDir = getCurrentDataDir();
-		ClusterServer.load(this, currentDataDir, null, null);
-		ConnectorManager.load(this, currentDataDir, null);
-		ToolsManager.load(this, currentDataDir, null);
-		loadScript(this);
-		loadScheduler(this, maxThreads);
+		ClusterServer.load(getWebServicePublicAddress(), currentDataDir, null,
+				null);
+		ConnectorManager.load(currentDataDir, null);
+		ToolsManager.load(currentDataDir, null);
+		loadScript(currentDataDir);
+		loadScheduler(currentDataDir, maxThreads);
 	}
 
 	public static void main(String[] args) throws IOException, ParseException,

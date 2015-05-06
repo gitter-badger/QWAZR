@@ -240,8 +240,10 @@ public abstract class AbstractServer {
 					.addDeployment(deploymentInfo);
 			manager.deploy();
 			PathHandler pathHandler = new PathHandler();
-			pathHandler.addPrefixPath(servletApplication.getContextPath(),
-					manager.start());
+			String prefixPath = servletApplication.getContextPath();
+			if (StringUtils.isEmpty(prefixPath))
+				prefixPath = "/";
+			pathHandler.addPrefixPath(prefixPath, manager.start());
 			servletBuilder = Undertow.builder()
 					.addHttpListener(servletPort, currentListenAddress)
 					.setHandler(pathHandler);

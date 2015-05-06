@@ -85,7 +85,8 @@ public class GraphServer extends AbstractServer {
 
 	@Override
 	public void load() throws IOException {
-		ClusterServer.load(this, getCurrentDataDir(), null, null);
+		ClusterServer.load(getWebServicePublicAddress(), getCurrentDataDir(),
+				null, null);
 		load(getCurrentDataDir());
 	}
 

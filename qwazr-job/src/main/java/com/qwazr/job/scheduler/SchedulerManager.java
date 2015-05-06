@@ -44,7 +44,6 @@ import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.job.script.ScriptManager;
 import com.qwazr.job.script.ScriptRunStatus;
 import com.qwazr.utils.json.JsonMapper;
-import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServerException;
 
 public class SchedulerManager {
@@ -54,21 +53,19 @@ public class SchedulerManager {
 
 	public static volatile SchedulerManager INSTANCE = null;
 
-	public static void load(AbstractServer server, File directory,
-			int maxThreads) throws IOException, SchedulerException,
-			ServerException {
+	public static void load(File directory, int maxThreads) throws IOException,
+			SchedulerException, ServerException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new SchedulerManager(server, directory, maxThreads);
+		INSTANCE = new SchedulerManager(directory, maxThreads);
 	}
 
 	private final static String SCHEDULERS_DIRNAME = "schedulers";
 	private final File schedulersDirectory;
 	private final Scheduler globalScheduler;
 
-	private SchedulerManager(AbstractServer server, File rootDirectory,
-			int maxThreads) throws IOException, SchedulerException,
-			ServerException {
+	private SchedulerManager(File rootDirectory, int maxThreads)
+			throws IOException, SchedulerException, ServerException {
 		schedulersDirectory = new File(rootDirectory, SCHEDULERS_DIRNAME);
 		if (!schedulersDirectory.exists())
 			schedulersDirectory.mkdir();

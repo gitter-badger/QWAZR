@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.qwazr.utils.json.JsonMapper;
-import com.qwazr.utils.server.AbstractServer;
 
 public class ConnectorManager {
 
@@ -35,8 +34,8 @@ public class ConnectorManager {
 
 	public static volatile ConnectorManager INSTANCE = null;
 
-	public static void load(AbstractServer server, File directory,
-			String contextId) throws IOException {
+	public static void load(File directory, String contextId)
+			throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		INSTANCE = new ConnectorManager(directory, contextId);

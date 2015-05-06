@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.qwazr.utils.json.JsonMapper;
-import com.qwazr.utils.server.AbstractServer;
 
 public class ToolsManager {
 
@@ -33,8 +32,8 @@ public class ToolsManager {
 
 	public static volatile ToolsManager INSTANCE = null;
 
-	public static void load(AbstractServer server, File directory,
-			String contextId) throws IOException {
+	public static void load(File directory, String contextId)
+			throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		INSTANCE = new ToolsManager(directory, contextId);
@@ -48,15 +47,15 @@ public class ToolsManager {
 			throws IOException {
 		this.contextId = contextId;
 		tools = new ConcurrentHashMap<String, AbstractTool>();
-		File connectorFile = new File(rootDirectory, "connectors.json");
-		if (!connectorFile.exists())
+		File toolsFile = new File(rootDirectory, "tools.json");
+		if (!toolsFile.exists())
 			return;
-		if (!connectorFile.isFile())
+		if (!toolsFile.isFile())
 			return;
 		logger.info("Loading tools configuration file: "
 				+ rootDirectory.getPath());
 		ToolsConfiguration configuration = JsonMapper.MAPPER.readValue(
-				connectorFile, ToolsConfiguration.class);
+				toolsFile, ToolsConfiguration.class);
 		if (configuration.tools == null)
 			return;
 		for (AbstractTool tool : configuration.tools) {
