@@ -33,7 +33,6 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.qwazr.connectors.CassandraConnector;
-import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.CallableExceptionCatcher;
 import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
@@ -45,8 +44,9 @@ public class CassandraTest {
 			.getName());
 
 	private CassandraConnector getCassandra() throws IOException {
-		return (CassandraConnector) ConnectorManager.INSTANCE.getReadOnlyMap()
-				.get("cassandra");
+
+		return (CassandraConnector) ConnectorsTestContext.getConnectorManager()
+				.getReadOnlyMap().get("cassandra");
 	}
 
 	private final static String CREATE_SCHEMA = "CREATE KEYSPACE qwazr_connector_test WITH REPLICATION "

@@ -24,16 +24,12 @@ import com.qwazr.connectors.ConnectorManager;
 
 public class ConnectorsTestContext {
 
-	private static ConnectorsTestContext testContext = null;
-
-	static synchronized ConnectorsTestContext getTestContext()
+	static synchronized ConnectorManager getConnectorManager()
 			throws JsonParseException, JsonMappingException, IOException {
-		if (testContext != null)
-			return testContext;
-		testContext = new ConnectorsTestContext();
-		File file = new File("src/test/resources");
-		ConnectorManager.load(null, file, null);
-		return testContext;
+		if (ConnectorManager.INSTANCE != null)
+			return ConnectorManager.INSTANCE;
+		ConnectorManager.load(null, new File("src/test/resources"), null);
+		return ConnectorManager.INSTANCE;
 	}
 
 }
