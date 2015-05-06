@@ -3,6 +3,12 @@ QWAZR Graph
 
 An open source graph engine for [QWAZR](https://www.qwazr.com)
 
+QWAZR is a an application server dedicated to distributed projects.
+The server provides a set of JSON web services which manages distributed jobs and
+web applications written in Javascript or Java.
+
+The main [documentation of QWAZR is available here](https://github.com/qwazr/QWAZR/wiki).
+
 Requirement
 -----------
 
@@ -58,14 +64,6 @@ Usage
 -----
 
 The provided [REST/Json Web Service is described here](src/doc/usage.md).
-
-Issues and change Log
----------------------
-
-Issues and milestones are tracked on GitHub:
-
-- [Open issues](https://github.com/qwazr/qwazr-graph/issues?q=is%3Aopen+is%3Aissue)
-- [Closed issues](https://github.com/qwazr/qwazr-graph/issues?q=is%3Aissue+is%3Aclosed)
 
 License Apache 2
 ----------------
