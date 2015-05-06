@@ -31,8 +31,9 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.connectors.ConnectorContextAbstract.ConnectorMap;
+import com.qwazr.connectors.ConnectorManager.ConnectorMap;
 import com.qwazr.job.script.ScriptRunStatus.ScriptState;
+import com.qwazr.tools.ToolsManager.ToolMap;
 
 @JsonInclude(Include.NON_EMPTY)
 public class ScriptRunThread extends SimpleScriptContext implements Runnable {
@@ -51,7 +52,8 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 	private final File scriptFile;
 
 	ScriptRunThread(ScriptEngine scriptEngine, File scriptFile,
-			Map<String, ? extends Object> bindings, ConnectorMap connectors) {
+			Map<String, ? extends Object> bindings, ConnectorMap connectors,
+			ToolMap tools) {
 		uuid = UUIDs.timeBased().toString();
 		state = ScriptState.ready;
 		startTime = null;
@@ -62,6 +64,8 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 			engineScope.putAll(bindings);
 		if (connectors != null)
 			engineScope.put("connectors", connectors);
+		if (tools != null)
+			engineScope.put("tools", tools);
 		this.scriptFile = scriptFile;
 		this.setWriter(new StringWriter());
 		this.setErrorWriter(new StringWriter());

@@ -70,7 +70,7 @@ public class CassandraConnector extends AbstractConnector {
 	private String keyspace = null;
 
 	@Override
-	public void load(ConnectorContext context) {
+	public void load(String contextId) {
 		if (keyspaceLocator != null) {
 			String login = keyspaceLocator.login == null ? keyspaceLocator.keyspace
 					: keyspaceLocator.login;
@@ -84,8 +84,7 @@ public class CassandraConnector extends AbstractConnector {
 			}
 			CassandraSession session = publicCluster
 					.getSession(keyspaceLocator.keyspace);
-			Row row = session.execute(keyspaceLocator.cql,
-					context.getContextId()).one();
+			Row row = session.execute(keyspaceLocator.cql, contextId).one();
 			if (row == null)
 				return;
 			int size = row.getColumnDefinitions().size();
@@ -114,7 +113,7 @@ public class CassandraConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(ConnectorContext context) {
+	public void unload(String contextId) {
 		if (cluster != null) {
 			IOUtils.closeQuietly(cluster);
 			cluster = null;

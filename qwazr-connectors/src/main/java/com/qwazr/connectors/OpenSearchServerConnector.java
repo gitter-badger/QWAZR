@@ -50,7 +50,7 @@ public class OpenSearchServerConnector extends AbstractConnector {
 	private JsonClient1 jsonClient;
 
 	@Override
-	public void load(ConnectorContext context) {
+	public void load(String contextId) {
 		try {
 			jsonClient = new JsonClient1(url, login, api_key,
 					time_out == null ? 60000 : time_out);
@@ -61,7 +61,7 @@ public class OpenSearchServerConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(ConnectorContext context) {
+	public void unload(String contextId) {
 	}
 
 	public AnalyzerApi1 getNewAnalyzerApi1() {

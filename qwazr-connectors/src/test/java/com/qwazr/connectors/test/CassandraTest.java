@@ -44,7 +44,8 @@ public class CassandraTest {
 			.getName());
 
 	private CassandraConnector getCassandra() throws IOException {
-		return (CassandraConnector) ConnectorsTestContext.getTestContext()
+
+		return (CassandraConnector) ConnectorsTestContext.getConnectorManager()
 				.getReadOnlyMap().get("cassandra");
 	}
 

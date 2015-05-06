@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.connectors.test;
+package com.qwazr.tools.postagger;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.LinkedHashSet;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.qwazr.connectors.ConnectorManager;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-public class ConnectorsTestContext {
+@JsonInclude(Include.NON_EMPTY)
+public class POSFilter {
 
-	static synchronized ConnectorManager getConnectorManager()
-			throws JsonParseException, JsonMappingException, IOException {
-		if (ConnectorManager.INSTANCE != null)
-			return ConnectorManager.INSTANCE;
-		ConnectorManager.load(null, new File("src/test/resources"), null);
-		return ConnectorManager.INSTANCE;
+	public final LinkedHashSet<String> any_of;
+	public final Integer min_size;
+	public final Integer max_distance;
+
+	public POSFilter() {
+		any_of = null;
+		min_size = null;
+		max_distance = null;
 	}
-
 }

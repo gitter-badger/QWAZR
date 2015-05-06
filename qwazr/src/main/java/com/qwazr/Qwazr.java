@@ -33,6 +33,7 @@ import com.qwazr.ServerConfiguration.ServiceEnum;
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
+import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.service.WebCrawlerServiceImpl;
 import com.qwazr.extractor.ExtractorServer;
@@ -42,6 +43,7 @@ import com.qwazr.job.scheduler.SchedulerServiceImpl;
 import com.qwazr.job.script.ScriptServiceImpl;
 import com.qwazr.search.SearchServer;
 import com.qwazr.search.index.IndexServiceImpl;
+import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServletApplication;
@@ -125,19 +127,22 @@ public class Qwazr extends AbstractServer {
 	@Override
 	public void load() throws IOException {
 
-		File data_directory = getCurrentDataDir();
+		File currentDataDir = getCurrentDataDir();
 
-		ClusterServer.load(this, subDir(data_directory, "cluster"), null, null);
+		ClusterServer.load(this, subDir(currentDataDir, "cluster"), null, null);
+
+		ConnectorManager.load(this, currentDataDir, null);
+		ToolsManager.load(this, currentDataDir, null);
 
 		if (ServiceEnum.extractor.isActive(serverConfiguration)) {
-			ExtractorServer.load(this, subDir(data_directory, "extractor"),
+			ExtractorServer.load(this, subDir(currentDataDir, "extractor"),
 					null);
 			services.add(ServiceEnum.extractor.name());
 		}
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
 			WebappServer.load(WEBAPPS_CONTEXT_PATH, null, 1,
-					subDir(data_directory, "webapps"));
+					subDir(currentDataDir, "webapps"));
 			services.add(ServiceEnum.extractor.name());
 		}
 
@@ -163,7 +168,7 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.graph.isActive(serverConfiguration)) {
-			GraphServer.load(subDir(data_directory, "graph"));
+			GraphServer.load(subDir(currentDataDir, "graph"));
 			services.add(ServiceEnum.graph.name());
 		}
 

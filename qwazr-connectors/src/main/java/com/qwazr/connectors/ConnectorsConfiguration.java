@@ -17,35 +17,11 @@ package com.qwazr.connectors;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ConnectorsConfigurationFile {
-
-	private static final Logger logger = LoggerFactory
-			.getLogger(ConnectorsConfigurationFile.class);
+public class ConnectorsConfiguration {
 
 	public List<AbstractConnector> connectors;
 
-	/**
-	 * This method loads the connectors.
-	 * 
-	 * @param context
-	 *            The connector context
-	 * @param configuration
-	 *            The configuration definition
-	 */
-	public static void load(ConnectorContextAbstract context,
-			ConnectorsConfigurationFile configuration) {
-		if (configuration == null || configuration.connectors == null)
-			return;
-		for (AbstractConnector connector : configuration.connectors) {
-			logger.info("Loading connector: " + connector.name);
-			connector.load(context);
-			context.add(connector);
-		}
-	}
 }

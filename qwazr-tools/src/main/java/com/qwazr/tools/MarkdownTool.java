@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.analyzer.markdown;
+package com.qwazr.tools;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.pegdown.Extensions;
 import org.pegdown.PegDownProcessor;
 
@@ -24,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MarkdownProcessorDefinition {
+public class MarkdownTool extends AbstractTool {
 
 	public List<ExtensionEnum> extensions;
 
@@ -52,12 +55,32 @@ public class MarkdownProcessorDefinition {
 	}
 
 	@JsonIgnore
-	PegDownProcessor getNewPegdownProcessor() {
+	private PegDownProcessor pegDownProcessor = null;
+
+	@Override
+	public void load(String contextId) {
 		int extensionsValue = 0;
 		if (extensions != null)
 			for (ExtensionEnum extensionEnum : extensions)
 				extensionsValue |= extensionEnum.value;
-		return new PegDownProcessor(extensionsValue);
+		pegDownProcessor = new PegDownProcessor(extensionsValue);
 	}
 
+	@Override
+	public void unload(String contextId) {
+	}
+
+	public String toHtml(String input) {
+		return pegDownProcessor.markdownToHtml(input);
+	}
+
+	public String toHtml(File file) throws IOException {
+		return pegDownProcessor.markdownToHtml(FileUtils.readFileToString(file,
+				"UTF-8"));
+	}
+
+	public String toHtml(File file, String encoding) throws IOException {
+		return pegDownProcessor.markdownToHtml(FileUtils.readFileToString(file,
+				encoding));
+	}
 }

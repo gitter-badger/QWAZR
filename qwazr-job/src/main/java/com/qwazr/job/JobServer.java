@@ -15,6 +15,7 @@
  **/
 package com.qwazr.job;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
@@ -30,10 +31,12 @@ import org.quartz.SchedulerException;
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
+import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.job.scheduler.SchedulerManager;
 import com.qwazr.job.scheduler.SchedulerServiceImpl;
 import com.qwazr.job.script.ScriptManager;
 import com.qwazr.job.script.ScriptServiceImpl;
+import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServerException;
@@ -100,7 +103,10 @@ public class JobServer extends AbstractServer {
 
 	@Override
 	public void load() throws IOException {
-		ClusterServer.load(this, getCurrentDataDir(), null, null);
+		File currentDataDir = getCurrentDataDir();
+		ClusterServer.load(this, currentDataDir, null, null);
+		ConnectorManager.load(this, currentDataDir, null);
+		ToolsManager.load(this, currentDataDir, null);
 		loadScript(this);
 		loadScheduler(this, maxThreads);
 	}
