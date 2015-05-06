@@ -16,7 +16,6 @@
 package com.qwazr.connectors;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +26,7 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.util.JSON;
 import com.qwazr.utils.StringUtils;
 
@@ -47,30 +47,26 @@ public class MongoDbConnector extends AbstractConnector {
 
 	@Override
 	public void load(String contextId) {
-		try {
-			ServerAddress serverAddress = null;
-			if (!StringUtils.isEmpty(hostname)) {
-				if (port == null)
-					serverAddress = new ServerAddress(hostname);
-				else
-					serverAddress = new ServerAddress(hostname, port);
-			} else
-				serverAddress = new ServerAddress();
-			if (credentials == null || credentials.isEmpty()) {
-				mongoClient = new MongoClient(serverAddress);
-			} else {
-				List<MongoCredential> mongoCredentials = new ArrayList<MongoCredential>(
-						credentials.size());
-				for (MongoDbCredential credential : credentials)
-					mongoCredentials.add(MongoCredential
-							.createMongoCRCredential(credential.username,
-									credential.database,
-									credential.password.toCharArray()));
-				mongoClient = new MongoClient(serverAddress, mongoCredentials);
-			}
-		} catch (UnknownHostException e) {
-			throw new RuntimeException(e);
+		ServerAddress serverAddress = null;
+		if (!StringUtils.isEmpty(hostname)) {
+			if (port == null)
+				serverAddress = new ServerAddress(hostname);
+			else
+				serverAddress = new ServerAddress(hostname, port);
+		} else
+			serverAddress = new ServerAddress();
+		if (credentials == null || credentials.isEmpty()) {
+			mongoClient = new MongoClient(serverAddress);
+		} else {
+			List<MongoCredential> mongoCredentials = new ArrayList<MongoCredential>(
+					credentials.size());
+			for (MongoDbCredential credential : credentials)
+				mongoCredentials.add(MongoCredential.createMongoCRCredential(
+						credential.username, credential.database,
+						credential.password.toCharArray()));
+			mongoClient = new MongoClient(serverAddress, mongoCredentials);
 		}
+
 	}
 
 	@Override
@@ -86,14 +82,14 @@ public class MongoDbConnector extends AbstractConnector {
 	 * 
 	 * @param databaseName
 	 *            the name of the database
-	 * @return a DB object
+	 * @return a MongoDatabase object
 	 * @throws IOException
 	 *             if any I/O error occurs
 	 */
-	public DB getDatabase(String databaseName) throws IOException {
+	public MongoDatabase getDatabase(String databaseName) throws IOException {
 		if (StringUtils.isEmpty(databaseName))
 			throw new IOException("No database name.");
-		return mongoClient.getDB(databaseName);
+		return mongoClient.getDatabase(databaseName);
 	}
 
 	/**
