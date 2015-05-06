@@ -20,7 +20,6 @@ import java.net.URISyntaxException;
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.connectors.AbstractConnector;
-import com.qwazr.connectors.ConnectorContext;
 import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.client.WebCrawlerMultiClient;
 import com.qwazr.extractor.ExtractorServiceImpl;
@@ -32,11 +31,11 @@ import com.qwazr.job.script.ScriptMultiClient;
 public class ServicesProvider extends AbstractConnector {
 
 	@Override
-	public void load(ConnectorContext context) {
+	public void load(String contextId) {
 	}
 
 	@Override
-	public void unload(ConnectorContext context) {
+	public void unload(String contextId) {
 	}
 
 	public ClusterMultiClient getCluster() {

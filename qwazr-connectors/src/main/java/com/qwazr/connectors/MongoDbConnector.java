@@ -46,7 +46,7 @@ public class MongoDbConnector extends AbstractConnector {
 	public Integer port;
 
 	@Override
-	public void load(ConnectorContext context) {
+	public void load(String contextId) {
 		try {
 			ServerAddress serverAddress = null;
 			if (!StringUtils.isEmpty(hostname)) {
@@ -74,7 +74,7 @@ public class MongoDbConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(ConnectorContext context) {
+	public void unload(String contextId) {
 		if (mongoClient != null) {
 			mongoClient.close();
 			mongoClient = null;

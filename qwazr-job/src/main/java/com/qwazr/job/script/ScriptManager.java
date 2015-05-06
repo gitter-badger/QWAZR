@@ -43,15 +43,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.connectors.ConnectorContextAbstract;
-import com.qwazr.connectors.ConnectorsConfigurationFile;
+import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.job.JobServer;
+import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.LockUtils.ReadWriteLock;
-import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServerException;
 
-public class ScriptManager extends ConnectorContextAbstract {
+public class ScriptManager {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(ScriptManager.class);
@@ -70,7 +69,6 @@ public class ScriptManager extends ConnectorContextAbstract {
 	}
 
 	private final static String SCRIPT_DIRNAME = "scripts";
-	private final static String CONNECTORS_CONF_FILENAME = "connectors.json";
 	private final File scriptDirectory;
 	private final ScriptEngine scriptEngine;
 
@@ -90,18 +88,6 @@ public class ScriptManager extends ConnectorContextAbstract {
 
 		runsMap = new HashMap<String, HashMap<String, ScriptRunThread>>();
 		executorService = Executors.newFixedThreadPool(100);
-
-		// Load the providers
-		File providerFile = new File(rootDirectory, CONNECTORS_CONF_FILENAME);
-		if (providerFile.exists() && providerFile.isFile()) {
-			logger.info("Loading provider configuration file: "
-					+ rootDirectory.getPath());
-			ConnectorsConfigurationFile providerconfigurationFile = JsonMapper.MAPPER
-					.readValue(providerFile, ConnectorsConfigurationFile.class);
-			ConnectorsConfigurationFile.load(this, providerconfigurationFile);
-		} else {
-			logger.info("No provider to load");
-		}
 	}
 
 	public TreeMap<String, ScriptFileStatus> getScripts() {
@@ -166,7 +152,9 @@ public class ScriptManager extends ConnectorContextAbstract {
 	private ScriptRunThread getNewScriptRunThread(String script_name,
 			Map<String, ? extends Object> objects) throws ServerException {
 		ScriptRunThread scriptRunThread = new ScriptRunThread(scriptEngine,
-				getScriptFile(script_name), objects, getReadOnlyMap());
+				getScriptFile(script_name), objects,
+				ConnectorManager.INSTANCE.getReadOnlyMap(),
+				ToolsManager.INSTANCE.getReadOnlyMap());
 		addScriptRunThread(script_name, scriptRunThread);
 		return scriptRunThread;
 	}
@@ -258,16 +246,6 @@ public class ScriptManager extends ConnectorContextAbstract {
 		} finally {
 			runsMapLock.r.unlock();
 		}
-	}
-
-	@Override
-	public String getContextId() {
-		return null;
-	}
-
-	@Override
-	public File getContextDirectory() {
-		return scriptDirectory;
 	}
 
 	/**

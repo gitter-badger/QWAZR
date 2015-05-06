@@ -28,7 +28,7 @@ public abstract class AbstractConnector {
 
 	public final String name = null;
 
-	public abstract void load(ConnectorContext context);
+	public abstract void load(String contextId);
 
-	public abstract void unload(ConnectorContext context);
+	public abstract void unload(String contextId);
 }

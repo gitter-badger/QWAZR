@@ -68,7 +68,6 @@
 	<modules>
 		<module>qwazr</module>
 		<module>qwazr-affinities</module>
-		<module>qwazr-analyzer</module>
 		<module>qwazr-cluster</module>
 		<module>qwazr-connectors</module>
 		<module>qwazr-crawlers</module>
@@ -78,6 +77,7 @@
 		<module>qwazr-native</module>
 		<module>qwazr-search</module>
 		<module>qwazr-store</module>
+		<module>qwazr-tools</module>
 		<module>qwazr-utils</module>
 		<module>qwazr-webapps</module>
 	</modules>

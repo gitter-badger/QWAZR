@@ -1,7 +1,7 @@
-QWAZR Analyzer
+QWAZR Tools
 ==============
 
-A set of text analyzer APIs for [QWAZR](https://www.qwazr.com).
+A set of text analyzer and converters APIs for [QWAZR](https://www.qwazr.com).
 
 QWAZR is a an application server dedicated to distributed projects.
 The server provides a set of JSON web services which manages distributed jobs and

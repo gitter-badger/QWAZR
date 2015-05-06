@@ -42,7 +42,7 @@ public class DatabaseConnector extends AbstractConnector {
 	private JDBCConnection connectionManager = null;
 
 	@Override
-	public void load(ConnectorContext context) {
+	public void load(String contextId) {
 		try {
 			connectionManager = new JDBCConnection();
 			if (!StringUtils.isEmpty(driver))
@@ -61,7 +61,7 @@ public class DatabaseConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(ConnectorContext context) {
+	public void unload(String contextId) {
 	}
 
 	public ConnectionManager getConnectionManager() {

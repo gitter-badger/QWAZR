@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.connectors;
+package com.qwazr.tools;
 
-import java.io.File;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.qwazr.tools.postagger.POSTaggerTool;
 
-import com.qwazr.connectors.ConnectorContextAbstract.ConnectorMap;
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
+@JsonSubTypes({ @Type(value = MarkdownTool.class),
+		@Type(value = POSTaggerTool.class) })
+public abstract class AbstractTool {
 
-public interface ConnectorContext {
+	public final String name = null;
 
-	String getContextId();
+	public abstract void load(String contextId);
 
-	File getContextDirectory();
-
-	/**
-	 * @return a readonly map
-	 */
-	ConnectorMap getReadOnlyMap();
+	public abstract void unload(String contextId);
 }

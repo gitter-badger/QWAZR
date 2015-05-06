@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.webapps;
+package com.qwazr.tools.postagger;
 
-import java.util.List;
-import java.util.Map;
+import java.util.LinkedHashSet;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class WebappConfigurationFile {
+@JsonInclude(Include.NON_EMPTY)
+public class POSFilter {
 
-	public Map<String, List<String>> controllers;
+	public final LinkedHashSet<String> any_of;
+	public final Integer min_size;
+	public final Integer max_distance;
 
+	public POSFilter() {
+		any_of = null;
+		min_size = null;
+		max_distance = null;
+	}
 }

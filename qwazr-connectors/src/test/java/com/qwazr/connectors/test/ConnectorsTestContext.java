@@ -20,11 +20,9 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.qwazr.connectors.ConnectorContextAbstract;
-import com.qwazr.connectors.ConnectorsConfigurationFile;
-import com.qwazr.utils.json.JsonMapper;
+import com.qwazr.connectors.ConnectorManager;
 
-public class ConnectorsTestContext extends ConnectorContextAbstract {
+public class ConnectorsTestContext {
 
 	private static ConnectorsTestContext testContext = null;
 
@@ -33,20 +31,9 @@ public class ConnectorsTestContext extends ConnectorContextAbstract {
 		if (testContext != null)
 			return testContext;
 		testContext = new ConnectorsTestContext();
-		File file = new File("src/test/resources/connectors.json");
-		ConnectorsConfigurationFile.load(testContext, JsonMapper.MAPPER
-				.readValue(file, ConnectorsConfigurationFile.class));
+		File file = new File("src/test/resources");
+		ConnectorManager.load(null, file, null);
 		return testContext;
-	}
-
-	@Override
-	public String getContextId() {
-		return "Test";
-	}
-
-	@Override
-	public File getContextDirectory() {
-		return null;
 	}
 
 }

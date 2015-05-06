@@ -13,23 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.analyzer.postagger;
+package com.qwazr.tools;
 
-import java.util.LinkedHashSet;
+import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@JsonInclude(Include.NON_EMPTY)
-public class POSFilter {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class ToolsConfiguration {
 
-	public final LinkedHashSet<String> any_of;
-	public final Integer min_size;
-	public final Integer max_distance;
+	public List<AbstractTool> tools;
 
-	public POSFilter() {
-		any_of = null;
-		min_size = null;
-		max_distance = null;
-	}
 }
