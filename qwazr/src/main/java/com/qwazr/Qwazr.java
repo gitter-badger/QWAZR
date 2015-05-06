@@ -129,10 +129,11 @@ public class Qwazr extends AbstractServer {
 
 		File currentDataDir = getCurrentDataDir();
 
-		ClusterServer.load(this, subDir(currentDataDir, "cluster"), null, null);
+		ClusterServer.load(getWebServicePublicAddress(),
+				subDir(currentDataDir, "cluster"), null);
 
-		ConnectorManager.load(this, currentDataDir, null);
-		ToolsManager.load(this, currentDataDir, null);
+		ConnectorManager.load(currentDataDir, null);
+		ToolsManager.load(currentDataDir, null);
 
 		if (ServiceEnum.extractor.isActive(serverConfiguration)) {
 			ExtractorServer.load(this, subDir(currentDataDir, "extractor"),
@@ -147,12 +148,12 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.scripts.isActive(serverConfiguration)) {
-			JobServer.loadScript(this);
+			JobServer.loadScript(currentDataDir);
 			services.add(ServiceEnum.scripts.name());
 		}
 
 		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
-			JobServer.loadScheduler(this,
+			JobServer.loadScheduler(currentDataDir,
 					serverConfiguration.getSchedulerMaxThreads());
 			services.add(ServiceEnum.schedulers.name());
 		}
@@ -163,7 +164,7 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.search.isActive(serverConfiguration)) {
-			SearchServer.loadIndexManager(this);
+			SearchServer.loadIndexManager(currentDataDir);
 			services.add(ServiceEnum.search.name());
 		}
 

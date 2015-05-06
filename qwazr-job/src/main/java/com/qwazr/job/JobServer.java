@@ -103,8 +103,7 @@ public class JobServer extends AbstractServer {
 	@Override
 	public void load() throws IOException {
 		File currentDataDir = getCurrentDataDir();
-		ClusterServer.load(getWebServicePublicAddress(), currentDataDir, null,
-				null);
+		ClusterServer.load(getWebServicePublicAddress(), currentDataDir, null);
 		ConnectorManager.load(currentDataDir, null);
 		ToolsManager.load(currentDataDir, null);
 		loadScript(currentDataDir);
