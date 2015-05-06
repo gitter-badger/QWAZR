@@ -70,7 +70,7 @@ public class StoreServer extends AbstractServer {
 	@Override
 	public void load() throws IOException {
 		File dataDir = getCurrentDataDir();
-		ClusterManager.load(this, dataDir, null);
+		ClusterManager.load(getWebServicePublicAddress(), dataDir, null);
 		load(this, dataDir);
 	}
 
