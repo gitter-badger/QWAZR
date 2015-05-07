@@ -97,6 +97,11 @@
 		</dependency>
 		<dependency>
 			<groupId>com.opensearchserver</groupId>
+			<artifactId>qwazr-store</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.opensearchserver</groupId>
 			<artifactId>qwazr-connectors</artifactId>
 			<version>1.0.0-SNAPSHOT</version>
 		</dependency>

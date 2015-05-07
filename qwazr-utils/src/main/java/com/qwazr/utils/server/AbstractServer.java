@@ -103,9 +103,14 @@ public abstract class AbstractServer {
 		public String mainJarPath;
 
 		/**
-		 * The default path for the data directory
+		 * The default name for the data directory
 		 */
-		public String defaultDataDirPath;
+		public String defaultDataDirName;
+
+		/**
+		 * The name of the optional sub directories
+		 */
+		public String[] subDirectoryNames;
 	}
 
 	/**
@@ -195,9 +200,9 @@ public abstract class AbstractServer {
 
 		File dataDir = null;
 		// Data directory option
-		if (serverDefinition.defaultDataDirPath != null) {
+		if (serverDefinition.defaultDataDirName != null) {
 			dataDir = new File(System.getProperty("user.home"),
-					serverDefinition.defaultDataDirPath);
+					serverDefinition.defaultDataDirName);
 			if (cmd.hasOption(DATADIR_OPTION.getOpt()))
 				dataDir = new File(cmd.getOptionValue(DATADIR_OPTION.getOpt()));
 			if (!dataDir.exists())
@@ -207,7 +212,17 @@ public abstract class AbstractServer {
 				throw new IOException(
 						"The data directory path is not a directory: "
 								+ dataDir);
+
+			if (serverDefinition.subDirectoryNames != null) {
+				for (String subDirName : serverDefinition.subDirectoryNames) {
+					File subDir = new File(dataDir, subDirName);
+					if (!subDir.exists())
+						subDir.mkdir();
+				}
+			}
+
 		}
+
 		currentDataDir = dataDir;
 
 		// TCP port and listening adresss options

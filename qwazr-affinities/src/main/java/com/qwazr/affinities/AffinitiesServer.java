@@ -30,11 +30,14 @@ import com.qwazr.utils.server.ServletApplication;
 
 public class AffinitiesServer extends AbstractServer {
 
+	private final static String SERVICE_NAME_AFFINITIES = "affinities";
+
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 	static {
 		serverDefinition.defaultWebApplicationTcpPort = 9092;
 		serverDefinition.mainJarPath = "qwazr-affinities.jar";
-		serverDefinition.defaultDataDirPath = "qwazr/affinities";
+		serverDefinition.defaultDataDirName = "qwazr";
+		serverDefinition.subDirectoryNames = new String[] { SERVICE_NAME_AFFINITIES };
 	}
 
 	private AffinitiesServer() {

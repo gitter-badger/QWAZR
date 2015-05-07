@@ -66,7 +66,6 @@ public class ScriptManager {
 		}
 	}
 
-	private final static String SCRIPT_DIRNAME = "scripts";
 	private final File scriptDirectory;
 	private final ScriptEngine scriptEngine;
 
@@ -80,7 +79,7 @@ public class ScriptManager {
 		// Load Nashorn
 		ScriptEngineManager manager = new ScriptEngineManager();
 		scriptEngine = manager.getEngineByName("nashorn");
-		scriptDirectory = new File(rootDirectory, SCRIPT_DIRNAME);
+		scriptDirectory = new File(rootDirectory, JobServer.SERVICE_NAME_SCRIPT);
 		if (!scriptDirectory.exists())
 			scriptDirectory.mkdir();
 
