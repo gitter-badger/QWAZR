@@ -15,6 +15,7 @@
  */
 package com.qwazr.graph.test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import com.google.common.io.Files;
 import com.qwarz.graph.GraphServer;
 import com.qwarz.graph.model.GraphBase;
 import com.qwarz.graph.model.GraphBase.PropertyTypeEnum;
@@ -53,8 +55,8 @@ public class FullTest {
 
 	public static final String BASE_URL = "http://localhost:9091/graph";
 	public static final String TEST_BASE = "graph-test";
-	public static final int PRODUCT_NUMBER = 100;
-	public static final int VISIT_NUMBER = 200;
+	public static final int PRODUCT_NUMBER = 1000;
+	public static final int VISIT_NUMBER = 1000;
 
 	public static final ContentType APPLICATION_JSON_UTF8 = ContentType.create(
 			"application/json", Consts.UTF_8);
@@ -64,7 +66,8 @@ public class FullTest {
 		if (started)
 			return;
 		// start the server
-		GraphServer.main(null);
+		File dataDir = Files.createTempDir();
+		GraphServer.main(new String[] { "-d", dataDir.getAbsolutePath() });
 		started = true;
 	}
 

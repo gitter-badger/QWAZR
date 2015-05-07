@@ -20,6 +20,8 @@ import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.qwazr.store.StoreServer;
+
 public class StoreManager {
 
 	public static volatile StoreManager INSTANCE = null;
@@ -29,7 +31,8 @@ public class StoreManager {
 	public static void load(File directory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new StoreManager(directory);
+		INSTANCE = new StoreManager(new File(directory,
+				StoreServer.SERVICE_NAME_STORE));
 	}
 
 	private StoreManager(File rootDir) throws IOException {

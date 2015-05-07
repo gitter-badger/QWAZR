@@ -43,6 +43,8 @@ import com.qwazr.job.scheduler.SchedulerServiceImpl;
 import com.qwazr.job.script.ScriptServiceImpl;
 import com.qwazr.search.SearchServer;
 import com.qwazr.search.index.IndexServiceImpl;
+import com.qwazr.store.StoreServer;
+import com.qwazr.store.store.StoreService;
 import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
@@ -57,7 +59,7 @@ public class Qwazr extends AbstractServer {
 		serverDefinition.defaultWebApplicationTcpPort = 9090;
 		serverDefinition.defaultWebServiceTcpPort = 9091;
 		serverDefinition.mainJarPath = "qwazr.jar";
-		serverDefinition.defaultDataDirPath = "qwazr";
+		serverDefinition.defaultDataDirName = "qwazr";
 	}
 
 	private final static String WEBAPPS_CONTEXT_PATH = "/";
@@ -90,6 +92,8 @@ public class Qwazr extends AbstractServer {
 				classes.add(IndexServiceImpl.class);
 			if (ServiceEnum.graph.isActive(serverConfiguration))
 				classes.add(GraphServiceImpl.class);
+			if (ServiceEnum.store.isActive(serverConfiguration))
+				classes.add(StoreService.class);
 			return classes;
 		}
 	}
@@ -171,6 +175,11 @@ public class Qwazr extends AbstractServer {
 		if (ServiceEnum.graph.isActive(serverConfiguration)) {
 			GraphServer.load(subDir(currentDataDir, "graph"));
 			services.add(ServiceEnum.graph.name());
+		}
+
+		if (ServiceEnum.store.isActive(serverConfiguration)) {
+			StoreServer.load(subDir(currentDataDir, "store"));
+			services.add(ServiceEnum.store.name());
 		}
 
 	}

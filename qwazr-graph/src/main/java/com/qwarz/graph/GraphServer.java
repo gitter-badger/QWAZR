@@ -36,14 +36,16 @@ import com.qwazr.utils.server.ServletApplication;
 
 public class GraphServer extends AbstractServer {
 
+	public final static String SERVICE_NAME_GRAPH = "graph";
+
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 	static {
 		serverDefinition.defaultWebApplicationTcpPort = 9093;
 		serverDefinition.mainJarPath = "qwazr-graph.jar";
-		serverDefinition.defaultDataDirPath = "qwazr/graph";
-	}
+		serverDefinition.defaultDataDirName = "qwazr";
+		serverDefinition.subDirectoryNames = new String[] { SERVICE_NAME_GRAPH };
 
-	public final static String SERVICE_NAME_GRAPH = "graph";
+	}
 
 	private GraphServer() {
 		super(serverDefinition);
@@ -77,7 +79,7 @@ public class GraphServer extends AbstractServer {
 
 	public static void load(File dataDir) throws IOException {
 		try {
-			GraphManager.load(dataDir);
+			GraphManager.load(new File(dataDir, SERVICE_NAME_GRAPH));
 		} catch (URISyntaxException | ServerException e) {
 			throw new IOException(e);
 		}
@@ -85,9 +87,9 @@ public class GraphServer extends AbstractServer {
 
 	@Override
 	public void load() throws IOException {
-		File currentDataDir = getCurrentDataDir();
-		ClusterServer.load(getWebServicePublicAddress(), currentDataDir, null);
-		load(currentDataDir);
+		File dataDir = getCurrentDataDir();
+		ClusterServer.load(getWebServicePublicAddress(), dataDir, null);
+		load(dataDir);
 	}
 
 	public static void main(String[] args) throws IOException, ParseException,

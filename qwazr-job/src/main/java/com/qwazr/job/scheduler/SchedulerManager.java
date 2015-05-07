@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.job.JobServer;
 import com.qwazr.job.script.ScriptManager;
 import com.qwazr.job.script.ScriptRunStatus;
 import com.qwazr.utils.json.JsonMapper;
@@ -60,13 +61,13 @@ public class SchedulerManager {
 		INSTANCE = new SchedulerManager(directory, maxThreads);
 	}
 
-	private final static String SCHEDULERS_DIRNAME = "schedulers";
 	private final File schedulersDirectory;
 	private final Scheduler globalScheduler;
 
 	private SchedulerManager(File rootDirectory, int maxThreads)
 			throws IOException, SchedulerException, ServerException {
-		schedulersDirectory = new File(rootDirectory, SCHEDULERS_DIRNAME);
+		schedulersDirectory = new File(rootDirectory,
+				JobServer.SERVICE_NAME_SCHEDULER);
 		if (!schedulersDirectory.exists())
 			schedulersDirectory.mkdir();
 

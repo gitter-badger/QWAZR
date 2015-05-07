@@ -43,7 +43,9 @@ public class ServerConfiguration {
 
 		search,
 
-		graph;
+		graph,
+
+		store;
 
 		/**
 		 * @param serverConfiguration

@@ -35,11 +35,14 @@ import com.qwazr.utils.server.ServletApplication;
 
 public class StoreServer extends AbstractServer {
 
+	public final static String SERVICE_NAME_STORE = "store";
+
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 	static {
 		serverDefinition.defaultWebApplicationTcpPort = 9092;
 		serverDefinition.mainJarPath = "qwazr-store.jar";
-		serverDefinition.defaultDataDirPath = "qwazr/store";
+		serverDefinition.defaultDataDirName = "qwazr";
+		serverDefinition.subDirectoryNames = new String[] { SERVICE_NAME_STORE };
 	}
 
 	private StoreServer() {
@@ -62,21 +65,21 @@ public class StoreServer extends AbstractServer {
 	public void commandLine(CommandLine cmd) throws IOException, ParseException {
 	}
 
-	public static void load(AbstractServer server, File storeDir)
-			throws IOException {
-		StoreManager.load(storeDir);
+	public static void load(File dataDir) throws IOException {
+		StoreManager.load(dataDir);
 	}
 
 	@Override
 	public void load() throws IOException {
 		File dataDir = getCurrentDataDir();
 		ClusterManager.load(getWebServicePublicAddress(), dataDir);
-		load(this, dataDir);
+		load(dataDir);
 	}
 
 	public static void main(String[] args) throws IOException, ParseException,
 			ServletException {
 		new StoreServer().start(args);
+		ClusterManager.INSTANCE.registerMe(SERVICE_NAME_STORE);
 	}
 
 	@Override
