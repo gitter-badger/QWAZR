@@ -16,7 +16,6 @@
 package com.qwazr.job.script;
 
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -40,10 +39,10 @@ public class ScriptMultiClient extends
 	private static final Logger logger = LoggerFactory
 			.getLogger(ScriptMultiClient.class);
 
-	public ScriptMultiClient(Collection<String> urls, int msTimeOut)
+	public ScriptMultiClient(String[] urls, int msTimeOut)
 			throws URISyntaxException {
 		// TODO Pass executor
-		super(null, new ScriptSingleClient[urls.size()], urls, msTimeOut);
+		super(null, new ScriptSingleClient[urls.length], urls, msTimeOut);
 	}
 
 	@Override

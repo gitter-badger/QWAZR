@@ -47,7 +47,7 @@ public class ServicesProvider extends AbstractConnector {
 	public WebCrawlerMultiClient getNewWebCrawler() throws URISyntaxException {
 		return new WebCrawlerMultiClient(ClusterManager.INSTANCE
 				.getClusterClient().getActiveNodes(
-						WebCrawlerServer.SERVICE_NAME), 60000);
+						WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), 60000);
 	}
 
 	public ScriptMultiClient getNewScriptClient() throws URISyntaxException {

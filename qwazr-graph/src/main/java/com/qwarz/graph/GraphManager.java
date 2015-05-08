@@ -18,13 +18,10 @@ package com.qwarz.graph;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwarz.graph.model.GraphBase;
 import com.qwarz.graph.process.GraphProcess;
 import com.qwazr.cluster.client.ClusterMultiClient;
@@ -49,8 +46,7 @@ public class GraphManager extends DirectoryJsonManager<GraphBase> {
 			GraphProcess.load(name, INSTANCE.get(name));
 	}
 
-	private GraphManager(File directory) throws JsonGenerationException,
-			JsonMappingException, JsonParseException, IOException {
+	private GraphManager(File directory) throws ServerException, IOException {
 		super(directory, GraphBase.class);
 		this.directory = directory;
 		executor = Executors.newFixedThreadPool(8);
@@ -62,16 +58,34 @@ public class GraphManager extends DirectoryJsonManager<GraphBase> {
 		});
 	}
 
-	GraphMultiClient getMultiClient(int msTimeOut, boolean removeMe)
-			throws URISyntaxException {
+	@Override
+	public Set<String> nameSet() {
+		return super.nameSet();
+	}
+
+	@Override
+	public GraphBase get(String name) {
+		return super.get(name);
+	}
+
+	@Override
+	public void set(String name, GraphBase affinity) throws IOException,
+			ServerException {
+		super.set(name, affinity);
+	}
+
+	@Override
+	public GraphBase delete(String name) throws ServerException {
+		return super.delete(name);
+	}
+
+	GraphMultiClient getMultiClient(int msTimeOut) throws URISyntaxException {
 		ClusterMultiClient clusterClient = ClusterManager.INSTANCE
 				.getClusterClient();
 		if (clusterClient == null)
 			return null;
-		HashSet<String> nodes = new HashSet<String>(
-				clusterClient.getActiveNodes(GraphServer.SERVICE_NAME_GRAPH));
-		if (removeMe)
-			nodes.remove(ClusterManager.INSTANCE.myAddress);
-		return new GraphMultiClient(executor, nodes, msTimeOut);
+		return new GraphMultiClient(executor,
+				clusterClient.getActiveNodes(GraphServer.SERVICE_NAME_GRAPH),
+				msTimeOut);
 	}
 }

@@ -36,7 +36,7 @@ public abstract class JsonMultiClientAbstract<T extends JsonClientAbstract>
 	protected final ExecutorService executor;
 
 	protected JsonMultiClientAbstract(ExecutorService executor,
-			T[] clientArray, Collection<String> urls, int msTimeOut)
+			T[] clientArray, String[] urls, int msTimeOut)
 			throws URISyntaxException {
 		this.executor = executor;
 		clientsArray = clientArray;

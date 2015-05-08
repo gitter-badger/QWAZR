@@ -24,7 +24,6 @@ import java.util.TreeMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.server.ServerException;
 
 public class ScriptServiceImpl implements ScriptServiceInterface {
@@ -33,17 +32,13 @@ public class ScriptServiceImpl implements ScriptServiceInterface {
 	public TreeMap<String, ScriptFileStatus> getScripts(Boolean local) {
 
 		// Read the file in the local node
-		TreeMap<String, ScriptFileStatus> localFiles = ScriptManager.INSTANCE
-				.getScripts();
 		if (local != null && local)
-			return localFiles;
+			return ScriptManager.INSTANCE.getScripts();
 
 		// Read the files present in the remote nodes
 		try {
 			TreeMap<String, ScriptFileStatus> globalFiles = new TreeMap<String, ScriptFileStatus>();
-			ScriptMultiClient client = ScriptManager.getClient(true);
-			ScriptFileStatus.merge(globalFiles,
-					ClusterManager.INSTANCE.myAddress, localFiles);
+			ScriptMultiClient client = ScriptManager.getClient();
 			ScriptFileStatus.merge(globalFiles, null, client.getScripts(false));
 
 			ScriptManager.INSTANCE.repair(client, globalFiles);
@@ -70,8 +65,8 @@ public class ScriptServiceImpl implements ScriptServiceInterface {
 				ScriptManager.INSTANCE.deleteScript(script_name);
 				return Response.ok().build();
 			} else
-				return ScriptManager.getClient(false).deleteScript(script_name,
-						true);
+				return ScriptManager.getClient()
+						.deleteScript(script_name, true);
 		} catch (ServerException | URISyntaxException e) {
 			throw ServerException.getTextException(e);
 		}
@@ -81,11 +76,12 @@ public class ScriptServiceImpl implements ScriptServiceInterface {
 	public Response setScript(String script_name, Long last_modified,
 			Boolean local, String script) {
 		try {
-			last_modified = ScriptManager.INSTANCE.setScript(script_name,
-					last_modified, script);
-			if (local == null || !local)
-				ScriptManager.getClient(true).setScript(script_name,
-						last_modified, false, script);
+			if (local != null && local)
+				last_modified = ScriptManager.INSTANCE.setScript(script_name,
+						last_modified, script);
+			else
+				ScriptManager.getClient().setScript(script_name, last_modified,
+						false, script);
 			return Response.ok().build();
 		} catch (IOException | URISyntaxException e) {
 			throw ServerException.getTextException(e);
@@ -147,18 +143,16 @@ public class ScriptServiceImpl implements ScriptServiceInterface {
 	public Map<String, ScriptRunStatus> getRunsStatus(String script_name,
 			Boolean local) {
 		try {
-			Map<String, ScriptRunStatus> localRunStatusMap = ScriptManager.INSTANCE
-					.getRunsStatus(script_name);
 			if (local != null && local) {
+				Map<String, ScriptRunStatus> localRunStatusMap = ScriptManager.INSTANCE
+						.getRunsStatus(script_name);
 				if (localRunStatusMap == null)
 					localRunStatusMap = Collections.emptyMap();
 				return localRunStatusMap;
 			}
 			TreeMap<String, ScriptRunStatus> globalRunStatusMap = new TreeMap<String, ScriptRunStatus>();
-			if (localRunStatusMap != null)
-				globalRunStatusMap.putAll(localRunStatusMap);
-			globalRunStatusMap.putAll(ScriptManager.getClient(true)
-					.getRunsStatus(script_name, false));
+			globalRunStatusMap.putAll(ScriptManager.getClient().getRunsStatus(
+					script_name, false));
 			return globalRunStatusMap;
 		} catch (URISyntaxException e) {
 			throw ServerException.getJsonException(e);

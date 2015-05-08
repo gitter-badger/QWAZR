@@ -15,12 +15,23 @@
  */
 package com.qwazr.store;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonInclude(Include.NON_EMPTY)
 public class StoreSchemaDefinition {
 
-	public String[] nodes;
+	public Integer replication_factor;
 
+	public Integer distribution_factor;
+
+	public List<String[]> nodes;
+
+	public StoreSchemaDefinition() {
+		nodes = null;
+		replication_factor = null;
+		distribution_factor = null;
+	}
 }

@@ -15,13 +15,19 @@
  */
 package com.qwazr.store;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.qwazr.utils.server.ServerException;
 
 @Path("/store")
-public class StoreNameService implements StoreNameServiceInterface {
+public class StoreNameService implements StoreServiceInterface {
 
 	@Override
 	public Response getFile(String schemaName, String path) {
@@ -33,6 +39,16 @@ public class StoreNameService implements StoreNameServiceInterface {
 	public Response headFile(String schemaName, String path) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Response getFile(String schemaName) {
+		return getFile(schemaName, StringUtils.EMPTY);
+	}
+
+	@Override
+	public Response headFile(String schemaName) {
+		return headFile(schemaName, StringUtils.EMPTY);
 	}
 
 	@Override
@@ -56,21 +72,40 @@ public class StoreNameService implements StoreNameServiceInterface {
 
 	@Override
 	public StoreSchemaDefinition getSchema(String schemaName) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			// Todo multi server
+			StoreSchemaDefinition schemaDefinition = StoreNameManager.INSTANCE
+					.getSchema(schemaName);
+			if (schemaDefinition == null)
+				throw new ServerException(Status.NOT_FOUND,
+						"Schema not found: " + schemaName);
+			return schemaDefinition;
+		} catch (ServerException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
-	public StoreSchemaDefinition postSchema(String schemaName,
-			StoreSchemaDefinition schemaDef) {
-		// TODO Auto-generated method stub
-		return null;
+	public StoreSchemaDefinition createSchema(String schemaName,
+			StoreSchemaDefinition schemaDefinition) {
+		try {
+			StoreNameManager.checkSchemaDefinition(schemaDefinition);
+			StoreNameManager.INSTANCE
+					.createSchema(schemaName, schemaDefinition);
+			return schemaDefinition;
+		} catch (IOException | ServerException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
 	public StoreSchemaDefinition deleteSchema(String schemaName) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			// TODO multi servers
+			return StoreNameManager.INSTANCE.deleteSchema(schemaName);
+		} catch (ServerException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 }

@@ -51,20 +51,17 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	public Set<String> list(Boolean local) {
 
 		// Read the base in the local node
-		TreeSet<String> globalSet = new TreeSet<String>();
-		Set<String> set = GraphManager.INSTANCE.nameSet();
-		if (set != null)
-			globalSet.addAll(set);
 		if (local != null && local)
-			return globalSet;
+			return GraphManager.INSTANCE.nameSet();
 
 		// Read the bases present in the remote nodes
 		try {
+			TreeSet<String> globalSet = new TreeSet<String>();
 			GraphServiceInterface client = GraphManager.INSTANCE
-					.getMultiClient(60000, true);
+					.getMultiClient(60000);
 			if (client == null)
 				return globalSet;
-			set = client.list(false);
+			Set<String> set = client.list(false);
 			if (set != null)
 				globalSet.addAll(set);
 			return globalSet;
@@ -76,15 +73,18 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	@Override
 	public GraphBase createUpdateBase(@PathParam("db_name") String db_name,
 			GraphBase base, Boolean local) {
+
 		try {
-			GraphManager.INSTANCE.set(db_name, base);
-			GraphProcess.createDataIndex(db_name, base);
-			if (local == null || !local) {
-				GraphMultiClient client = GraphManager.INSTANCE.getMultiClient(
-						60000, true);
-				if (client != null)
-					client.createUpdateBase(db_name, base, false);
+			if (local != null && local) {
+				GraphManager.INSTANCE.set(db_name, base);
+				GraphProcess.createDataIndex(db_name, base);
+				return base;
 			}
+
+			GraphMultiClient client = GraphManager.INSTANCE
+					.getMultiClient(60000);
+			if (client != null)
+				client.createUpdateBase(db_name, base, false);
 			return base;
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
@@ -106,8 +106,8 @@ public class GraphServiceImpl implements GraphServiceInterface {
 			if (local != null && local)
 				return getBaseOrNotFound(db_name);
 			else {
-				GraphMultiClient client = GraphManager.INSTANCE.getMultiClient(
-						60000, false);
+				GraphMultiClient client = GraphManager.INSTANCE
+						.getMultiClient(60000);
 				if (client != null)
 					return getBase(db_name, false);
 				return getBaseOrNotFound(db_name);
@@ -132,8 +132,8 @@ public class GraphServiceImpl implements GraphServiceInterface {
 			if (local != null && local)
 				return deleteBaseLocal(db_name);
 			else {
-				GraphMultiClient client = GraphManager.INSTANCE.getMultiClient(
-						60000, false);
+				GraphMultiClient client = GraphManager.INSTANCE
+						.getMultiClient(60000);
 				if (client != null)
 					return client.deleteBase(db_name, false);
 				return deleteBaseLocal(db_name);

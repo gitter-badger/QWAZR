@@ -24,34 +24,64 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Response;
 
-public interface StoreDataServiceInterface {
+import com.qwazr.utils.server.RestApplication;
+
+public interface StoreServiceInterface {
 
 	@GET
-	@Path("/{shema_name}/{path : .+}")
+	@Path("/{schema_name}/{path : .+}")
 	public Response getFile(@PathParam("schema_name") String schemaName,
 			@PathParam("path") String path);
 
+	@GET
+	@Path("/{schema_name}")
+	public Response getFile(@PathParam("schema_name") String schemaName);
+
 	@HEAD
-	@Path("/{shema_name}/{path : .+}")
+	@Path("/{schema_name}/{path : .+}")
 	public Response headFile(@PathParam("schema_name") String schemaName,
 			@PathParam("path") String path);
 
+	@HEAD
+	@Path("/{schema_name}")
+	public Response headFile(@PathParam("schema_name") String schemaName);
+
 	@PUT
-	@Path("/{shema_name}/{path : .+}")
+	@Path("/{schema_name}/{path : .+}")
 	public Response putFile(@PathParam("schema_name") String schemaName,
 			@PathParam("path") String path, InputStream inputStream);
 
 	@POST
-	@Path("/{shema_name}/{path : .+}")
+	@Path("/{schema_name}/{path : .+}")
 	public Response createDirectory(
 			@PathParam("schema_name") String schemaName,
 			@PathParam("path") String path);
 
 	@DELETE
-	@Path("/{shema_name}/{path : .+}")
+	@Path("/{schema_name}/{path : .+}")
 	public Response deleteFile(@PathParam("schema_name") String schemaName,
 			@PathParam("path") String path);
+
+	@GET
+	@Path("/{schema_name}")
+	@Produces(RestApplication.APPLICATION_JSON_UTF8)
+	public StoreSchemaDefinition getSchema(
+			@PathParam("schema_name") String schemaName);
+
+	@POST
+	@Path("/{schema_name}")
+	@Produces(RestApplication.APPLICATION_JSON_UTF8)
+	public StoreSchemaDefinition createSchema(
+			@PathParam("schema_name") String schemaName,
+			StoreSchemaDefinition schemaDef);
+
+	@DELETE
+	@Path("/{schema_name}")
+	@Produces(RestApplication.APPLICATION_JSON_UTF8)
+	public StoreSchemaDefinition deleteSchema(
+			@PathParam("schema_name") String schemaName);
 
 }

@@ -27,12 +27,13 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.qwazr.utils.server.ServerException;
 
 @Path("/store_local")
 public class StoreDataService extends AbstractService implements
-		StoreDataServiceInterface {
+		StoreServiceInterface {
 
 	private File getExistingFile(String schemaName, String path)
 			throws ServerException {
@@ -61,6 +62,11 @@ public class StoreDataService extends AbstractService implements
 	}
 
 	@Override
+	public Response getFile(String schemaName) {
+		return getFile(schemaName, StringUtils.EMPTY);
+	}
+
+	@Override
 	public Response headFile(String schemaName, String path) {
 		try {
 			File file = getExistingFile(schemaName, path);
@@ -69,6 +75,11 @@ public class StoreDataService extends AbstractService implements
 		} catch (ServerException e) {
 			return ServerException.getTextException(e).getResponse();
 		}
+	}
+
+	@Override
+	public Response headFile(String schemaName) {
+		return headFile(schemaName, StringUtils.EMPTY);
 	}
 
 	@Override
@@ -147,6 +158,28 @@ public class StoreDataService extends AbstractService implements
 			return responseText(Status.OK, "File deleted: " + path).build();
 		} catch (ServerException e) {
 			return ServerException.getTextException(e).getResponse();
+		}
+	}
+
+	@Override
+	public StoreSchemaDefinition getSchema(String schemaName) {
+		throw new ServerException(Status.NOT_IMPLEMENTED).getJsonException();
+	}
+
+	@Override
+	public StoreSchemaDefinition createSchema(String schemaName,
+			StoreSchemaDefinition schemaDefinition) {
+		StoreDataManager.INSTANCE.createSchema(schemaName);
+		return null;
+	}
+
+	@Override
+	public StoreSchemaDefinition deleteSchema(String schemaName) {
+		try {
+			StoreDataManager.INSTANCE.deleteSchema(schemaName);
+			return null;
+		} catch (IOException e) {
+			throw new ServerException(e).getJsonException();
 		}
 	}
 }

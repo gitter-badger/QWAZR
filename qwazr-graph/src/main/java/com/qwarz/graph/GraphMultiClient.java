@@ -18,7 +18,6 @@ package com.qwarz.graph;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
@@ -49,9 +48,9 @@ public class GraphMultiClient extends
 	private static final Logger logger = LoggerFactory
 			.getLogger(GraphMultiClient.class);
 
-	GraphMultiClient(ExecutorService executor, Collection<String> urls,
-			int msTimeOut) throws URISyntaxException {
-		super(executor, new GraphSingleClient[urls.size()], urls, msTimeOut);
+	GraphMultiClient(ExecutorService executor, String[] urls, int msTimeOut)
+			throws URISyntaxException {
+		super(executor, new GraphSingleClient[urls.length], urls, msTimeOut);
 	}
 
 	@Override
