@@ -22,7 +22,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-public class AbstractService {
+public abstract class AbstractService {
 
 	protected final static String APPLICATION_JSON_UTF8 = "application/json;charset=UTF-8";
 	protected final static String TEXT_PLAIN_UTF8 = "text/plain;charset=UTF-8";

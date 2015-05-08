@@ -26,6 +26,8 @@ import javax.ws.rs.ApplicationPath;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.qwarz.graph.GraphServer;
 import com.qwarz.graph.GraphServiceImpl;
@@ -43,8 +45,9 @@ import com.qwazr.job.scheduler.SchedulerServiceImpl;
 import com.qwazr.job.script.ScriptServiceImpl;
 import com.qwazr.search.SearchServer;
 import com.qwazr.search.index.IndexServiceImpl;
+import com.qwazr.store.StoreDataService;
+import com.qwazr.store.StoreNameService;
 import com.qwazr.store.StoreServer;
-import com.qwazr.store.store.StoreService;
 import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
@@ -53,6 +56,8 @@ import com.qwazr.webapps.WebappServer;
 import com.qwazr.webapps.WebappServer.WebappApplication;
 
 public class Qwazr extends AbstractServer {
+
+	private static final Logger logger = LoggerFactory.getLogger(Qwazr.class);
 
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 	static {
@@ -92,21 +97,13 @@ public class Qwazr extends AbstractServer {
 				classes.add(IndexServiceImpl.class);
 			if (ServiceEnum.graph.isActive(serverConfiguration))
 				classes.add(GraphServiceImpl.class);
-			if (ServiceEnum.store.isActive(serverConfiguration))
-				classes.add(StoreService.class);
+			if (ServiceEnum.store.isActive(serverConfiguration)) {
+				classes.add(StoreDataService.class);
+				if (ClusterManager.INSTANCE.isMaster())
+					classes.add(StoreNameService.class);
+			}
 			return classes;
 		}
-	}
-
-	private File subDir(File dataDir, String name) throws IOException {
-		File dir = new File(dataDir, name);
-		if (!dir.exists())
-			dir.mkdir();
-		if (!dir.isDirectory())
-			throw new IOException(
-					"The configuration directory does not exist or cannot be created: "
-							+ dir.getName());
-		return dir;
 	}
 
 	@Override
@@ -121,11 +118,15 @@ public class Qwazr extends AbstractServer {
 		File serverConfigurationFile = new File(getCurrentDataDir(),
 				SERVER_YAML_NAME);
 		if (serverConfigurationFile.exists()
-				&& serverConfigurationFile.isFile())
+				&& serverConfigurationFile.isFile()) {
+			logger.info("Load server configuration file: "
+					+ serverConfigurationFile.getAbsolutePath());
 			serverConfiguration = ServerConfiguration
 					.getNewInstance(serverConfigurationFile);
-
-		serverConfiguration = ServerConfiguration.getDefaultConfiguration();
+		} else {
+			logger.info("Load default server configuration");
+			serverConfiguration = ServerConfiguration.getDefaultConfiguration();
+		}
 	}
 
 	@Override
@@ -133,22 +134,19 @@ public class Qwazr extends AbstractServer {
 
 		File currentDataDir = getCurrentDataDir();
 
-		ClusterServer.load(getWebServicePublicAddress(),
-				subDir(currentDataDir, "cluster"), null);
+		ClusterServer.load(getWebServicePublicAddress(), currentDataDir, null);
 
 		ConnectorManager.load(currentDataDir, null);
 		ToolsManager.load(currentDataDir, null);
 
 		if (ServiceEnum.extractor.isActive(serverConfiguration)) {
-			ExtractorServer.load(this, subDir(currentDataDir, "extractor"),
-					null);
+			ExtractorServer.loadParserManager();
 			services.add(ServiceEnum.extractor.name());
 		}
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
-			WebappServer.load(WEBAPPS_CONTEXT_PATH, null, 1,
-					subDir(currentDataDir, "webapps"));
-			services.add(ServiceEnum.extractor.name());
+			WebappServer.load(WEBAPPS_CONTEXT_PATH, null, 1, currentDataDir);
+			services.add(ServiceEnum.webapps.name());
 		}
 
 		if (ServiceEnum.scripts.isActive(serverConfiguration)) {
@@ -173,12 +171,12 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.graph.isActive(serverConfiguration)) {
-			GraphServer.load(subDir(currentDataDir, "graph"));
+			GraphServer.load(currentDataDir);
 			services.add(ServiceEnum.graph.name());
 		}
 
 		if (ServiceEnum.store.isActive(serverConfiguration)) {
-			StoreServer.load(subDir(currentDataDir, "store"));
+			StoreServer.load(currentDataDir);
 			services.add(ServiceEnum.store.name());
 		}
 

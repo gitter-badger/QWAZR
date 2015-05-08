@@ -24,6 +24,9 @@ import javax.ws.rs.ApplicationPath;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 
+import com.qwazr.cluster.ClusterServer;
+import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServletApplication;
@@ -37,7 +40,6 @@ public class AffinitiesServer extends AbstractServer {
 		serverDefinition.defaultWebApplicationTcpPort = 9092;
 		serverDefinition.mainJarPath = "qwazr-affinities.jar";
 		serverDefinition.defaultDataDirName = "qwazr";
-		serverDefinition.subDirectoryNames = new String[] { SERVICE_NAME_AFFINITIES };
 	}
 
 	private AffinitiesServer() {
@@ -51,6 +53,7 @@ public class AffinitiesServer extends AbstractServer {
 		public Set<Class<?>> getClasses() {
 			Set<Class<?>> classes = super.getClasses();
 			classes.add(AffinitiesServiceImpl.class);
+			classes.add(ClusterServiceImpl.class);
 			return classes;
 		}
 	}
@@ -61,6 +64,8 @@ public class AffinitiesServer extends AbstractServer {
 
 	@Override
 	public void load() throws IOException {
+		ClusterServer.load(getWebServicePublicAddress(), getCurrentDataDir(),
+				null);
 		AffinityManager.load(getCurrentDataDir());
 	}
 
@@ -77,6 +82,7 @@ public class AffinitiesServer extends AbstractServer {
 	public static void main(String[] args) throws IOException, ParseException,
 			ServletException {
 		new AffinitiesServer().start(args);
+		ClusterManager.INSTANCE.registerMe(SERVICE_NAME_AFFINITIES);
 	}
 
 }

@@ -14,6 +14,7 @@ services:
 - webapps
 - graph
 - search
+- store
 
 #
 # The maximum number of threads used by the scheduler service

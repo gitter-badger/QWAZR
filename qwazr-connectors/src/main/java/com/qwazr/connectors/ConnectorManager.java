@@ -53,7 +53,7 @@ public class ConnectorManager {
 		if (!connectorFile.isFile())
 			return;
 		logger.info("Loading connector configuration file: "
-				+ rootDirectory.getPath());
+				+ connectorFile.getAbsolutePath());
 		ConnectorsConfiguration configuration = JsonMapper.MAPPER.readValue(
 				connectorFile, ConnectorsConfiguration.class);
 		if (configuration.connectors == null)

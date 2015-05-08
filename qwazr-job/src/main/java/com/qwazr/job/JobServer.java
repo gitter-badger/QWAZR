@@ -52,8 +52,6 @@ public class JobServer extends AbstractServer {
 		serverDefinition.defaultWebApplicationTcpPort = 9098;
 		serverDefinition.mainJarPath = "qwazr-job.jar";
 		serverDefinition.defaultDataDirName = "qwazr";
-		serverDefinition.subDirectoryNames = new String[] {
-				SERVICE_NAME_SCHEDULER, SERVICE_NAME_SCRIPT };
 	}
 
 	public final static Option THREADS_OPTION = new Option("t", "maxthreads",
