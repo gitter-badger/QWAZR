@@ -25,7 +25,6 @@ import io.undertow.servlet.api.DeploymentManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 
@@ -38,11 +37,16 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.plugins.server.undertow.UndertowJaxrsServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Generic OpenSearchServer REST server
  */
 public abstract class AbstractServer {
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(AbstractServer.class);
 
 	/**
 	 * Standard help option
@@ -85,7 +89,7 @@ public abstract class AbstractServer {
 		/**
 		 * The default hostname. Could be 0.0.0.0 or localhost
 		 */
-		public String defaultHostname = "0.0.0.0";
+		public String defaultHostname = "localhost";
 
 		/**
 		 * The default TCP listening port for the Web application (servlet)
@@ -107,10 +111,6 @@ public abstract class AbstractServer {
 		 */
 		public String defaultDataDirName;
 
-		/**
-		 * The name of the optional sub directories
-		 */
-		public String[] subDirectoryNames;
 	}
 
 	/**
@@ -184,7 +184,7 @@ public abstract class AbstractServer {
 	 */
 	final public void start(String[] args) throws IOException, ParseException,
 			ServletException {
-		Logger.getLogger("").setLevel(Level.WARNING);
+		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 		Options options = new Options();
 		defineOptions(options);
 		CommandLineParser parser = new GnuParser();
@@ -212,14 +212,6 @@ public abstract class AbstractServer {
 				throw new IOException(
 						"The data directory path is not a directory: "
 								+ dataDir);
-
-			if (serverDefinition.subDirectoryNames != null) {
-				for (String subDirName : serverDefinition.subDirectoryNames) {
-					File subDir = new File(dataDir, subDirName);
-					if (!subDir.exists())
-						subDir.mkdir();
-				}
-			}
 
 		}
 
@@ -259,6 +251,8 @@ public abstract class AbstractServer {
 			if (StringUtils.isEmpty(prefixPath))
 				prefixPath = "/";
 			pathHandler.addPrefixPath(prefixPath, manager.start());
+			logger.info("Start the WEB server " + currentListenAddress + ":"
+					+ servletPort);
 			servletBuilder = Undertow.builder()
 					.addHttpListener(servletPort, currentListenAddress)
 					.setHandler(pathHandler);
@@ -269,6 +263,8 @@ public abstract class AbstractServer {
 		RestApplication restApplication = getRestApplication();
 		if (restApplication != null) {
 			restPort = webServiceTcpPort;
+			logger.info("Start the REST server " + currentListenAddress + ":"
+					+ restPort);
 			restBuilder = Undertow.builder().addHttpListener(restPort,
 					currentListenAddress);
 		}

@@ -53,7 +53,7 @@ public class ToolsManager {
 		if (!toolsFile.isFile())
 			return;
 		logger.info("Loading tools configuration file: "
-				+ rootDirectory.getPath());
+				+ toolsFile.getAbsolutePath());
 		ToolsConfiguration configuration = JsonMapper.MAPPER.readValue(
 				toolsFile, ToolsConfiguration.class);
 		if (configuration.tools == null)

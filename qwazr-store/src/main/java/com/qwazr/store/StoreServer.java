@@ -27,8 +27,6 @@ import org.apache.commons.cli.ParseException;
 
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
-import com.qwazr.store.store.StoreManager;
-import com.qwazr.store.store.StoreService;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServletApplication;
@@ -42,7 +40,6 @@ public class StoreServer extends AbstractServer {
 		serverDefinition.defaultWebApplicationTcpPort = 9092;
 		serverDefinition.mainJarPath = "qwazr-store.jar";
 		serverDefinition.defaultDataDirName = "qwazr";
-		serverDefinition.subDirectoryNames = new String[] { SERVICE_NAME_STORE };
 	}
 
 	private StoreServer() {
@@ -55,7 +52,9 @@ public class StoreServer extends AbstractServer {
 		@Override
 		public Set<Class<?>> getClasses() {
 			Set<Class<?>> classes = super.getClasses();
-			classes.add(StoreService.class);
+			classes.add(StoreDataService.class);
+			if (ClusterManager.INSTANCE.isMaster())
+				classes.add(StoreNameService.class);
 			classes.add(ClusterServiceImpl.class);
 			return classes;
 		}
@@ -66,7 +65,12 @@ public class StoreServer extends AbstractServer {
 	}
 
 	public static void load(File dataDir) throws IOException {
-		StoreManager.load(dataDir);
+		File storeDir = new File(dataDir, SERVICE_NAME_STORE);
+		if (!storeDir.exists())
+			storeDir.mkdir();
+		StoreDataManager.load(storeDir);
+		if (ClusterManager.INSTANCE.isMaster())
+			StoreNameManager.load(storeDir);
 	}
 
 	@Override

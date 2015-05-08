@@ -33,7 +33,7 @@ public class DirectoryJsonManager<T> {
 
 	private final ReadWriteLock rwl = new ReentrantReadWriteLock();
 
-	private final File directory;
+	protected final File directory;
 
 	private final Map<String, T> instancesMap;
 

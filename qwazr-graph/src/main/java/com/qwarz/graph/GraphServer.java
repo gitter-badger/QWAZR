@@ -43,8 +43,6 @@ public class GraphServer extends AbstractServer {
 		serverDefinition.defaultWebApplicationTcpPort = 9093;
 		serverDefinition.mainJarPath = "qwazr-graph.jar";
 		serverDefinition.defaultDataDirName = "qwazr";
-		serverDefinition.subDirectoryNames = new String[] { SERVICE_NAME_GRAPH };
-
 	}
 
 	private GraphServer() {
@@ -79,7 +77,10 @@ public class GraphServer extends AbstractServer {
 
 	public static void load(File dataDir) throws IOException {
 		try {
-			GraphManager.load(new File(dataDir, SERVICE_NAME_GRAPH));
+			File graphDir = new File(dataDir, SERVICE_NAME_GRAPH);
+			if (!graphDir.exists())
+				graphDir.mkdir();
+			GraphManager.load(graphDir);
 		} catch (URISyntaxException | ServerException e) {
 			throw new IOException(e);
 		}
