@@ -38,7 +38,7 @@ public class ScriptServiceImpl implements ScriptServiceInterface {
 		// Read the files present in the remote nodes
 		try {
 			TreeMap<String, ScriptFileStatus> globalFiles = new TreeMap<String, ScriptFileStatus>();
-			ScriptMultiClient client = ScriptManager.getClient();
+			ScriptMultiClient client = ScriptManager.INSTANCE.getNewClient();
 			ScriptFileStatus.merge(globalFiles, null, client.getScripts(false));
 
 			ScriptManager.INSTANCE.repair(client, globalFiles);
@@ -65,8 +65,8 @@ public class ScriptServiceImpl implements ScriptServiceInterface {
 				ScriptManager.INSTANCE.deleteScript(script_name);
 				return Response.ok().build();
 			} else
-				return ScriptManager.getClient()
-						.deleteScript(script_name, true);
+				return ScriptManager.INSTANCE.getNewClient().deleteScript(
+						script_name, true);
 		} catch (ServerException | URISyntaxException e) {
 			throw ServerException.getTextException(e);
 		}
@@ -80,8 +80,8 @@ public class ScriptServiceImpl implements ScriptServiceInterface {
 				last_modified = ScriptManager.INSTANCE.setScript(script_name,
 						last_modified, script);
 			else
-				ScriptManager.getClient().setScript(script_name, last_modified,
-						false, script);
+				ScriptManager.INSTANCE.getNewClient().setScript(script_name,
+						last_modified, false, script);
 			return Response.ok().build();
 		} catch (IOException | URISyntaxException e) {
 			throw ServerException.getTextException(e);
@@ -151,8 +151,8 @@ public class ScriptServiceImpl implements ScriptServiceInterface {
 				return localRunStatusMap;
 			}
 			TreeMap<String, ScriptRunStatus> globalRunStatusMap = new TreeMap<String, ScriptRunStatus>();
-			globalRunStatusMap.putAll(ScriptManager.getClient().getRunsStatus(
-					script_name, false));
+			globalRunStatusMap.putAll(ScriptManager.INSTANCE.getNewClient()
+					.getRunsStatus(script_name, false));
 			return globalRunStatusMap;
 		} catch (URISyntaxException e) {
 			throw ServerException.getJsonException(e);

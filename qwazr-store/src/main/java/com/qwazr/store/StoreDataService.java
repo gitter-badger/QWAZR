@@ -167,14 +167,14 @@ public class StoreDataService extends AbstractService implements
 	}
 
 	@Override
-	public StoreSchemaDefinition createSchema(String schemaName,
+	public StoreSchemaDefinition createSchema(String schemaName, Boolean local,
 			StoreSchemaDefinition schemaDefinition) {
 		StoreDataManager.INSTANCE.createSchema(schemaName);
 		return null;
 	}
 
 	@Override
-	public StoreSchemaDefinition deleteSchema(String schemaName) {
+	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local) {
 		try {
 			StoreDataManager.INSTANCE.deleteSchema(schemaName);
 			return null;

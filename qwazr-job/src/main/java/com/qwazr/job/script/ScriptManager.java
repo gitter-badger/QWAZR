@@ -309,8 +309,10 @@ public class ScriptManager {
 		}
 	}
 
-	public static ScriptMultiClient getClient() throws URISyntaxException {
-		return new ScriptMultiClient(ClusterManager.INSTANCE.getClusterClient()
-				.getActiveNodes(JobServer.SERVICE_NAME_SCRIPT), 60000);
+	public ScriptMultiClient getNewClient() throws URISyntaxException {
+		// pass executor
+		return new ScriptMultiClient(null, ClusterManager.INSTANCE
+				.getClusterClient().getActiveNodes(
+						JobServer.SERVICE_NAME_SCRIPT), 60000);
 	}
 }

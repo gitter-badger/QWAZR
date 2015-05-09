@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.server.ServerException;
 
-public class StoreDataManager {
+class StoreDataManager {
 
 	public static volatile StoreDataManager INSTANCE = null;
 

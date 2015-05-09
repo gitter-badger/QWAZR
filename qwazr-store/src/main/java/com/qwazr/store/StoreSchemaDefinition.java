@@ -15,8 +15,6 @@
  */
 package com.qwazr.store;
 
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -27,7 +25,7 @@ public class StoreSchemaDefinition {
 
 	public Integer distribution_factor;
 
-	public List<String[]> nodes;
+	public String[][] nodes;
 
 	public StoreSchemaDefinition() {
 		nodes = null;

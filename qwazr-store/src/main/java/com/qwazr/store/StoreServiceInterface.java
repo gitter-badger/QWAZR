@@ -25,6 +25,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
 import com.qwazr.utils.server.RestApplication;
@@ -76,12 +77,13 @@ public interface StoreServiceInterface {
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public StoreSchemaDefinition createSchema(
 			@PathParam("schema_name") String schemaName,
-			StoreSchemaDefinition schemaDef);
+			@QueryParam("local") Boolean local, StoreSchemaDefinition schemaDef);
 
 	@DELETE
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public StoreSchemaDefinition deleteSchema(
-			@PathParam("schema_name") String schemaName);
+			@PathParam("schema_name") String schemaName,
+			@QueryParam("local") Boolean local);
 
 }

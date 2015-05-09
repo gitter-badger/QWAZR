@@ -15,23 +15,44 @@
  */
 package com.qwazr.store;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.concurrent.ExecutorService;
 
-import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.lang3.StringUtils;
+import com.qwazr.store.StoreSingleClient.PrefixPath;
+import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 
-import com.qwazr.utils.server.ServerException;
+public class StoreReplicationClient extends
+		JsonMultiClientAbstract<String[], StoreDistributionClient> implements
+		StoreServiceInterface {
 
-@Path("/store")
-public class StoreNameService implements StoreServiceInterface {
+	private final PrefixPath prefixPath;
+
+	protected StoreReplicationClient(ExecutorService executor,
+			String[][] urlMap, PrefixPath prefixPath, int msTimeOut)
+			throws URISyntaxException {
+		super(executor, new StoreDistributionClient[urlMap.length], urlMap,
+				msTimeOut);
+		this.prefixPath = prefixPath;
+	}
+
+	@Override
+	protected StoreDistributionClient newClient(String[] urls, int msTimeOut)
+			throws URISyntaxException {
+		return new StoreDistributionClient(executor, urls, prefixPath,
+				msTimeOut);
+	}
 
 	@Override
 	public Response getFile(String schemaName, String path) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Response getFile(String schemaName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -43,13 +64,9 @@ public class StoreNameService implements StoreServiceInterface {
 	}
 
 	@Override
-	public Response getFile(String schemaName) {
-		return getFile(schemaName, StringUtils.EMPTY);
-	}
-
-	@Override
 	public Response headFile(String schemaName) {
-		return headFile(schemaName, StringUtils.EMPTY);
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -73,47 +90,21 @@ public class StoreNameService implements StoreServiceInterface {
 
 	@Override
 	public StoreSchemaDefinition getSchema(String schemaName) {
-		try {
-			StoreSchemaDefinition schemaDefinition = StoreNameManager.INSTANCE
-					.getSchema(schemaName);
-			if (schemaDefinition == null)
-				throw new ServerException(Status.NOT_FOUND,
-						"Schema not found: " + schemaName);
-			return schemaDefinition;
-		} catch (ServerException e) {
-			throw ServerException.getJsonException(e);
-		}
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public StoreSchemaDefinition createSchema(String schemaName, Boolean local,
-			StoreSchemaDefinition schemaDefinition) {
-		try {
-			StoreNameManager.checkSchemaDefinition(schemaDefinition);
-			if (local != null && local) {
-				StoreNameManager.INSTANCE.createSchema(schemaName,
-						schemaDefinition);
-			} else {
-				StoreNameManager.INSTANCE.getNewNameClient(60000).createSchema(
-						schemaName, false, schemaDefinition);
-				StoreNameManager.INSTANCE.getNewDataClient(
-						schemaDefinition.nodes, 60000).createSchema(schemaName,
-						false, schemaDefinition);
-			}
-			return schemaDefinition;
-		} catch (IOException | ServerException | URISyntaxException e) {
-			throw ServerException.getJsonException(e);
-		}
+			StoreSchemaDefinition schemaDef) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local) {
-		try {
-			// TODO multi servers
-			return StoreNameManager.INSTANCE.deleteSchema(schemaName);
-		} catch (ServerException e) {
-			throw ServerException.getJsonException(e);
-		}
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

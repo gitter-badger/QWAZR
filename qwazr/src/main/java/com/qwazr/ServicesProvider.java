@@ -51,8 +51,9 @@ public class ServicesProvider extends AbstractConnector {
 	}
 
 	public ScriptMultiClient getNewScriptClient() throws URISyntaxException {
-		return new ScriptMultiClient(ClusterManager.INSTANCE.getClusterClient()
-				.getActiveNodes(JobServer.SERVICE_NAME_SCRIPT), 60000);
+		return new ScriptMultiClient(null, ClusterManager.INSTANCE
+				.getClusterClient().getActiveNodes(
+						JobServer.SERVICE_NAME_SCRIPT), 60000);
 	}
 
 	public ExtractorServiceInterface getNewExtractorClient() {

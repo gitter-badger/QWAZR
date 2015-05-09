@@ -19,19 +19,54 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 
-import javax.ws.rs.Path;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.fluent.Request;
+import org.apache.http.client.utils.URIBuilder;
 
-import com.qwazr.utils.server.ServerException;
+import com.qwazr.utils.http.HttpResponseEntityException;
+import com.qwazr.utils.json.client.JsonClientAbstract;
 
-@Path("/store")
-public class StoreNameService implements StoreServiceInterface {
+class StoreSingleClient extends JsonClientAbstract implements
+		StoreServiceInterface {
+
+	static enum PrefixPath {
+
+		name("/store/"), data("/store_local/");
+
+		final String path;
+
+		PrefixPath(String path) {
+			this.path = path;
+		}
+	}
+
+	private final PrefixPath prefixPath;
+
+	StoreSingleClient(String url, PrefixPath prefixPath, int msTimeOut)
+			throws URISyntaxException {
+		super(url, msTimeOut);
+		this.prefixPath = prefixPath;
+	}
 
 	@Override
 	public Response getFile(String schemaName, String path) {
+		try {
+			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, path);
+			Request request = Request.Get(uriBuilder.build());
+			return execute(request, null, msTimeOut, Response.class, 200);
+		} catch (HttpResponseEntityException e) {
+			throw e.getWebApplicationException();
+		} catch (URISyntaxException | IOException e) {
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	@Override
+	public Response getFile(String schemaName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -43,13 +78,9 @@ public class StoreNameService implements StoreServiceInterface {
 	}
 
 	@Override
-	public Response getFile(String schemaName) {
-		return getFile(schemaName, StringUtils.EMPTY);
-	}
-
-	@Override
 	public Response headFile(String schemaName) {
-		return headFile(schemaName, StringUtils.EMPTY);
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -73,47 +104,21 @@ public class StoreNameService implements StoreServiceInterface {
 
 	@Override
 	public StoreSchemaDefinition getSchema(String schemaName) {
-		try {
-			StoreSchemaDefinition schemaDefinition = StoreNameManager.INSTANCE
-					.getSchema(schemaName);
-			if (schemaDefinition == null)
-				throw new ServerException(Status.NOT_FOUND,
-						"Schema not found: " + schemaName);
-			return schemaDefinition;
-		} catch (ServerException e) {
-			throw ServerException.getJsonException(e);
-		}
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public StoreSchemaDefinition createSchema(String schemaName, Boolean local,
-			StoreSchemaDefinition schemaDefinition) {
-		try {
-			StoreNameManager.checkSchemaDefinition(schemaDefinition);
-			if (local != null && local) {
-				StoreNameManager.INSTANCE.createSchema(schemaName,
-						schemaDefinition);
-			} else {
-				StoreNameManager.INSTANCE.getNewNameClient(60000).createSchema(
-						schemaName, false, schemaDefinition);
-				StoreNameManager.INSTANCE.getNewDataClient(
-						schemaDefinition.nodes, 60000).createSchema(schemaName,
-						false, schemaDefinition);
-			}
-			return schemaDefinition;
-		} catch (IOException | ServerException | URISyntaxException e) {
-			throw ServerException.getJsonException(e);
-		}
+			StoreSchemaDefinition schemaDef) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local) {
-		try {
-			// TODO multi servers
-			return StoreNameManager.INSTANCE.deleteSchema(schemaName);
-		} catch (ServerException e) {
-			throw ServerException.getJsonException(e);
-		}
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

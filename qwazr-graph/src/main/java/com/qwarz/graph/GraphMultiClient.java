@@ -42,7 +42,7 @@ import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
 public class GraphMultiClient extends
-		JsonMultiClientAbstract<GraphSingleClient> implements
+		JsonMultiClientAbstract<String, GraphSingleClient> implements
 		GraphServiceInterface {
 
 	private static final Logger logger = LoggerFactory

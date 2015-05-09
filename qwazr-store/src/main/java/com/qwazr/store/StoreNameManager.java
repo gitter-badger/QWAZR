@@ -17,11 +17,13 @@ package com.qwazr.store;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.ws.rs.core.Response.Status;
 
@@ -30,6 +32,7 @@ import org.apache.commons.lang3.RandomUtils;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.store.StoreSingleClient.PrefixPath;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;
 import com.qwazr.utils.server.ServerException;
@@ -51,11 +54,13 @@ public class StoreNameManager extends
 
 	private final LockUtils.ReadWriteLock rwlSchemas = new LockUtils.ReadWriteLock();
 	private final Map<String, StoreNameInstance> nameInstanceMap;
+	private final ExecutorService executor;
 
 	private StoreNameManager(File storeDirectory) throws IOException,
 			ServerException {
 		super(storeDirectory, StoreSchemaDefinition.class);
 		nameInstanceMap = new HashMap<String, StoreNameInstance>();
+		executor = Executors.newFixedThreadPool(8);
 	}
 
 	StoreNameInstance getNameInstance(String schemaName) throws ServerException {
@@ -136,10 +141,10 @@ public class StoreNameManager extends
 		// If the node has been given, we check that the count conforms the
 		// requirements
 		if (schemaDefinition.nodes != null) {
-			if (schemaDefinition.nodes.size() != schemaDefinition.replication_factor)
+			if (schemaDefinition.nodes.length != schemaDefinition.replication_factor)
 				throw new ServerException(Status.NOT_ACCEPTABLE,
 						"The number of replicated nodes is not correct: "
-								+ schemaDefinition.nodes.size() + " versus "
+								+ schemaDefinition.nodes.length + " versus "
 								+ schemaDefinition.replication_factor);
 			for (String[] nodes : schemaDefinition.nodes)
 				if (nodes == null
@@ -153,7 +158,7 @@ public class StoreNameManager extends
 
 		// We retrieve the list of all available store nodes
 		String[] nodes = ClusterManager.INSTANCE
-				.getAllNodes(StoreServer.SERVICE_NAME_STORE);
+				.getActiveNodes(StoreServer.SERVICE_NAME_STORE);
 		if (nodes == null || nodes.length < nodesNumber)
 			throw new ServerException(Status.NOT_ACCEPTABLE,
 					"Not enough store servers to handle the request: "
@@ -165,14 +170,26 @@ public class StoreNameManager extends
 		TreeMap<String, String> nodesMap = new TreeMap<String, String>();
 		for (String node : nodes)
 			nodesMap.put(m3.hashString(node).toString(), node);
-		schemaDefinition.nodes = new ArrayList<String[]>(
-				schemaDefinition.replication_factor);
+		schemaDefinition.nodes = new String[schemaDefinition.replication_factor][];
 		Iterator<String> nodeIterator = nodesMap.values().iterator();
 		for (int i = 0; i < schemaDefinition.replication_factor; i++) {
 			String[] nodeArray = new String[schemaDefinition.distribution_factor];
 			for (int j = 0; j < schemaDefinition.distribution_factor; j++)
 				nodeArray[j] = nodeIterator.next();
-			schemaDefinition.nodes.add(nodeArray);
+			schemaDefinition.nodes[i] = nodeArray;
 		}
+	}
+
+	public StoreDistributionClient getNewNameClient(int msTimeOut)
+			throws URISyntaxException {
+		return new StoreDistributionClient(executor,
+				ClusterManager.INSTANCE.getMasterArray(), PrefixPath.name,
+				msTimeOut);
+	}
+
+	public StoreReplicationClient getNewDataClient(String[][] nodes,
+			int msTimeOut) throws URISyntaxException {
+		return new StoreReplicationClient(executor, nodes, PrefixPath.data,
+				msTimeOut);
 	}
 }
