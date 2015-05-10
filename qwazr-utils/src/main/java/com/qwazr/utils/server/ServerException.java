@@ -30,16 +30,25 @@ public class ServerException extends Exception {
 	 */
 	private static final long serialVersionUID = -6102827990391082335L;
 
-	private final Status status;
+	private final int statusCode;
 	private final String message;
-	private final Exception exception;
 
 	public ServerException(Status status, String message, Exception exception) {
 		super(message, exception);
-		this.status = status != null ? status : Status.INTERNAL_SERVER_ERROR;
-		this.message = message != null ? message : (exception == null ? null
-				: exception.getMessage());
-		this.exception = exception;
+		if (status == null && exception != null
+				&& exception instanceof WebApplicationException) {
+			WebApplicationException wae = (WebApplicationException) exception;
+			this.statusCode = wae.getResponse().getStatus();
+		} else
+			this.statusCode = status != null ? status.getStatusCode()
+					: Status.INTERNAL_SERVER_ERROR.getStatusCode();
+		if (StringUtils.isEmpty(message)) {
+			if (exception != null)
+				message = exception.getMessage();
+			if (StringUtils.isEmpty(message) && status != null)
+				message = status.getReasonPhrase();
+		}
+		this.message = message;
 	}
 
 	public ServerException(Status status) {
@@ -62,26 +71,24 @@ public class ServerException extends Exception {
 		this(null, null, exception);
 	}
 
-	public Integer getStatusCode() {
-		return status == null ? null : status.getStatusCode();
+	public int getStatusCode() {
+		return statusCode;
 	}
 
 	@Override
 	public String getMessage() {
 		if (message != null)
 			return message;
-		if (status != null)
-			return status.getReasonPhrase();
 		return super.getMessage();
 	}
 
 	private Response getTextResponse() {
-		return Response.status(status).type(MediaType.TEXT_PLAIN)
+		return Response.status(statusCode).type(MediaType.TEXT_PLAIN)
 				.entity(message == null ? StringUtils.EMPTY : message).build();
 	}
 
 	private Response getJsonResponse() {
-		return new JsonException(status, message, exception).toResponse();
+		return new JsonException(statusCode, message).toResponse();
 	}
 
 	public WebApplicationException getTextException() {
@@ -106,5 +113,4 @@ public class ServerException extends Exception {
 		return getServerException(e).getJsonException();
 
 	}
-
 }

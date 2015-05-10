@@ -16,24 +16,20 @@
 package com.qwazr.store;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import com.qwazr.utils.server.ServerException;
 
 @Path("/store_local")
-public class StoreDataService extends AbstractService implements
-		StoreServiceInterface {
+public class StoreDataService implements StoreServiceInterface {
 
 	private File getExistingFile(String schemaName, String path)
 			throws ServerException {
@@ -45,101 +41,59 @@ public class StoreDataService extends AbstractService implements
 	}
 
 	@Override
-	public Response getFile(String schemaName, String path) {
+	public Response getFile(String schemaName, String path, Integer msTimeout) {
+		StoreFileResult storeFile = null;
 		try {
 			File file = getExistingFile(schemaName, path);
-			StoreFileResult storeFileResult = new StoreFileResult(file, true);
-			if (file.isDirectory())
-				return storeFileResult.headerResponse(
-						responseJson(storeFileResult)).build();
-			else if (file.isFile())
-				return storeFileResult.headerResponse(
-						responseStream(new FileInputStream(file))).build();
-			return responseJson(null).build();
-		} catch (ServerException | FileNotFoundException e) {
+			storeFile = new StoreFileResult(file, file.isDirectory());
+			ResponseBuilder builder = Response.ok();
+			storeFile.buildHeader(builder);
+			storeFile.buildEntity(builder);
+			return builder.build();
+		} catch (ServerException | IOException e) {
+			if (storeFile != null)
+				storeFile.free();
 			return ServerException.getTextException(e).getResponse();
 		}
 	}
 
 	@Override
-	public Response getFile(String schemaName) {
-		return getFile(schemaName, StringUtils.EMPTY);
+	public Response getFile(String schemaName, Integer msTimeout) {
+		return getFile(schemaName, "/", msTimeout);
 	}
 
 	@Override
-	public Response headFile(String schemaName, String path) {
+	public Response headFile(String schemaName, String path, Integer msTimeout) {
 		try {
 			File file = getExistingFile(schemaName, path);
-			return new StoreFileResult(file, false).headerResponse(
-					Response.ok()).build();
+			StoreFileResult storeFile = new StoreFileResult(file, false);
+			ResponseBuilder builder = Response.ok();
+			storeFile.buildHeader(builder);
+			return builder.build();
 		} catch (ServerException e) {
 			return ServerException.getTextException(e).getResponse();
 		}
-	}
-
-	@Override
-	public Response headFile(String schemaName) {
-		return headFile(schemaName, StringUtils.EMPTY);
 	}
 
 	@Override
 	public Response putFile(String schemaName, String path,
-			InputStream inputStream) {
+			InputStream inputStream, Long lastModified, Integer msTimeout,
+			Integer target) {
 		try {
-			File file = StoreDataManager.INSTANCE.getFile(schemaName, path);
-			if (file.exists() && file.isDirectory())
-				throw new ServerException(Status.CONFLICT,
-						"Error. A directory already exists: " + path);
-			File tmpFile = File.createTempFile("oss-cluster-node", ".upload");
-			FileOutputStream fos = null;
-			try {
-				fos = new FileOutputStream(tmpFile);
-				IOUtils.copy(inputStream, fos);
-				fos.close();
-				if (file.exists())
-					file.delete();
-				tmpFile.renameTo(file);
-				tmpFile = null;
-				return new StoreFileResult(file, false).headerResponse(
-						Response.status(Status.OK)).build();
-			} finally {
-				if (fos != null)
-					IOUtils.closeQuietly(fos);
-				if (tmpFile != null)
-					tmpFile.delete();
-			}
+			File file = StoreDataManager.INSTANCE.putFile(schemaName, path,
+					inputStream, lastModified);
+			StoreFileResult storeFile = new StoreFileResult(file, false);
+			ResponseBuilder builder = Response.ok("File created: " + path,
+					MediaType.TEXT_PLAIN);
+			storeFile.buildHeader(builder);
+			return builder.build();
 		} catch (ServerException | IOException e) {
-			return ServerException.getTextException(e).getResponse();
+			throw ServerException.getTextException(e);
 		}
 	}
 
 	@Override
-	public Response createDirectory(String schemaName, String path) {
-		try {
-			File file = StoreDataManager.INSTANCE.getFile(schemaName, path);
-			if (file.exists())
-				throw new ServerException(Status.CONFLICT,
-						"Error. Resource already exists: " + path);
-			file.mkdir();
-			if (file.exists() && file.isDirectory())
-				return new StoreFileResult(file, false).headerResponse(
-						Response.status(Status.CREATED)).build();
-			File parentFile = file.getParentFile();
-			if (parentFile == null || !parentFile.exists())
-				throw new ServerException(Status.NOT_ACCEPTABLE,
-						"The parent directory does not exists: " + path);
-			if (!parentFile.isDirectory())
-				throw new ServerException(Status.NOT_ACCEPTABLE,
-						"The parent path is not a directory: " + path);
-			throw new ServerException(Status.INTERNAL_SERVER_ERROR,
-					"Unexpected internal error");
-		} catch (ServerException e) {
-			return ServerException.getTextException(e).getResponse();
-		}
-	}
-
-	@Override
-	public Response deleteFile(String schemaName, String path) {
+	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
 		try {
 			File file = StoreDataManager.INSTANCE.getFile(schemaName, path);
 			if (!file.exists())
@@ -155,29 +109,45 @@ public class StoreDataService extends AbstractService implements
 			if (file.exists())
 				throw new ServerException(Status.INTERNAL_SERVER_ERROR,
 						"Unable to delete the file: " + path);
-			return responseText(Status.OK, "File deleted: " + path).build();
+			File parent = file.getParentFile();
+			if (parent.list().length == 0)
+				parent.delete();
+			return Response.ok("File deleted: " + path, MediaType.TEXT_PLAIN)
+					.build();
 		} catch (ServerException e) {
-			return ServerException.getTextException(e).getResponse();
+			throw ServerException.getTextException(e);
 		}
 	}
 
 	@Override
-	public StoreSchemaDefinition getSchema(String schemaName) {
+	public Set<String> getSchemas(Boolean local, Integer msTimeout) {
 		throw new ServerException(Status.NOT_IMPLEMENTED).getJsonException();
 	}
 
 	@Override
-	public StoreSchemaDefinition createSchema(String schemaName, Boolean local,
-			StoreSchemaDefinition schemaDefinition) {
-		StoreDataManager.INSTANCE.createSchema(schemaName);
-		return null;
+	public StoreSchemaDefinition getSchema(String schemaName, Boolean local,
+			Integer msTimeout) {
+		throw new ServerException(Status.NOT_IMPLEMENTED).getJsonException();
 	}
 
 	@Override
-	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local) {
+	public StoreSchemaDefinition createSchema(String schemaName,
+			StoreSchemaDefinition schemaDefinition, Boolean local,
+			Integer msTimeout) {
+		try {
+			StoreDataManager.INSTANCE.createSchema(schemaName);
+			return schemaDefinition;
+		} catch (IOException e) {
+			throw new ServerException(e).getJsonException();
+		}
+	}
+
+	@Override
+	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local,
+			Integer msTimeout) {
 		try {
 			StoreDataManager.INSTANCE.deleteSchema(schemaName);
-			return null;
+			return new StoreSchemaDefinition();
 		} catch (IOException e) {
 			throw new ServerException(e).getJsonException();
 		}

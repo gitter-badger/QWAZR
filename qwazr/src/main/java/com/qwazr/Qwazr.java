@@ -134,7 +134,7 @@ public class Qwazr extends AbstractServer {
 
 		File currentDataDir = getCurrentDataDir();
 
-		ClusterServer.load(getWebServicePublicAddress(), currentDataDir, null);
+		ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
 
 		ConnectorManager.load(currentDataDir, null);
 		ToolsManager.load(currentDataDir, null);

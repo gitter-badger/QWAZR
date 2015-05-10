@@ -16,37 +16,49 @@
 package com.qwazr.store;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
 import org.jboss.resteasy.util.DateUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.qwazr.utils.json.JsonMapper;
+import com.qwazr.utils.server.RestApplication;
 
 @JsonInclude(Include.NON_EMPTY)
 public class StoreFileResult {
 
-	public final String name;
+	private final File file;
+	private FileInputStream inputStream;
+
 	public final Type type;
 	public final Date lastModified;
 	public final Long size;
 
-	public final List<StoreFileResult> childs;
+	public final Map<String, StoreFileResult> childs;
 
 	StoreFileResult(File file, boolean retrieveChilds) {
-		name = file.getName();
+		inputStream = null;
+		this.file = file;
 		if (file.isDirectory()) {
 			type = Type.DIRECTORY;
 			if (retrieveChilds) {
 				File[] files = file.listFiles();
 				if (files != null) {
-					childs = new ArrayList<StoreFileResult>(files.length);
+					childs = new TreeMap<String, StoreFileResult>();
 					for (File f : files)
-						childs.add(new StoreFileResult(f, false));
+						childs.put(file.getName(),
+								new StoreFileResult(f, false));
 				} else
 					childs = null;
 			} else
@@ -66,12 +78,47 @@ public class StoreFileResult {
 		FILE, DIRECTORY, UNKNOWN
 	};
 
-	final ResponseBuilder headerResponse(ResponseBuilder builder) {
-		builder.header("X-OSS-Cluster-Store-Type", type);
+	void free() {
+		if (inputStream != null)
+			IOUtils.closeQuietly(inputStream);
+	}
+
+	private final static String QWAZR_TYPE = "X-QWAZR-Store-Type";
+	private final static String QWAZR_SIZE = "X-QWAZR-Store-Size";
+	private final static String LAST_MODIFIED = "Last-Modified";
+
+	final ResponseBuilder buildHeader(ResponseBuilder builder) {
+		builder.header(QWAZR_TYPE, type);
 		if (size != null)
-			builder.header("X-OSS-Cluster-Store-Length", size);
+			builder.header(QWAZR_SIZE, size);
 		if (lastModified != null)
-			builder.header("Last-Modified", DateUtil.formatDate(lastModified));
+			builder.header(LAST_MODIFIED, DateUtil.formatDate(lastModified));
 		return builder;
 	}
+
+	final void buildEntity(ResponseBuilder builder) throws IOException {
+		if (type == Type.FILE) {
+			inputStream = new FileInputStream(file);
+			builder.entity(inputStream)
+					.type(MediaType.APPLICATION_OCTET_STREAM);
+		} else if (type == Type.DIRECTORY) {
+			builder.entity(JsonMapper.MAPPER.writeValueAsString(this)).type(
+					RestApplication.APPLICATION_JSON_UTF8);
+		}
+	}
+
+	final static ResponseBuilder buildHeaders(HttpResponse response,
+			ResponseBuilder builder) {
+		Header header = response.getFirstHeader(QWAZR_TYPE);
+		if (header != null)
+			builder.header(QWAZR_TYPE, header.getValue());
+		header = response.getFirstHeader(QWAZR_SIZE);
+		if (header != null)
+			builder.header(QWAZR_SIZE, header.getValue());
+		header = response.getFirstHeader(LAST_MODIFIED);
+		if (header != null)
+			builder.header(LAST_MODIFIED, header.getValue());
+		return builder;
+	}
+
 }

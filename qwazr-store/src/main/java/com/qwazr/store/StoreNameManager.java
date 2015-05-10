@@ -21,7 +21,9 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -91,6 +93,17 @@ public class StoreNameManager extends
 
 	StoreSchemaDefinition getSchema(String schemaName) {
 		return super.get(schemaName);
+	}
+
+	Set<String> getSchemas() {
+		rwlSchemas.r.lock();
+		try {
+			TreeSet<String> set = new TreeSet<String>();
+			set.addAll(super.nameSet());
+			return set;
+		} finally {
+			rwlSchemas.r.unlock();
+		}
 	}
 
 	void createSchema(String schemaName, StoreSchemaDefinition schemaDefinition)
@@ -180,16 +193,17 @@ public class StoreNameManager extends
 		}
 	}
 
-	public StoreDistributionClient getNewNameClient(int msTimeOut)
+	public StoreNameMultiClient getNewNameClient(Integer msTimeOut)
 			throws URISyntaxException {
-		return new StoreDistributionClient(executor,
-				ClusterManager.INSTANCE.getMasterArray(), PrefixPath.name,
-				msTimeOut);
+		return new StoreNameMultiClient(executor,
+				ClusterManager.INSTANCE.getMasterArray(),
+				msTimeOut == null ? 60000 : msTimeOut);
 	}
 
-	public StoreReplicationClient getNewDataClient(String[][] nodes,
-			int msTimeOut) throws URISyntaxException {
-		return new StoreReplicationClient(executor, nodes, PrefixPath.data,
-				msTimeOut);
+	public StoreDataReplicationClient getNewDataClient(String[][] nodes,
+			Integer msTimeOut) throws URISyntaxException {
+		return new StoreDataReplicationClient(executor, nodes, PrefixPath.data,
+				msTimeOut == null ? 60000 : msTimeOut);
 	}
+
 }

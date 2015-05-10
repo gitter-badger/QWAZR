@@ -64,8 +64,7 @@ public class AffinitiesServer extends AbstractServer {
 
 	@Override
 	public void load() throws IOException {
-		ClusterServer.load(getWebServicePublicAddress(), getCurrentDataDir(),
-				null);
+		ClusterServer.load(getWebServicePublicAddress(), getCurrentDataDir());
 		AffinityManager.load(getCurrentDataDir());
 	}
 

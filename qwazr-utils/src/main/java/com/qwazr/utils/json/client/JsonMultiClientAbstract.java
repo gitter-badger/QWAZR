@@ -113,6 +113,16 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 		return clientsMap.get(url.intern());
 	}
 
+	/**
+	 * 
+	 * @param pos
+	 *            the position of the client
+	 * @return a json client
+	 */
+	protected V getClientByPos(Integer pos) {
+		return clientsArray[pos];
+	}
+
 	private class JsonClientIterator implements Iterator<V> {
 
 		private int count = clientsArray.length;

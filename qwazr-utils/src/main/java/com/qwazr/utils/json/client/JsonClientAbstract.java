@@ -16,6 +16,7 @@
 package com.qwazr.utils.json.client;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -76,7 +77,8 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 			sb.append(path);
 		if (paths != null)
 			for (String path : paths)
-				sb.append(path);
+				if (path != null)
+					sb.append(path);
 		URIBuilder uriBuilder = new URIBuilder().setScheme(scheme)
 				.setHost(host).setPort(port).setFragment(fragment);
 		if (sb.length() > 0)
@@ -146,6 +148,9 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 			if (bodyObject instanceof String)
 				request = request.bodyString(bodyObject.toString(),
 						ContentType.TEXT_PLAIN);
+			else if (bodyObject instanceof InputStream)
+				request = request.bodyStream((InputStream) bodyObject,
+						ContentType.APPLICATION_OCTET_STREAM);
 			else
 				request = request.bodyString(
 						JsonMapper.MAPPER.writeValueAsString(bodyObject),

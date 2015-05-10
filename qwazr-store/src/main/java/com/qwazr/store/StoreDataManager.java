@@ -18,6 +18,7 @@ package com.qwazr.store;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
+import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.server.ServerException;
 
@@ -44,23 +46,33 @@ class StoreDataManager {
 	private final Map<String, File> schemaDataDirectoryMap;
 	private final File storeDirectory;
 
-	private StoreDataManager(File storeDirectory) {
+	private StoreDataManager(File storeDirectory) throws IOException {
 		this.schemaDataDirectoryMap = new ConcurrentHashMap<String, File>();
 		this.storeDirectory = storeDirectory;
 		File[] schemaFiles = storeDirectory
 				.listFiles((FileFilter) DirectoryFileFilter.INSTANCE);
 		for (File schemaFile : schemaFiles)
-			INSTANCE.addSchema(schemaFile);
+			addSchema(schemaFile);
 	}
 
-	private final void addSchema(File schemaFile) {
+	private final void addSchema(File schemaFile) throws IOException {
+		if (!schemaFile.exists()) {
+			schemaFile.mkdir();
+			if (!schemaFile.exists())
+				throw new IOException("Unable to create the directory: "
+						+ schemaFile.getAbsolutePath());
+		}
 		File dataFile = new File(schemaFile, "data");
-		if (!dataFile.exists())
+		if (!dataFile.exists()) {
 			dataFile.mkdir();
+			if (!dataFile.exists())
+				throw new IOException("Unable to create the directory: "
+						+ schemaFile.getAbsolutePath());
+		}
 		schemaDataDirectoryMap.put(schemaFile.getName(), dataFile);
 	}
 
-	public void createSchema(String schemaName) {
+	void createSchema(String schemaName) throws IOException {
 		rwlSchemas.r.lock();
 		try {
 			if (schemaDataDirectoryMap.containsKey(schemaName))
@@ -78,7 +90,7 @@ class StoreDataManager {
 		}
 	}
 
-	public void deleteSchema(String schemaName) throws IOException {
+	void deleteSchema(String schemaName) throws IOException {
 		rwlSchemas.r.lock();
 		try {
 			if (!schemaDataDirectoryMap.containsKey(schemaName))
@@ -97,6 +109,33 @@ class StoreDataManager {
 		}
 	}
 
+	private File getSchemaDataDir(String schemaName) throws ServerException {
+		rwlSchemas.r.lock();
+		try {
+			File schemaDataDir = schemaDataDirectoryMap.get(schemaName);
+			if (schemaDataDir != null)
+				return schemaDataDir;
+			throw new ServerException(Status.NOT_FOUND, "Schema not found: "
+					+ schemaName);
+		} finally {
+			rwlSchemas.r.unlock();
+		}
+	}
+
+	private File getFile(File schemaDataDir, String relativePath)
+			throws ServerException {
+		if (StringUtils.isEmpty(relativePath) || relativePath.equals("/"))
+			return schemaDataDir;
+		File finalFile = new File(schemaDataDir, relativePath);
+		File file = finalFile;
+		while (file != null) {
+			if (file.equals(schemaDataDir))
+				return finalFile;
+			file = file.getParentFile();
+		}
+		throw new ServerException(Status.FORBIDDEN, "Permission denied.");
+	}
+
 	/**
 	 * Get a File with a path relative to the schema directory. This method also
 	 * checks that the resolved path is a child of the schema directory
@@ -110,26 +149,67 @@ class StoreDataManager {
 	 */
 	final File getFile(String schema, String relativePath)
 			throws ServerException {
-		File schemaDataDir;
-		rwlSchemas.r.lock();
-		try {
-			schemaDataDir = schemaDataDirectoryMap.get(schema);
-			if (schemaDataDir == null)
-				throw new ServerException(Status.NOT_FOUND,
-						"Schema not found: " + schema);
-		} finally {
-			rwlSchemas.r.unlock();
-		}
-		if (StringUtils.isEmpty(relativePath) || relativePath.equals("/"))
-			return schemaDataDir;
-		File finalFile = new File(schemaDataDir, relativePath);
-		File file = finalFile;
-		while (file != null) {
-			if (file.equals(schemaDataDir))
-				return finalFile;
-			file = file.getParentFile();
-		}
-		throw new ServerException(Status.FORBIDDEN, "Permission denied.");
+		File schemaDataDir = getSchemaDataDir(schema);
+		File file = getFile(schemaDataDir, relativePath);
+		if (!file.exists())
+			throw new ServerException(Status.NOT_FOUND, "File not found: "
+					+ relativePath);
+		return file;
 	}
 
+	final File putFile(String schema, String relativePath,
+			InputStream inputStream, Long lastModified) throws ServerException,
+			IOException {
+		File schemaDataDir = getSchemaDataDir(schema);
+		File file = getFile(schemaDataDir, relativePath);
+		if (file.exists() && file.isDirectory())
+			throw new ServerException(Status.CONFLICT,
+					"Error. A directory already exists: " + relativePath);
+		File tmpFile = null;
+		try {
+			tmpFile = IOUtils.storeAsTempFile(inputStream);
+			if (lastModified != null)
+				tmpFile.setLastModified(lastModified);
+			File parent = file.getParentFile();
+			if (!parent.exists())
+				parent.mkdir();
+			tmpFile.renameTo(file);
+			tmpFile = null;
+			return file;
+		} finally {
+			if (tmpFile != null)
+				tmpFile.delete();
+		}
+	}
+
+	/**
+	 * Delete the file, and prune the parent directory if empty.
+	 * 
+	 * @param schema
+	 *            the name of the schema
+	 * @param relativePath
+	 *            the path of the file, relative to the schema
+	 * @return the file instance of the deleted file
+	 * @throws ServerException
+	 *             is thrown is the file does not exists or if deleting the file
+	 *             was not possible
+	 */
+	final File deleteFile(String schema, String relativePath)
+			throws ServerException {
+		File schemaDataDir = getSchemaDataDir(schema);
+		File file = getFile(schemaDataDir, relativePath);
+		if (!file.exists())
+			throw new ServerException(Status.NOT_FOUND, "File not found: "
+					+ relativePath);
+		file.delete();
+		if (file.exists())
+			throw new ServerException(Status.INTERNAL_SERVER_ERROR,
+					"Unable to delete the file: " + relativePath);
+		File parent = file.getParentFile();
+		if (parent.equals(schemaDataDir))
+			return file;
+		if (parent.list().length == 0)
+			parent.delete();
+		return file;
+	}
 }
