@@ -24,8 +24,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.lang3.StringUtils;
-
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import com.qwazr.utils.server.ServerException;
 
 @Path("/store")
@@ -59,36 +59,41 @@ public class StoreNameService implements StoreServiceInterface {
 	}
 
 	@Override
-	public Response getFile(String schemaName, String path) {
-		return null;
+	public Response getFile(String schemaName, String path, Integer msTimeout) {
+		try {
+			return getDataClient(getSchema(schemaName, false, msTimeout).nodes,
+					msTimeout).getFile(schemaName, path, msTimeout);
+		} catch (ServerException | URISyntaxException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
-	public Response headFile(String schemaName, String path) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Response getFile(String schemaName) {
-		return getFile(schemaName, StringUtils.EMPTY);
-	}
-
-	@Override
-	public Response headFile(String schemaName) {
-		return headFile(schemaName, StringUtils.EMPTY);
+	public Response headFile(String schemaName, String path, Integer msTimeout) {
+		try {
+			return getDataClient(getSchema(schemaName, false, msTimeout).nodes,
+					msTimeout).headFile(schemaName, path, msTimeout);
+		} catch (ServerException | URISyntaxException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
 	public Response putFile(String schemaName, String path,
-			InputStream inputStream) {
-		return null;
-	}
-
-	@Override
-	public Response createDirectory(String schemaName, String path) {
-		// TODO Auto-generated method stub
-		return null;
+			InputStream inputStream, Long lastModified, Integer msTimeout,
+			Integer target) {
+		try {
+			StoreSchemaDefinition schemaDef = getSchemaOrNotFound(schemaName);
+			if (target == null) {
+				HashFunction m3 = Hashing.murmur3_128();
+				target = (m3.hashString(path).asInt() % schemaDef.distribution_factor);
+			}
+			return getDataClient(schemaDef.nodes, msTimeout).putFile(
+					schemaName, path, inputStream, lastModified, msTimeout,
+					target);
+		} catch (ServerException | URISyntaxException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
@@ -110,6 +115,16 @@ public class StoreNameService implements StoreServiceInterface {
 		}
 	}
 
+	private StoreSchemaDefinition getSchemaOrNotFound(String schemaName)
+			throws ServerException {
+		StoreSchemaDefinition schemaDefinition = StoreNameManager.INSTANCE
+				.getSchema(schemaName);
+		if (schemaDefinition != null)
+			return schemaDefinition;
+		throw new ServerException(Status.NOT_FOUND, "Schema not found: "
+				+ schemaName);
+	}
+
 	@Override
 	public StoreSchemaDefinition getSchema(String schemaName, Boolean local,
 			Integer msTimeout) {
@@ -117,12 +132,7 @@ public class StoreNameService implements StoreServiceInterface {
 			StoreNameMultiClient client = getNameClient(msTimeout, local);
 			if (client != null)
 				return client.getSchema(schemaName, false, msTimeout);
-			StoreSchemaDefinition schemaDefinition = StoreNameManager.INSTANCE
-					.getSchema(schemaName);
-			if (schemaDefinition == null)
-				throw new ServerException(Status.NOT_FOUND,
-						"Schema not found: " + schemaName);
-			return schemaDefinition;
+			return getSchemaOrNotFound(schemaName);
 		} catch (ServerException | URISyntaxException e) {
 			throw ServerException.getJsonException(e);
 		}
@@ -160,11 +170,7 @@ public class StoreNameService implements StoreServiceInterface {
 			if (nameClient == null)
 				return StoreNameManager.INSTANCE.deleteSchema(schemaName);
 			else {
-				StoreSchemaDefinition schemaDefinition = nameClient
-						.deleteSchema(schemaName, false, msTimeout);
-				if (schemaDefinition == null)
-					throw new ServerException(Status.NOT_FOUND,
-							"Schema not found: " + schemaName);
+				StoreSchemaDefinition schemaDefinition = getSchemaOrNotFound(schemaName);
 				if (schemaDefinition.nodes == null)
 					return schemaDefinition;
 				getDataClient(schemaDefinition.nodes, msTimeout).deleteSchema(

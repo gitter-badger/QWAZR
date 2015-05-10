@@ -44,33 +44,19 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 	}
 
 	@Override
-	public Response getFile(String schemaName, String path) {
+	public Response getFile(String schemaName, String path, Integer msTimeout) {
 		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
 	}
 
 	@Override
-	public Response getFile(String schemaName) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
-	}
-
-	@Override
-	public Response headFile(String schemaName, String path) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
-	}
-
-	@Override
-	public Response headFile(String schemaName) {
+	public Response headFile(String schemaName, String path, Integer msTimeout) {
 		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
 	}
 
 	@Override
 	public Response putFile(String schemaName, String path,
-			InputStream inputStream) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
-	}
-
-	@Override
-	public Response createDirectory(String schemaName, String path) {
+			InputStream inputStream, Long lastModified, Integer msTimeout,
+			Integer target) {
 		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
 	}
 

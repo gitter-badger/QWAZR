@@ -18,6 +18,7 @@ package com.qwazr.store;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
+import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.server.ServerException;
 
@@ -50,7 +52,7 @@ class StoreDataManager {
 		File[] schemaFiles = storeDirectory
 				.listFiles((FileFilter) DirectoryFileFilter.INSTANCE);
 		for (File schemaFile : schemaFiles)
-			INSTANCE.addSchema(schemaFile);
+			addSchema(schemaFile);
 	}
 
 	private final void addSchema(File schemaFile) throws IOException {
@@ -70,7 +72,7 @@ class StoreDataManager {
 		schemaDataDirectoryMap.put(schemaFile.getName(), dataFile);
 	}
 
-	public void createSchema(String schemaName) throws IOException {
+	void createSchema(String schemaName) throws IOException {
 		rwlSchemas.r.lock();
 		try {
 			if (schemaDataDirectoryMap.containsKey(schemaName))
@@ -88,7 +90,7 @@ class StoreDataManager {
 		}
 	}
 
-	public void deleteSchema(String schemaName) throws IOException {
+	void deleteSchema(String schemaName) throws IOException {
 		rwlSchemas.r.lock();
 		try {
 			if (!schemaDataDirectoryMap.containsKey(schemaName))
@@ -142,4 +144,24 @@ class StoreDataManager {
 		throw new ServerException(Status.FORBIDDEN, "Permission denied.");
 	}
 
+	final File putFile(String schema, String relativePath,
+			InputStream inputStream, Long lastModified) throws ServerException,
+			IOException {
+		File file = getFile(schema, relativePath);
+		if (file.exists() && file.isDirectory())
+			throw new ServerException(Status.CONFLICT,
+					"Error. A directory already exists: " + relativePath);
+		File tmpFile = null;
+		try {
+			tmpFile = IOUtils.storeAsTempFile(inputStream);
+			if (lastModified != null)
+				tmpFile.setLastModified(lastModified);
+			tmpFile.renameTo(file);
+			tmpFile = null;
+			return file;
+		} finally {
+			if (tmpFile != null)
+				tmpFile.delete();
+		}
+	}
 }

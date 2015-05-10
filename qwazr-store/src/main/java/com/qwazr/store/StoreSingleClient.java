@@ -22,15 +22,19 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.qwazr.utils.http.HttpResponseEntityException;
+import com.qwazr.utils.http.HttpUtils;
 import com.qwazr.utils.json.client.JsonClientAbstract;
+import com.qwazr.utils.server.ServerException;
 
 public class StoreSingleClient extends JsonClientAbstract implements
 		StoreServiceInterface {
@@ -55,11 +59,22 @@ public class StoreSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public Response getFile(String schemaName, String path) {
+	public Response getFile(String schemaName, String path, Integer msTimeOut) {
+		throw new ServerException(Status.NOT_ACCEPTABLE).getTextException();
+	}
+
+	@Override
+	public Response headFile(String schemaName, String path, Integer msTimeout) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, path);
-			Request request = Request.Get(uriBuilder.build());
-			return execute(request, null, msTimeOut, Response.class, 200);
+			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
+					"/", path);
+			if (msTimeout != null)
+				uriBuilder.setParameter("timeout", msTimeout.toString());
+			Request request = Request.Head(uriBuilder.build());
+			HttpResponse response = execute(request, null, msTimeOut);
+			HttpUtils.checkStatusCodes(response, 200);
+			return StoreFileResult.buildHeaders(response, Response.ok())
+					.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {
@@ -69,34 +84,29 @@ public class StoreSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public Response getFile(String schemaName) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Response headFile(String schemaName, String path) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Response headFile(String schemaName) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Response putFile(String schemaName, String path,
-			InputStream inputStream) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Response createDirectory(String schemaName, String path) {
-		// TODO Auto-generated method stub
-		return null;
+			InputStream inputStream, Long lastModified, Integer msTimeout,
+			Integer target) {
+		try {
+			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
+					"/", path);
+			if (lastModified != null)
+				uriBuilder.setParameter("last_modified",
+						lastModified.toString());
+			if (msTimeout != null)
+				uriBuilder.setParameter("timeout", msTimeout.toString());
+			if (target != null)
+				uriBuilder.setParameter("target", target.toString());
+			Request request = Request.Post(uriBuilder.build());
+			HttpResponse response = execute(request, inputStream, msTimeout);
+			HttpUtils.checkStatusCodes(response, 200);
+			return Response.ok("OK", MediaType.TEXT_PLAIN).build();
+		} catch (HttpResponseEntityException e) {
+			throw e.getWebApplicationException();
+		} catch (URISyntaxException | IOException e) {
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	@Override

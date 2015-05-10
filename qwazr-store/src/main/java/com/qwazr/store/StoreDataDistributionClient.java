@@ -15,10 +15,16 @@
  */
 package com.qwazr.store;
 
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 
+import javax.ws.rs.core.Response;
+
+import org.apache.commons.io.IOUtils;
+
 import com.qwazr.store.StoreSingleClient.PrefixPath;
+import com.qwazr.utils.server.ServerException;
 
 public class StoreDataDistributionClient extends
 		StoreMultiClientAbstract<String, StoreSingleClient> implements
@@ -34,6 +40,21 @@ public class StoreDataDistributionClient extends
 	protected StoreSingleClient newClient(String url, int msTimeOut)
 			throws URISyntaxException {
 		return new StoreSingleClient(url, PrefixPath.data, msTimeOut);
+	}
+
+	@Override
+	public Response putFile(String schemaName, String path,
+			InputStream inputStream, Long lastModified, Integer msTimeout,
+			Integer target) {
+
+		try {
+			return getClientByPos(target).putFile(schemaName, path,
+					inputStream, lastModified, msTimeout, target);
+		} catch (Exception e) {
+			throw new ServerException(e).getTextException();
+		} finally {
+			IOUtils.closeQuietly(inputStream);
+		}
 	}
 
 }

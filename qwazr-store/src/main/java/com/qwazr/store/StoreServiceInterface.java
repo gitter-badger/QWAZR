@@ -27,6 +27,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.qwazr.utils.server.RestApplication;
@@ -34,36 +35,31 @@ import com.qwazr.utils.server.RestApplication;
 public interface StoreServiceInterface {
 
 	@GET
-	@Path("/{schema_name}/{path : .+}")
+	@Path("/{schema_name}/{path : .*}")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getFile(@PathParam("schema_name") String schemaName,
-			@PathParam("path") String path);
-
-	@GET
-	@Path("/{schema_name}")
-	public Response getFile(@PathParam("schema_name") String schemaName);
+			@PathParam("path") String path,
+			@QueryParam("timeout") Integer msTimeout);
 
 	@HEAD
-	@Path("/{schema_name}/{path : .+}")
+	@Path("/{schema_name}/{path : .*}")
 	public Response headFile(@PathParam("schema_name") String schemaName,
-			@PathParam("path") String path);
-
-	@HEAD
-	@Path("/{schema_name}")
-	public Response headFile(@PathParam("schema_name") String schemaName);
+			@PathParam("path") String path,
+			@QueryParam("timeout") Integer msTimeout);
 
 	@PUT
-	@Path("/{schema_name}/{path : .+}")
-	public Response putFile(@PathParam("schema_name") String schemaName,
-			@PathParam("path") String path, InputStream inputStream);
-
 	@POST
 	@Path("/{schema_name}/{path : .+}")
-	public Response createDirectory(
-			@PathParam("schema_name") String schemaName,
-			@PathParam("path") String path);
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response putFile(@PathParam("schema_name") String schemaName,
+			@PathParam("path") String path, InputStream inputStream,
+			@QueryParam("last_modified") Long lastModified,
+			@QueryParam("timeout") Integer msTimeout,
+			@QueryParam("target") Integer target);
 
 	@DELETE
 	@Path("/{schema_name}/{path : .+}")
+	@Produces(MediaType.TEXT_PLAIN)
 	public Response deleteFile(@PathParam("schema_name") String schemaName,
 			@PathParam("path") String path);
 

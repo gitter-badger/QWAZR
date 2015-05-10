@@ -104,4 +104,18 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
+	public static final File storeAsTempFile(InputStream inputStream)
+			throws IOException {
+		File tmpFile = File.createTempFile("qwazr-store", ".upload");
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(tmpFile);
+			IOUtils.copy(inputStream, fos);
+			return tmpFile;
+		} finally {
+			if (fos != null)
+				IOUtils.closeQuietly(fos);
+		}
+	}
+
 }
