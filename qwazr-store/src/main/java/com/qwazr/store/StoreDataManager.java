@@ -160,7 +160,8 @@ class StoreDataManager {
 	final File putFile(String schema, String relativePath,
 			InputStream inputStream, Long lastModified) throws ServerException,
 			IOException {
-		File file = getFile(schema, relativePath);
+		File schemaDataDir = getSchemaDataDir(schema);
+		File file = getFile(schemaDataDir, relativePath);
 		if (file.exists() && file.isDirectory())
 			throw new ServerException(Status.CONFLICT,
 					"Error. A directory already exists: " + relativePath);
@@ -169,6 +170,9 @@ class StoreDataManager {
 			tmpFile = IOUtils.storeAsTempFile(inputStream);
 			if (lastModified != null)
 				tmpFile.setLastModified(lastModified);
+			File parent = file.getParentFile();
+			if (!parent.exists())
+				parent.mkdir();
 			tmpFile.renameTo(file);
 			tmpFile = null;
 			return file;

@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import com.qwazr.store.StoreSingleClient.PrefixPath;
 import com.qwazr.utils.IOUtils;
@@ -70,7 +71,11 @@ public class StoreDataReplicationClient extends
 				});
 			}
 			ThreadUtils.invokeAndJoin(executor, threads);
-			return ThreadUtils.getFirstResult(threads);
+			Response response = ThreadUtils.getFirstResult(threads);
+			if (response == null)
+				throw new ServerException(Status.NOT_FOUND, "File not found: "
+						+ path);
+			return response;
 		} catch (Exception e) {
 			throw ServerException.getTextException(e);
 		}

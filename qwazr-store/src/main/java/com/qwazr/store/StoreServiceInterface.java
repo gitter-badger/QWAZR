@@ -35,14 +35,20 @@ import com.qwazr.utils.server.RestApplication;
 public interface StoreServiceInterface {
 
 	@GET
-	@Path("/{schema_name}/{path : .*}")
+	@Path("/{schema_name}/{path : .+}")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getFile(@PathParam("schema_name") String schemaName,
 			@PathParam("path") String path,
 			@QueryParam("timeout") Integer msTimeout);
 
+	@GET
+	@Path("/{schema_name}")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public Response getFile(@PathParam("schema_name") String schemaName,
+			@QueryParam("timeout") Integer msTimeout);
+
 	@HEAD
-	@Path("/{schema_name}/{path : .*}")
+	@Path("/{schema_name}/{path : .+}")
 	public Response headFile(@PathParam("schema_name") String schemaName,
 			@PathParam("path") String path,
 			@QueryParam("timeout") Integer msTimeout);

@@ -49,6 +49,11 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 	}
 
 	@Override
+	public Response getFile(String schemaName, Integer msTimeout) {
+		return getFile(schemaName, "/", msTimeout);
+	}
+
+	@Override
 	public Response headFile(String schemaName, String path, Integer msTimeout) {
 		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
 	}

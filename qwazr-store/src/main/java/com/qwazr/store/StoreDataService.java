@@ -58,6 +58,11 @@ public class StoreDataService implements StoreServiceInterface {
 	}
 
 	@Override
+	public Response getFile(String schemaName, Integer msTimeout) {
+		return getFile(schemaName, "/", msTimeout);
+	}
+
+	@Override
 	public Response headFile(String schemaName, String path, Integer msTimeout) {
 		try {
 			File file = getExistingFile(schemaName, path);

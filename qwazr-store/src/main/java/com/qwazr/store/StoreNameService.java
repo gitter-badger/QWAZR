@@ -69,6 +69,11 @@ public class StoreNameService implements StoreServiceInterface {
 	}
 
 	@Override
+	public Response getFile(String schemaName, Integer msTimeout) {
+		return getFile(schemaName, "/", msTimeout);
+	}
+
+	@Override
 	public Response headFile(String schemaName, String path, Integer msTimeout) {
 		try {
 			return getDataClient(getSchema(schemaName, false, msTimeout).nodes,

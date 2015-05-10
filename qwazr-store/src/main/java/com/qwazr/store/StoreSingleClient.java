@@ -64,6 +64,11 @@ public class StoreSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
+	public Response getFile(String schemaName, Integer msTimeout) {
+		return getFile(schemaName, "/", msTimeout);
+	}
+
+	@Override
 	public Response headFile(String schemaName, String path, Integer msTimeout) {
 		try {
 			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
@@ -121,8 +126,10 @@ public class StoreSingleClient extends JsonClientAbstract implements
 			Request request = Request.Delete(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
-			return StoreFileResult.buildHeaders(response, Response.ok())
-					.build();
+			return StoreFileResult.buildHeaders(
+					response,
+					Response.ok(response.getStatusLine().getReasonPhrase(),
+							MediaType.TEXT_PLAIN)).build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {

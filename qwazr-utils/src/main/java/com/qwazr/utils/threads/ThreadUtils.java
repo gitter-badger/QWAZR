@@ -139,7 +139,6 @@ public class ThreadUtils {
 		for (FunctionExceptionCatcher<T> callable : callables)
 			if (callable.getResult() != null)
 				return callable.getResult();
-		System.err.println("M'enfinf");
 		return null;
 	}
 
