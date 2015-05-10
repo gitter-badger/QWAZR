@@ -61,7 +61,8 @@ public interface StoreServiceInterface {
 	@Path("/{schema_name}/{path : .+}")
 	@Produces(MediaType.TEXT_PLAIN)
 	public Response deleteFile(@PathParam("schema_name") String schemaName,
-			@PathParam("path") String path);
+			@PathParam("path") String path,
+			@QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/")

@@ -97,9 +97,14 @@ public class StoreNameService implements StoreServiceInterface {
 	}
 
 	@Override
-	public Response deleteFile(String schemaName, String path) {
-		// TODO Auto-generated method stub
-		return null;
+	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
+		try {
+			StoreSchemaDefinition schemaDef = getSchemaOrNotFound(schemaName);
+			return getDataClient(schemaDef.nodes, msTimeout).deleteFile(
+					schemaName, path, msTimeout);
+		} catch (ServerException | URISyntaxException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override

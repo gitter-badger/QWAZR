@@ -61,7 +61,7 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 	}
 
 	@Override
-	public Response deleteFile(String schemaName, String path) {
+	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
 		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
 	}
 

@@ -78,16 +78,17 @@ public class StoreDataService implements StoreServiceInterface {
 			File file = StoreDataManager.INSTANCE.putFile(schemaName, path,
 					inputStream, lastModified);
 			StoreFileResult storeFile = new StoreFileResult(file, false);
-			ResponseBuilder builder = Response.ok("OK", MediaType.TEXT_PLAIN);
+			ResponseBuilder builder = Response.ok("File created: " + path,
+					MediaType.TEXT_PLAIN);
 			storeFile.buildHeader(builder);
 			return builder.build();
 		} catch (ServerException | IOException e) {
-			return ServerException.getTextException(e).getResponse();
+			throw ServerException.getTextException(e);
 		}
 	}
 
 	@Override
-	public Response deleteFile(String schemaName, String path) {
+	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
 		try {
 			File file = StoreDataManager.INSTANCE.getFile(schemaName, path);
 			if (!file.exists())
@@ -103,9 +104,13 @@ public class StoreDataService implements StoreServiceInterface {
 			if (file.exists())
 				throw new ServerException(Status.INTERNAL_SERVER_ERROR,
 						"Unable to delete the file: " + path);
-			return Response.ok("File deleted: " + path).build();
+			File parent = file.getParentFile();
+			if (parent.list().length == 0)
+				parent.delete();
+			return Response.ok("File deleted: " + path, MediaType.TEXT_PLAIN)
+					.build();
 		} catch (ServerException e) {
-			return ServerException.getTextException(e).getResponse();
+			throw ServerException.getTextException(e);
 		}
 	}
 

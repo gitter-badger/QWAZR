@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-import javax.ws.rs.core.MediaType;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import com.qwazr.store.StoreSingleClient.PrefixPath;
@@ -47,6 +47,33 @@ public class StoreDataReplicationClient extends
 	protected StoreDataDistributionClient newClient(String[] urls, int msTimeOut)
 			throws URISyntaxException {
 		return new StoreDataDistributionClient(executor, urls, msTimeOut);
+	}
+
+	@Override
+	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
+		try {
+			List<FunctionExceptionCatcher<Response>> threads = new ArrayList<>(
+					size());
+			for (StoreDataDistributionClient client : this) {
+				threads.add(new FunctionExceptionCatcher<Response>() {
+					@Override
+					public Response execute() throws Exception {
+						try {
+							return client.deleteFile(schemaName, path,
+									msTimeout);
+						} catch (WebApplicationException e) {
+							if (e.getResponse().getStatus() == 404)
+								return null;
+							throw e;
+						}
+					}
+				});
+			}
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return ThreadUtils.getFirstResult(threads);
+		} catch (Exception e) {
+			throw ServerException.getTextException(e);
+		}
 	}
 
 	@Override
@@ -75,9 +102,9 @@ public class StoreDataReplicationClient extends
 			}
 
 			ThreadUtils.invokeAndJoin(executor, threads);
-			return Response.ok("OK", MediaType.TEXT_PLAIN).build();
+			return ThreadUtils.getFirstResult(threads);
 		} catch (Exception e) {
-			throw new ServerException(e).getTextException();
+			throw ServerException.getTextException(e);
 		} finally {
 			if (tmpFile != null)
 				tmpFile.delete();

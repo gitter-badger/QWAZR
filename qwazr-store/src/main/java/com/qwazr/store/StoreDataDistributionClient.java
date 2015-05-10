@@ -17,14 +17,19 @@ package com.qwazr.store;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.IOUtils;
 
 import com.qwazr.store.StoreSingleClient.PrefixPath;
 import com.qwazr.utils.server.ServerException;
+import com.qwazr.utils.threads.ThreadUtils;
+import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 
 public class StoreDataDistributionClient extends
 		StoreMultiClientAbstract<String, StoreSingleClient> implements
@@ -54,6 +59,37 @@ public class StoreDataDistributionClient extends
 			throw new ServerException(e).getTextException();
 		} finally {
 			IOUtils.closeQuietly(inputStream);
+		}
+	}
+
+	@Override
+	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
+
+		try {
+
+			List<FunctionExceptionCatcher<Response>> threads = new ArrayList<>(
+					size());
+			for (StoreSingleClient client : this) {
+				threads.add(new FunctionExceptionCatcher<Response>() {
+					@Override
+					public Response execute() throws Exception {
+						try {
+							return client.deleteFile(schemaName, path,
+									msTimeout);
+						} catch (WebApplicationException e) {
+							if (e.getResponse().getStatus() == 404)
+								return null;
+							throw e;
+						}
+					}
+				});
+			}
+
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return ThreadUtils.getFirstResult(threads);
+
+		} catch (Exception e) {
+			throw ServerException.getJsonException(e);
 		}
 	}
 

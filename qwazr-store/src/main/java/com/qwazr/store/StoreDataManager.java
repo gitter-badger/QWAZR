@@ -109,6 +109,33 @@ class StoreDataManager {
 		}
 	}
 
+	private File getSchemaDataDir(String schemaName) throws ServerException {
+		rwlSchemas.r.lock();
+		try {
+			File schemaDataDir = schemaDataDirectoryMap.get(schemaName);
+			if (schemaDataDir != null)
+				return schemaDataDir;
+			throw new ServerException(Status.NOT_FOUND, "Schema not found: "
+					+ schemaName);
+		} finally {
+			rwlSchemas.r.unlock();
+		}
+	}
+
+	private File getFile(File schemaDataDir, String relativePath)
+			throws ServerException {
+		if (StringUtils.isEmpty(relativePath) || relativePath.equals("/"))
+			return schemaDataDir;
+		File finalFile = new File(schemaDataDir, relativePath);
+		File file = finalFile;
+		while (file != null) {
+			if (file.equals(schemaDataDir))
+				return finalFile;
+			file = file.getParentFile();
+		}
+		throw new ServerException(Status.FORBIDDEN, "Permission denied.");
+	}
+
 	/**
 	 * Get a File with a path relative to the schema directory. This method also
 	 * checks that the resolved path is a child of the schema directory
@@ -122,26 +149,12 @@ class StoreDataManager {
 	 */
 	final File getFile(String schema, String relativePath)
 			throws ServerException {
-		File schemaDataDir;
-		rwlSchemas.r.lock();
-		try {
-			schemaDataDir = schemaDataDirectoryMap.get(schema);
-			if (schemaDataDir == null)
-				throw new ServerException(Status.NOT_FOUND,
-						"Schema not found: " + schema);
-		} finally {
-			rwlSchemas.r.unlock();
-		}
-		if (StringUtils.isEmpty(relativePath) || relativePath.equals("/"))
-			return schemaDataDir;
-		File finalFile = new File(schemaDataDir, relativePath);
-		File file = finalFile;
-		while (file != null) {
-			if (file.equals(schemaDataDir))
-				return finalFile;
-			file = file.getParentFile();
-		}
-		throw new ServerException(Status.FORBIDDEN, "Permission denied.");
+		File schemaDataDir = getSchemaDataDir(schema);
+		File file = getFile(schemaDataDir, relativePath);
+		if (!file.exists())
+			throw new ServerException(Status.NOT_FOUND, "File not found: "
+					+ relativePath);
+		return file;
 	}
 
 	final File putFile(String schema, String relativePath,
@@ -163,5 +176,36 @@ class StoreDataManager {
 			if (tmpFile != null)
 				tmpFile.delete();
 		}
+	}
+
+	/**
+	 * Delete the file, and prune the parent directory if empty.
+	 * 
+	 * @param schema
+	 *            the name of the schema
+	 * @param relativePath
+	 *            the path of the file, relative to the schema
+	 * @return the file instance of the deleted file
+	 * @throws ServerException
+	 *             is thrown is the file does not exists or if deleting the file
+	 *             was not possible
+	 */
+	final File deleteFile(String schema, String relativePath)
+			throws ServerException {
+		File schemaDataDir = getSchemaDataDir(schema);
+		File file = getFile(schemaDataDir, relativePath);
+		if (!file.exists())
+			throw new ServerException(Status.NOT_FOUND, "File not found: "
+					+ relativePath);
+		file.delete();
+		if (file.exists())
+			throw new ServerException(Status.INTERNAL_SERVER_ERROR,
+					"Unable to delete the file: " + relativePath);
+		File parent = file.getParentFile();
+		if (parent.equals(schemaDataDir))
+			return file;
+		if (parent.list().length == 0)
+			parent.delete();
+		return file;
 	}
 }

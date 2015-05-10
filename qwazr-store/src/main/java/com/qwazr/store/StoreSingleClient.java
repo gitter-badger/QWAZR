@@ -34,7 +34,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.qwazr.utils.http.HttpResponseEntityException;
 import com.qwazr.utils.http.HttpUtils;
 import com.qwazr.utils.json.client.JsonClientAbstract;
-import com.qwazr.utils.server.ServerException;
 
 public class StoreSingleClient extends JsonClientAbstract implements
 		StoreServiceInterface {
@@ -59,8 +58,9 @@ public class StoreSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public Response getFile(String schemaName, String path, Integer msTimeOut) {
-		throw new ServerException(Status.NOT_ACCEPTABLE).getTextException();
+	public Response getFile(String schemaName, String path, Integer msTimeout) {
+		// TODO redirect!
+		return null;
 	}
 
 	@Override
@@ -100,7 +100,9 @@ public class StoreSingleClient extends JsonClientAbstract implements
 			Request request = Request.Post(uriBuilder.build());
 			HttpResponse response = execute(request, inputStream, msTimeout);
 			HttpUtils.checkStatusCodes(response, 200);
-			return Response.ok("OK", MediaType.TEXT_PLAIN).build();
+			return StoreFileResult.buildHeaders(response,
+					Response.ok("File created: " + path, MediaType.TEXT_PLAIN))
+					.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {
@@ -110,9 +112,23 @@ public class StoreSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public Response deleteFile(String schemaName, String path) {
-		// TODO Auto-generated method stub
-		return null;
+	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
+		try {
+			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
+					"/", path);
+			if (msTimeout != null)
+				uriBuilder.setParameter("timeout", msTimeout.toString());
+			Request request = Request.Delete(uriBuilder.build());
+			HttpResponse response = execute(request, null, msTimeOut);
+			HttpUtils.checkStatusCodes(response, 200);
+			return StoreFileResult.buildHeaders(response, Response.ok())
+					.build();
+		} catch (HttpResponseEntityException e) {
+			throw e.getWebApplicationException();
+		} catch (URISyntaxException | IOException e) {
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	private URIBuilder getSchemaBaseUrl(String schemaName, Boolean local,
