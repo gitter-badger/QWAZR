@@ -345,14 +345,31 @@ public class Database implements Closeable {
 		}
 	}
 
+	private FieldInterface getField(String field) throws IOException {
+		FieldInterface fieldInterface = fields.get(field);
+		if (fieldInterface != null)
+			return fieldInterface;
+		throw new IOException("Field not found: " + field);
+	}
+
 	public void setValues(Integer id, String field, Collection<String> values)
 			throws IOException {
-		fields.get(field).setValues(id, values);
+		rwlFields.r.lock();
+		try {
+			getField(field).setValues(id, values);
+		} finally {
+			rwlFields.r.unlock();
+		}
 	}
 
 	public void setValue(Integer id, String field, String value)
 			throws IOException {
-		fields.get(field).setValue(id, value);
+		rwlFields.r.lock();
+		try {
+			getField(field).setValue(id, value);
+		} finally {
+			rwlFields.r.unlock();
+		}
 	}
 
 	public Integer getNewPrimaryId(String id) {

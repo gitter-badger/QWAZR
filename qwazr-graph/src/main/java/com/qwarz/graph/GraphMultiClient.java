@@ -34,7 +34,6 @@ import com.qwarz.graph.model.GraphBase;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
-import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
@@ -54,19 +53,12 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public Set<String> list(Boolean local) {
+	public Set<String> list(Integer msTimeOut, Boolean local) {
 
 		try {
 
-			// If not global, just request the local node
-			if (local != null && local) {
-				GraphSingleClient client = getClientByUrl(ClusterManager.INSTANCE.myAddress);
-				if (client == null)
-					throw new ServerException(Status.NOT_ACCEPTABLE,
-							"Node not valid: "
-									+ ClusterManager.INSTANCE.myAddress);
-				return client.list(true);
-			}
+			if (local != null && local)
+				throw new ServerException(Status.NOT_IMPLEMENTED);
 
 			// We merge the result of all the nodes
 			TreeSet<String> globalSet = new TreeSet<String>();
@@ -77,7 +69,7 @@ public class GraphMultiClient extends
 
 					@Override
 					public void execute() throws Exception {
-						Set<String> set = client.list(true);
+						Set<String> set = client.list(msTimeOut, true);
 						synchronized (globalSet) {
 							if (set != null)
 								globalSet.addAll(set);
@@ -96,18 +88,12 @@ public class GraphMultiClient extends
 
 	@Override
 	public GraphBase createUpdateBase(String db_name, GraphBase base,
-			Boolean local) {
+			Integer msTimeOut, Boolean local) {
 
 		try {
 
-			if (local != null && local) {
-				GraphSingleClient client = getClientByUrl(ClusterManager.INSTANCE.myAddress);
-				if (client == null)
-					throw new ServerException(Status.NOT_ACCEPTABLE,
-							"Node not valid: "
-									+ ClusterManager.INSTANCE.myAddress);
-				return client.createUpdateBase(db_name, base, true);
-			}
+			if (local != null && local)
+				throw new ServerException(Status.NOT_IMPLEMENTED);
 
 			List<FunctionExceptionCatcher<GraphBase>> threads = new ArrayList<>(
 					size());
@@ -115,7 +101,8 @@ public class GraphMultiClient extends
 				threads.add(new FunctionExceptionCatcher<GraphBase>() {
 					@Override
 					public GraphBase execute() throws Exception {
-						return client.createUpdateBase(db_name, base, true);
+						return client.createUpdateBase(db_name, base,
+								msTimeOut, true);
 					}
 				});
 			}
@@ -129,12 +116,13 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphBase getBase(String db_name, Boolean local) {
+	public GraphBase getBase(String db_name, Integer msTimeOut, Boolean local) {
 		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
 				logger);
+
 		for (GraphSingleClient client : this) {
 			try {
-				return client.getBase(db_name, true);
+				return client.getBase(db_name, msTimeOut, true);
 			} catch (WebApplicationException e) {
 				if (e.getResponse().getStatus() == 404)
 					logger.warn(e.getMessage(), e);
@@ -148,19 +136,12 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphBase deleteBase(String db_name, Boolean local) {
+	public GraphBase deleteBase(String db_name, Integer msTimeOut, Boolean local) {
 
 		try {
 
-			// Is it local ?
-			if (local != null && local) {
-				GraphSingleClient client = getClientByUrl(ClusterManager.INSTANCE.myAddress);
-				if (client == null)
-					throw new ServerException(Status.NOT_ACCEPTABLE,
-							"Node not valid: "
-									+ ClusterManager.INSTANCE.myAddress);
-				return client.deleteBase(db_name, true);
-			}
+			if (local != null && local)
+				throw new ServerException(Status.NOT_IMPLEMENTED);
 
 			List<FunctionExceptionCatcher<GraphBase>> threads = new ArrayList<>(
 					size());
@@ -169,7 +150,7 @@ public class GraphMultiClient extends
 					@Override
 					public GraphBase execute() throws Exception {
 						try {
-							return client.deleteBase(db_name, true);
+							return client.deleteBase(db_name, msTimeOut, true);
 						} catch (WebApplicationException e) {
 							if (e.getResponse().getStatus() == 404)
 								return null;

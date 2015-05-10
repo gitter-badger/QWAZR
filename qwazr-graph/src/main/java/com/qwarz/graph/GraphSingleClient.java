@@ -48,7 +48,7 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	};
 
 	@Override
-	public Set<String> list(Boolean local) {
+	public Set<String> list(Integer msTimeOut, Boolean local) {
 		try {
 			URIBuilder uriBuilder = getBaseUrl("/graph");
 			if (local != null)
@@ -65,7 +65,7 @@ public class GraphSingleClient extends JsonClientAbstract implements
 
 	@Override
 	public GraphBase createUpdateBase(String db_name, GraphBase base,
-			Boolean local) {
+			Integer msTimeOut, Boolean local) {
 		try {
 			URIBuilder uriBuilder = getBaseUrl("/graph/", db_name);
 			if (local != null)
@@ -81,7 +81,7 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public GraphBase getBase(String db_name, Boolean local) {
+	public GraphBase getBase(String db_name, Integer msTimeOut, Boolean local) {
 		try {
 			URIBuilder uriBuilder = getBaseUrl("/graph/", db_name);
 			if (local != null)
@@ -97,7 +97,7 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public GraphBase deleteBase(String db_name, Boolean local) {
+	public GraphBase deleteBase(String db_name, Integer msTimeOut, Boolean local) {
 		try {
 			URIBuilder uriBuilder = getBaseUrl("/graph/", db_name);
 			if (local != null)

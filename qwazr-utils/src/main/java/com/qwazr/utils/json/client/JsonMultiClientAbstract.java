@@ -28,12 +28,35 @@ import org.slf4j.Logger;
 
 import com.qwazr.utils.ExceptionUtils.ExceptionHolder;
 
+/**
+ * 
+ * This class represents a connection to a set of servers
+ *
+ * @param <K>
+ *            the type of the key used to locate one server
+ * @param <V>
+ *            The type of the class which handle the connection to one server
+ */
 public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 
 	private final V[] clientsArray;
 	private final HashMap<K, V> clientsMap;
 	protected final ExecutorService executor;
 
+	/**
+	 * Create a new multi client
+	 * 
+	 * @param executor
+	 *            An executor service for parallels connections
+	 * @param clientArray
+	 *            an array of client connection
+	 * @param clientKeys
+	 *            an array of key values used to create the client connection
+	 * @param msTimeOut
+	 *            the default timeout
+	 * @throws URISyntaxException
+	 *             thrown in case of wrong URI syntax
+	 */
 	protected JsonMultiClientAbstract(ExecutorService executor,
 			V[] clientArray, K[] clientKeys, int msTimeOut)
 			throws URISyntaxException {
@@ -46,10 +69,10 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	}
 
 	/**
-	 * Create a new client
+	 * Create a new single client
 	 * 
-	 * @param url
-	 *            the destination URL
+	 * @param clientKey
+	 *            the key value of the single client
 	 * @param msTimeOut
 	 *            the default time out
 	 * @return a new JsonClient
@@ -67,7 +90,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	/**
 	 * Fill a collection with the URLs of the clients
 	 * 
-	 * @param urlCollection
+	 * @param clientKeyCollection
 	 *            The collection to fill
 	 */
 	public void fillClientUrls(Collection<K> clientKeyCollection) {

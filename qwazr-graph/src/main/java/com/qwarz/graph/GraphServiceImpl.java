@@ -24,9 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
-import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.io.IOUtils;
@@ -47,44 +45,51 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	private static final Logger logger = LoggerFactory
 			.getLogger(GraphServiceImpl.class);
 
-	@Override
-	public Set<String> list(Boolean local) {
-
-		// Read the base in the local node
+	/**
+	 * Return the right client.
+	 * 
+	 * @param msTimeOut
+	 *            a time out used for remote connection
+	 * @param local
+	 *            pass true to force a local connection
+	 * @return a remote client or null for local
+	 * @throws URISyntaxException
+	 *             thrown if the URI is wrong
+	 */
+	private GraphMultiClient getMultiClient(Integer msTimeOut, Boolean local)
+			throws URISyntaxException {
 		if (local != null && local)
-			return GraphManager.INSTANCE.nameSet();
+			return null;
+		if (msTimeOut == null)
+			msTimeOut = 60000;
+		return GraphManager.INSTANCE.getMultiClient(msTimeOut);
+	}
+
+	@Override
+	public Set<String> list(Integer msTimeOut, Boolean local) {
 
 		// Read the bases present in the remote nodes
 		try {
-			TreeSet<String> globalSet = new TreeSet<String>();
-			GraphServiceInterface client = GraphManager.INSTANCE
-					.getMultiClient(60000);
+			GraphMultiClient client = getMultiClient(msTimeOut, local);
 			if (client == null)
-				return globalSet;
-			Set<String> set = client.list(false);
-			if (set != null)
-				globalSet.addAll(set);
-			return globalSet;
+				return GraphManager.INSTANCE.nameSet();
+			else
+				return client.list(msTimeOut, local);
 		} catch (URISyntaxException e) {
 			throw ServerException.getJsonException(e);
 		}
 	}
 
 	@Override
-	public GraphBase createUpdateBase(@PathParam("db_name") String db_name,
-			GraphBase base, Boolean local) {
-
+	public GraphBase createUpdateBase(String db_name, GraphBase base,
+			Integer msTimeOut, Boolean local) {
 		try {
-			if (local != null && local) {
+			GraphMultiClient client = getMultiClient(msTimeOut, local);
+			if (client == null) {
 				GraphManager.INSTANCE.set(db_name, base);
 				GraphProcess.createDataIndex(db_name, base);
-				return base;
-			}
-
-			GraphMultiClient client = GraphManager.INSTANCE
-					.getMultiClient(60000);
-			if (client != null)
-				client.createUpdateBase(db_name, base, false);
+			} else
+				client.createUpdateBase(db_name, base, msTimeOut, false);
 			return base;
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
@@ -101,17 +106,13 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphBase getBase(String db_name, Boolean local) {
+	public GraphBase getBase(String db_name, Integer msTimeOut, Boolean local) {
 		try {
-			if (local != null && local)
+			GraphMultiClient client = getMultiClient(msTimeOut, local);
+			if (client == null)
 				return getBaseOrNotFound(db_name);
-			else {
-				GraphMultiClient client = GraphManager.INSTANCE
-						.getMultiClient(60000);
-				if (client != null)
-					return getBase(db_name, false);
-				return getBaseOrNotFound(db_name);
-			}
+			else
+				return client.getBase(db_name, msTimeOut, false);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
@@ -127,17 +128,13 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphBase deleteBase(String db_name, Boolean local) {
+	public GraphBase deleteBase(String db_name, Integer msTimeOut, Boolean local) {
 		try {
-			if (local != null && local)
+			GraphMultiClient client = getMultiClient(msTimeOut, local);
+			if (client == null)
 				return deleteBaseLocal(db_name);
-			else {
-				GraphMultiClient client = GraphManager.INSTANCE
-						.getMultiClient(60000);
-				if (client != null)
-					return client.deleteBase(db_name, false);
-				return deleteBaseLocal(db_name);
-			}
+			else
+				return client.deleteBase(db_name, msTimeOut, false);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
