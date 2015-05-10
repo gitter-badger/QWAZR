@@ -16,6 +16,7 @@
 package com.qwazr.store;
 
 import java.io.InputStream;
+import java.util.Set;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -67,23 +68,34 @@ public interface StoreServiceInterface {
 			@PathParam("path") String path);
 
 	@GET
+	@Path("/")
+	@Produces(RestApplication.APPLICATION_JSON_UTF8)
+	Set<String> getSchemas(@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
+
+	@GET
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public StoreSchemaDefinition getSchema(
-			@PathParam("schema_name") String schemaName);
+			@PathParam("schema_name") String schemaName,
+			@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
 
 	@POST
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public StoreSchemaDefinition createSchema(
 			@PathParam("schema_name") String schemaName,
-			@QueryParam("local") Boolean local, StoreSchemaDefinition schemaDef);
+			StoreSchemaDefinition schemaDef,
+			@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
 
 	@DELETE
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public StoreSchemaDefinition deleteSchema(
 			@PathParam("schema_name") String schemaName,
-			@QueryParam("local") Boolean local);
+			@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
 
 }

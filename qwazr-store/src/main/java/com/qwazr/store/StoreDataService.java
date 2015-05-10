@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -162,22 +163,34 @@ public class StoreDataService extends AbstractService implements
 	}
 
 	@Override
-	public StoreSchemaDefinition getSchema(String schemaName) {
+	public Set<String> getSchemas(Boolean local, Integer msTimeout) {
 		throw new ServerException(Status.NOT_IMPLEMENTED).getJsonException();
 	}
 
 	@Override
-	public StoreSchemaDefinition createSchema(String schemaName, Boolean local,
-			StoreSchemaDefinition schemaDefinition) {
-		StoreDataManager.INSTANCE.createSchema(schemaName);
-		return null;
+	public StoreSchemaDefinition getSchema(String schemaName, Boolean local,
+			Integer msTimeout) {
+		throw new ServerException(Status.NOT_IMPLEMENTED).getJsonException();
 	}
 
 	@Override
-	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local) {
+	public StoreSchemaDefinition createSchema(String schemaName,
+			StoreSchemaDefinition schemaDefinition, Boolean local,
+			Integer msTimeout) {
+		try {
+			StoreDataManager.INSTANCE.createSchema(schemaName);
+			return schemaDefinition;
+		} catch (IOException e) {
+			throw new ServerException(e).getJsonException();
+		}
+	}
+
+	@Override
+	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local,
+			Integer msTimeout) {
 		try {
 			StoreDataManager.INSTANCE.deleteSchema(schemaName);
-			return null;
+			return new StoreSchemaDefinition();
 		} catch (IOException e) {
 			throw new ServerException(e).getJsonException();
 		}

@@ -44,7 +44,7 @@ class StoreDataManager {
 	private final Map<String, File> schemaDataDirectoryMap;
 	private final File storeDirectory;
 
-	private StoreDataManager(File storeDirectory) {
+	private StoreDataManager(File storeDirectory) throws IOException {
 		this.schemaDataDirectoryMap = new ConcurrentHashMap<String, File>();
 		this.storeDirectory = storeDirectory;
 		File[] schemaFiles = storeDirectory
@@ -53,14 +53,24 @@ class StoreDataManager {
 			INSTANCE.addSchema(schemaFile);
 	}
 
-	private final void addSchema(File schemaFile) {
+	private final void addSchema(File schemaFile) throws IOException {
+		if (!schemaFile.exists()) {
+			schemaFile.mkdir();
+			if (!schemaFile.exists())
+				throw new IOException("Unable to create the directory: "
+						+ schemaFile.getAbsolutePath());
+		}
 		File dataFile = new File(schemaFile, "data");
-		if (!dataFile.exists())
+		if (!dataFile.exists()) {
 			dataFile.mkdir();
+			if (!dataFile.exists())
+				throw new IOException("Unable to create the directory: "
+						+ schemaFile.getAbsolutePath());
+		}
 		schemaDataDirectoryMap.put(schemaFile.getName(), dataFile);
 	}
 
-	public void createSchema(String schemaName) {
+	public void createSchema(String schemaName) throws IOException {
 		rwlSchemas.r.lock();
 		try {
 			if (schemaDataDirectoryMap.containsKey(schemaName))

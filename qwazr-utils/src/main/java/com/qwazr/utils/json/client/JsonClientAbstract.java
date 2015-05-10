@@ -76,7 +76,8 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 			sb.append(path);
 		if (paths != null)
 			for (String path : paths)
-				sb.append(path);
+				if (path != null)
+					sb.append(path);
 		URIBuilder uriBuilder = new URIBuilder().setScheme(scheme)
 				.setHost(host).setPort(port).setFragment(fragment);
 		if (sb.length() > 0)

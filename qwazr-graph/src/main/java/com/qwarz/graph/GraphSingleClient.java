@@ -44,15 +44,23 @@ public class GraphSingleClient extends JsonClientAbstract implements
 		super(url, msTimeOut);
 	}
 
+	private URIBuilder getGraphBaseUrl(String db_name, Boolean local,
+			Integer msTimeout) throws URISyntaxException {
+		URIBuilder uriBuilder = getBaseUrl("/graph/", db_name);
+		if (local != null)
+			uriBuilder.setParameter("local", local.toString());
+		if (msTimeout != null)
+			uriBuilder.setParameter("timeout", msTimeout.toString());
+		return uriBuilder;
+	}
+
 	public final static TypeReference<TreeSet<String>> SetStringTypeRef = new TypeReference<TreeSet<String>>() {
 	};
 
 	@Override
 	public Set<String> list(Integer msTimeOut, Boolean local) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/graph");
-			if (local != null)
-				uriBuilder.setParameter("local", local.toString());
+			URIBuilder uriBuilder = getGraphBaseUrl(null, local, null);
 			Request request = Request.Get(uriBuilder.build());
 			return execute(request, null, msTimeOut, SetStringTypeRef, 200);
 		} catch (HttpResponseEntityException e) {
@@ -67,9 +75,7 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	public GraphBase createUpdateBase(String db_name, GraphBase base,
 			Integer msTimeOut, Boolean local) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/graph/", db_name);
-			if (local != null)
-				uriBuilder.setParameter("local", local.toString());
+			URIBuilder uriBuilder = getGraphBaseUrl(db_name, local, msTimeOut);
 			Request request = Request.Post(uriBuilder.build());
 			return execute(request, base, msTimeOut, GraphBase.class, 200);
 		} catch (HttpResponseEntityException e) {
@@ -83,9 +89,7 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	@Override
 	public GraphBase getBase(String db_name, Integer msTimeOut, Boolean local) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/graph/", db_name);
-			if (local != null)
-				uriBuilder.setParameter("local", local.toString());
+			URIBuilder uriBuilder = getGraphBaseUrl(db_name, local, msTimeOut);
 			Request request = Request.Get(uriBuilder.build());
 			return execute(request, null, msTimeOut, GraphBase.class, 200);
 		} catch (HttpResponseEntityException e) {
@@ -99,9 +103,7 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	@Override
 	public GraphBase deleteBase(String db_name, Integer msTimeOut, Boolean local) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/graph/", db_name);
-			if (local != null)
-				uriBuilder.setParameter("local", local.toString());
+			URIBuilder uriBuilder = getGraphBaseUrl(db_name, local, msTimeOut);
 			Request request = Request.Delete(uriBuilder.build());
 			return execute(request, null, msTimeOut, GraphBase.class, 200);
 		} catch (HttpResponseEntityException e) {
