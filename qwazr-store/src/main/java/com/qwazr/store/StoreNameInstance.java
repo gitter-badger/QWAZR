@@ -15,12 +15,24 @@
  */
 package com.qwazr.store;
 
+import java.io.Closeable;
 import java.io.File;
 
-public class StoreNameInstance {
+public class StoreNameInstance implements Closeable {
 
 	public StoreNameInstance(File directory, String schemaName) {
 		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+
+	}
+
+	void delete() {
+		// TODO Auto-generated method stub
+
 	}
 
 }

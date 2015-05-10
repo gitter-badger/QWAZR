@@ -43,7 +43,8 @@ public interface GraphServiceInterface {
 	@GET
 	@Path("/")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public Set<String> list(@QueryParam("local") Boolean local);
+	public Set<String> list(@QueryParam("timeout") Integer msTimeOut,
+			@QueryParam("local") Boolean local);
 
 	@PUT
 	@POST
@@ -51,18 +52,21 @@ public interface GraphServiceInterface {
 	@Consumes(RestApplication.APPLICATION_JSON_UTF8)
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public GraphBase createUpdateBase(@PathParam("db_name") String db_name,
-			GraphBase base, @QueryParam("local") Boolean local);
+			GraphBase base, @QueryParam("timeout") Integer msTimeOut,
+			@QueryParam("local") Boolean local);
 
 	@GET
 	@Path("/{db_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public GraphBase getBase(@PathParam("db_name") String db_name,
+			@QueryParam("timeout") Integer msTimeOut,
 			@QueryParam("local") Boolean local);
 
 	@DELETE
 	@Path("/{db_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public GraphBase deleteBase(@PathParam("db_name") String db_name,
+			@QueryParam("timeout") Integer msTimeOut,
 			@QueryParam("local") Boolean local);
 
 	@PUT

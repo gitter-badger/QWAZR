@@ -20,9 +20,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +31,7 @@ import java.util.TreeMap;
 
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -70,13 +71,11 @@ public class ClusterManager {
 		}
 	}
 
-	public static final String MASTER_SERVICE_NAME = "master".intern();
-
 	public static final String CLUSTER_CONFIGURATION_NAME = "cluster.yaml";
 
 	private final ClusterNodeMap clusterNodeMap;
 
-	private final Set<String> clusterMasterSet;
+	private final String[] clusterMasterArray;
 
 	private final ClusterMultiClient clusterClient;
 
@@ -105,7 +104,7 @@ public class ClusterManager {
 		if (clusterConfiguration == null
 				|| clusterConfiguration.masters == null
 				|| clusterConfiguration.masters.isEmpty()) {
-			clusterMasterSet = null;
+			clusterMasterArray = null;
 			clusterNodeMap = null;
 			clusterClient = null;
 			isMaster = false;
@@ -115,17 +114,18 @@ public class ClusterManager {
 
 		// Build the master list and check if I am a master
 		boolean isMaster = false;
-		clusterMasterSet = new HashSet<String>();
+		clusterMasterArray = new String[clusterConfiguration.masters.size()];
+		int i = 0;
 		for (String master : clusterConfiguration.masters) {
 			String masterAddress = ClusterNode.toAddress(master);
 			logger.info("Add a master: " + masterAddress);
-			clusterMasterSet.add(masterAddress);
+			clusterMasterArray[i++] = masterAddress;
 			if (masterAddress == myAddress) {
 				isMaster = true;
 				logger.info("I am a master!");
 			}
 		}
-		clusterClient = new ClusterMultiClient(clusterMasterSet, 60000);
+		clusterClient = new ClusterMultiClient(clusterMasterArray, 60000);
 		this.isMaster = isMaster;
 		if (!isMaster) {
 			clusterNodeMap = null;
@@ -141,7 +141,7 @@ public class ClusterManager {
 	 * Load the node list from another master
 	 */
 	void loadNodesFromOtherMaster() {
-		for (String master : clusterMasterSet) {
+		for (String master : clusterMasterArray) {
 			if (master == myAddress)
 				continue;
 			try {
@@ -198,21 +198,30 @@ public class ClusterManager {
 		return checkMaster().getNodeList();
 	}
 
-	public Set<String> getMasterSet() {
-		return clusterMasterSet;
+	public String[] getMasterArray() {
+		return clusterMasterArray;
 	}
 
 	public boolean isMaster() {
 		return isMaster;
 	}
 
-	private List<String> buildList(ClusterNode[] nodes) {
-		if (nodes == null)
-			return ClusterServiceStatusJson.EMPTY_LIST;
-		List<String> nodeNameList = new ArrayList<String>();
-		for (ClusterNode node : nodes)
-			nodeNameList.add(node.address);
-		return nodeNameList;
+	private String[] buildArray(ClusterNode[]... nodesArray) {
+		if (nodesArray == null)
+			return ArrayUtils.EMPTY_STRING_ARRAY;
+		int count = 0;
+		for (ClusterNode[] nodes : nodesArray)
+			if (nodes != null)
+				count += nodes.length;
+		if (count == 0)
+			return ArrayUtils.EMPTY_STRING_ARRAY;
+
+		String[] array = new String[count];
+		int i = 0;
+		for (ClusterNode[] nodes : nodesArray)
+			for (ClusterNode node : nodes)
+				array[i++] = node.address;
+		return array;
 	}
 
 	private Cache getNodeSetCache(String service) throws ServerException {
@@ -222,18 +231,25 @@ public class ClusterManager {
 		return nodeSet.getCache();
 	}
 
-	public List<String> getInactiveNodes(String service) throws ServerException {
+	public String[] getAllNodes(String service) throws ServerException {
 		Cache cache = getNodeSetCache(service);
 		if (cache == null)
-			return ClusterServiceStatusJson.EMPTY_LIST;
-		return buildList(cache.activeArray);
+			return ArrayUtils.EMPTY_STRING_ARRAY;
+		return buildArray(cache.activeArray, cache.inactiveArray);
 	}
 
-	public List<String> getActiveNodes(String service) throws ServerException {
+	public String[] getInactiveNodes(String service) throws ServerException {
 		Cache cache = getNodeSetCache(service);
 		if (cache == null)
-			return ClusterServiceStatusJson.EMPTY_LIST;
-		return buildList(cache.activeArray);
+			return ArrayUtils.EMPTY_STRING_ARRAY;
+		return buildArray(cache.inactiveArray);
+	}
+
+	public String[] getActiveNodes(String service) throws ServerException {
+		Cache cache = getNodeSetCache(service);
+		if (cache == null)
+			return ArrayUtils.EMPTY_STRING_ARRAY;
+		return buildArray(cache.activeArray);
 	}
 
 	/**
@@ -268,10 +284,10 @@ public class ClusterManager {
 		Cache cache = getNodeSetCache(service);
 		if (cache == null)
 			return new ClusterServiceStatusJson();
-		List<String> activeList = buildList(cache.activeArray);
+		String[] activeList = buildArray(cache.activeArray);
 		if (cache.inactiveArray == null)
 			return new ClusterServiceStatusJson(activeList,
-					ClusterServiceStatusJson.EMPTY_MAP);
+					Collections.emptyMap());
 		Map<String, ClusterNodeStatusJson> inactiveMap = new LinkedHashMap<String, ClusterNodeStatusJson>();
 		for (ClusterNode node : cache.inactiveArray)
 			inactiveMap.put(node.address, node.getStatus());
@@ -285,7 +301,7 @@ public class ClusterManager {
 	}
 
 	public void registerMe(String... services) {
-		if (clusterClient == null || clusterMasterSet == null
+		if (clusterClient == null || clusterMasterArray == null
 				|| services == null || services.length == 0)
 			return;
 		logger.info("Registering to the master: "
@@ -341,4 +357,5 @@ public class ClusterManager {
 	public ClusterMultiClient getClusterClient() {
 		return clusterClient;
 	}
+
 }

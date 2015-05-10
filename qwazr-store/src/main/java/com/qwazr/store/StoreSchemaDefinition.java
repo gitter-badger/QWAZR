@@ -21,6 +21,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_EMPTY)
 public class StoreSchemaDefinition {
 
-	public String[] nodes;
+	public Integer replication_factor;
 
+	public Integer distribution_factor;
+
+	public String[][] nodes;
+
+	public StoreSchemaDefinition() {
+		nodes = null;
+		replication_factor = null;
+		distribution_factor = null;
+	}
 }

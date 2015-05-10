@@ -28,51 +28,73 @@ import org.slf4j.Logger;
 
 import com.qwazr.utils.ExceptionUtils.ExceptionHolder;
 
-public abstract class JsonMultiClientAbstract<T extends JsonClientAbstract>
-		implements Iterable<T> {
+/**
+ * 
+ * This class represents a connection to a set of servers
+ *
+ * @param <K>
+ *            the type of the key used to locate one server
+ * @param <V>
+ *            The type of the class which handle the connection to one server
+ */
+public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 
-	private final T[] clientsArray;
-	private final HashMap<String, T> clientsMap;
+	private final V[] clientsArray;
+	private final HashMap<K, V> clientsMap;
 	protected final ExecutorService executor;
 
+	/**
+	 * Create a new multi client
+	 * 
+	 * @param executor
+	 *            An executor service for parallels connections
+	 * @param clientArray
+	 *            an array of client connection
+	 * @param clientKeys
+	 *            an array of key values used to create the client connection
+	 * @param msTimeOut
+	 *            the default timeout
+	 * @throws URISyntaxException
+	 *             thrown in case of wrong URI syntax
+	 */
 	protected JsonMultiClientAbstract(ExecutorService executor,
-			T[] clientArray, Collection<String> urls, int msTimeOut)
+			V[] clientArray, K[] clientKeys, int msTimeOut)
 			throws URISyntaxException {
 		this.executor = executor;
 		clientsArray = clientArray;
-		clientsMap = new HashMap<String, T>();
-		for (String url : urls)
-			clientsMap.put(url, newClient(url, msTimeOut));
+		clientsMap = new HashMap<K, V>();
+		for (K clientKey : clientKeys)
+			clientsMap.put(clientKey, newClient(clientKey, msTimeOut));
 		clientsMap.values().toArray(clientsArray);
 	}
 
 	/**
-	 * Create a new client
+	 * Create a new single client
 	 * 
-	 * @param url
-	 *            the destination URL
+	 * @param clientKey
+	 *            the key value of the single client
 	 * @param msTimeOut
 	 *            the default time out
 	 * @return a new JsonClient
 	 * @throws URISyntaxException
 	 *             if any error occurs
 	 */
-	protected abstract T newClient(String url, int msTimeOut)
+	protected abstract V newClient(K clientKey, int msTimeOut)
 			throws URISyntaxException;
 
 	@Override
-	public Iterator<T> iterator() {
+	public Iterator<V> iterator() {
 		return new JsonClientIterator();
 	}
 
 	/**
 	 * Fill a collection with the URLs of the clients
 	 * 
-	 * @param urlCollection
+	 * @param clientKeyCollection
 	 *            The collection to fill
 	 */
-	public void fillClientUrls(Collection<String> urlCollection) {
-		urlCollection.addAll(clientsMap.keySet());
+	public void fillClientUrls(Collection<K> clientKeyCollection) {
+		clientKeyCollection.addAll(clientsMap.keySet());
 	}
 
 	/**
@@ -87,11 +109,11 @@ public abstract class JsonMultiClientAbstract<T extends JsonClientAbstract>
 	 *            the URL of the client
 	 * @return the client which handle this URL
 	 */
-	public T getClientByUrl(String url) {
+	public V getClientByUrl(String url) {
 		return clientsMap.get(url.intern());
 	}
 
-	private class JsonClientIterator implements Iterator<T> {
+	private class JsonClientIterator implements Iterator<V> {
 
 		private int count = clientsArray.length;
 		private int pos = RandomUtils.nextInt(0, clientsArray.length);
@@ -102,8 +124,8 @@ public abstract class JsonMultiClientAbstract<T extends JsonClientAbstract>
 		}
 
 		@Override
-		public T next() {
-			T client = clientsArray[pos++];
+		public V next() {
+			V client = clientsArray[pos++];
 			if (pos == clientsArray.length)
 				pos = 0;
 			count--;

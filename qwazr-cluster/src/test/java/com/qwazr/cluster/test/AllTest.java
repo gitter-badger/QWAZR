@@ -18,12 +18,12 @@ package com.qwazr.cluster.test;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -62,7 +62,7 @@ public class AllTest {
 		Assert.assertNotNull(result);
 		Assert.assertTrue(result.is_master);
 		Assert.assertNotNull(result.masters);
-		Assert.assertTrue(result.masters.contains(CLIENT_ADDRESS));
+		Assert.assertTrue(ArrayUtils.contains(result.masters, CLIENT_ADDRESS));
 	}
 
 	@Test
@@ -120,7 +120,7 @@ public class AllTest {
 				Assert.assertNotNull(result.status);
 				if (result.active_count == 1) {
 					Assert.assertNotNull(result.active);
-					Assert.assertEquals(1, result.active.size());
+					Assert.assertEquals(1, result.active.length);
 					Assert.assertEquals(StatusEnum.ok, result.status);
 					activated_count++;
 				} else {
@@ -148,10 +148,10 @@ public class AllTest {
 	@Test
 	public void test22_get_active_list() throws URISyntaxException {
 		for (String service : SERVICES) {
-			List<String> result = getClusterClient().getActiveNodes(service);
+			String[] result = getClusterClient().getActiveNodes(service);
 			Assert.assertNotNull(result);
-			Assert.assertEquals(1, result.size());
-			Assert.assertEquals(CLIENT_ADDRESS, result.get(0));
+			Assert.assertEquals(1, result.length);
+			Assert.assertEquals(CLIENT_ADDRESS, result[0]);
 		}
 	}
 

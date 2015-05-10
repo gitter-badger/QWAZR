@@ -37,6 +37,8 @@ public interface JsonClientInterface {
 	 *            The class of the returned object
 	 * @param expectedCodes
 	 *            The expected HTTP status code(s)
+	 * @param <T>
+	 *            The type of the returned object
 	 * @return An instance of the expected class
 	 * @throws IOException
 	 *             if any IO error occur
@@ -58,6 +60,8 @@ public interface JsonClientInterface {
 	 *            the TypeRef of the returned object
 	 * @param expectedCodes
 	 *            The expected HTTP status code(s)
+	 * @param <T>
+	 *            The type of the returned object
 	 * @return An instance of the expected type
 	 * @throws IOException
 	 *             in case of IO error

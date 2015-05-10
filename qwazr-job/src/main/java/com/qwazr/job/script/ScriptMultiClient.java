@@ -16,10 +16,10 @@
 package com.qwazr.job.script;
 
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -34,16 +34,15 @@ import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
 
 public class ScriptMultiClient extends
-		JsonMultiClientAbstract<ScriptSingleClient> implements
+		JsonMultiClientAbstract<String, ScriptSingleClient> implements
 		ScriptServiceInterface {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(ScriptMultiClient.class);
 
-	public ScriptMultiClient(Collection<String> urls, int msTimeOut)
-			throws URISyntaxException {
-		// TODO Pass executor
-		super(null, new ScriptSingleClient[urls.size()], urls, msTimeOut);
+	public ScriptMultiClient(ExecutorService executor, String[] urls,
+			int msTimeOut) throws URISyntaxException {
+		super(executor, new ScriptSingleClient[urls.length], urls, msTimeOut);
 	}
 
 	@Override

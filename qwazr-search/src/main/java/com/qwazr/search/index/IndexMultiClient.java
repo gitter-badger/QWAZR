@@ -16,7 +16,6 @@
 package com.qwazr.search.index;
 
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,12 +25,12 @@ import javax.ws.rs.core.Response;
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 
 public class IndexMultiClient extends
-		JsonMultiClientAbstract<IndexSingleClient> implements
+		JsonMultiClientAbstract<String, IndexSingleClient> implements
 		IndexServiceInterface {
 
-	public IndexMultiClient(Collection<String> urls, int msTimeOut)
+	public IndexMultiClient(String[] urls, int msTimeOut)
 			throws URISyntaxException {
-		super(null, new IndexSingleClient[urls.size()], urls, msTimeOut);
+		super(null, new IndexSingleClient[urls.length], urls, msTimeOut);
 	}
 
 	@Override

@@ -23,12 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
+import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.server.ServerException;
 
-public class StoreDataManager {
+class StoreDataManager {
 
 	public static volatile StoreDataManager INSTANCE = null;
 
@@ -38,21 +40,61 @@ public class StoreDataManager {
 		INSTANCE = new StoreDataManager(storeDirectory);
 	}
 
-	public final Map<String, File> schemaDataDirectoryMap;
+	private final LockUtils.ReadWriteLock rwlSchemas = new LockUtils.ReadWriteLock();
+	private final Map<String, File> schemaDataDirectoryMap;
+	private final File storeDirectory;
 
 	private StoreDataManager(File storeDirectory) {
 		this.schemaDataDirectoryMap = new ConcurrentHashMap<String, File>();
+		this.storeDirectory = storeDirectory;
 		File[] schemaFiles = storeDirectory
 				.listFiles((FileFilter) DirectoryFileFilter.INSTANCE);
 		for (File schemaFile : schemaFiles)
 			INSTANCE.addSchema(schemaFile);
 	}
 
-	final void addSchema(File schemaFile) {
+	private final void addSchema(File schemaFile) {
 		File dataFile = new File(schemaFile, "data");
 		if (!dataFile.exists())
 			dataFile.mkdir();
 		schemaDataDirectoryMap.put(schemaFile.getName(), dataFile);
+	}
+
+	public void createSchema(String schemaName) {
+		rwlSchemas.r.lock();
+		try {
+			if (schemaDataDirectoryMap.containsKey(schemaName))
+				return;
+		} finally {
+			rwlSchemas.r.unlock();
+		}
+		rwlSchemas.w.lock();
+		try {
+			if (schemaDataDirectoryMap.containsKey(schemaName))
+				return;
+			addSchema(new File(storeDirectory, schemaName));
+		} finally {
+			rwlSchemas.w.unlock();
+		}
+	}
+
+	public void deleteSchema(String schemaName) throws IOException {
+		rwlSchemas.r.lock();
+		try {
+			if (!schemaDataDirectoryMap.containsKey(schemaName))
+				return;
+		} finally {
+			rwlSchemas.r.unlock();
+		}
+		rwlSchemas.w.lock();
+		try {
+			File schemaFile = schemaDataDirectoryMap.remove(schemaName);
+			if (schemaFile == null)
+				return;
+			FileUtils.deleteDirectory(schemaFile);
+		} finally {
+			rwlSchemas.w.unlock();
+		}
 	}
 
 	/**
@@ -68,10 +110,16 @@ public class StoreDataManager {
 	 */
 	final File getFile(String schema, String relativePath)
 			throws ServerException {
-		File schemaDataDir = schemaDataDirectoryMap.get(schema);
-		if (schemaDataDir == null)
-			throw new ServerException(Status.NOT_FOUND, "Schema not found: "
-					+ schema);
+		File schemaDataDir;
+		rwlSchemas.r.lock();
+		try {
+			schemaDataDir = schemaDataDirectoryMap.get(schema);
+			if (schemaDataDir == null)
+				throw new ServerException(Status.NOT_FOUND,
+						"Schema not found: " + schema);
+		} finally {
+			rwlSchemas.r.unlock();
+		}
 		if (StringUtils.isEmpty(relativePath) || relativePath.equals("/"))
 			return schemaDataDir;
 		File finalFile = new File(schemaDataDir, relativePath);
@@ -83,4 +131,5 @@ public class StoreDataManager {
 		}
 		throw new ServerException(Status.FORBIDDEN, "Permission denied.");
 	}
+
 }

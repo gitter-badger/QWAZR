@@ -17,12 +17,11 @@ package com.qwazr.affinities;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwazr.affinities.model.Affinity;
 import com.qwazr.utils.json.DirectoryJsonManager;
+import com.qwazr.utils.server.ServerException;
 
 public class AffinityManager extends DirectoryJsonManager<Affinity> {
 
@@ -31,11 +30,36 @@ public class AffinityManager extends DirectoryJsonManager<Affinity> {
 	public static void load(File directory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new AffinityManager(directory);
+		try {
+			INSTANCE = new AffinityManager(directory);
+		} catch (ServerException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	protected AffinityManager(File directory) throws JsonGenerationException,
-			JsonMappingException, JsonParseException, IOException {
+	protected AffinityManager(File directory) throws ServerException,
+			IOException {
 		super(directory, Affinity.class);
+	}
+
+	@Override
+	public Set<String> nameSet() {
+		return super.nameSet();
+	}
+
+	@Override
+	public Affinity get(String name) {
+		return super.get(name);
+	}
+
+	@Override
+	public void set(String name, Affinity affinity) throws IOException,
+			ServerException {
+		super.set(name, affinity);
+	}
+
+	@Override
+	public Affinity delete(String name) throws ServerException {
+		return super.delete(name);
 	}
 }

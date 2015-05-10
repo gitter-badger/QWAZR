@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.qwazr.utils.server.ServerException;
 
 public class DirectoryJsonManager<T> {
 
@@ -43,7 +44,7 @@ public class DirectoryJsonManager<T> {
 
 	protected DirectoryJsonManager(File directory, Class<T> instanceClass)
 			throws JsonGenerationException, JsonMappingException,
-			JsonParseException, IOException {
+			JsonParseException, IOException, ServerException {
 		this.instanceClass = instanceClass;
 		this.directory = directory;
 		this.instancesMap = new LinkedHashMap<String, T>();
@@ -54,8 +55,8 @@ public class DirectoryJsonManager<T> {
 		return new File(directory, name + ".json");
 	}
 
-	public void load() throws JsonGenerationException, JsonMappingException,
-			JsonParseException, IOException {
+	protected void load() throws JsonGenerationException, JsonMappingException,
+			JsonParseException, IOException, ServerException {
 		try {
 			File[] files = directory.listFiles(JsonFileFilter.INSTANCE);
 			if (files == null)
@@ -74,7 +75,7 @@ public class DirectoryJsonManager<T> {
 		instancesCache = new LinkedHashMap<String, T>(instancesMap);
 	}
 
-	public T delete(String name) {
+	protected T delete(String name) throws ServerException {
 		if (StringUtils.isEmpty(name))
 			return null;
 		name = name.intern();
@@ -89,8 +90,8 @@ public class DirectoryJsonManager<T> {
 		}
 	}
 
-	public void set(String name, T instance) throws JsonGenerationException,
-			JsonMappingException, IOException {
+	protected void set(String name, T instance) throws JsonGenerationException,
+			JsonMappingException, IOException, ServerException {
 		if (instance == null)
 			return;
 		if (StringUtils.isEmpty(name))
@@ -106,11 +107,11 @@ public class DirectoryJsonManager<T> {
 		}
 	}
 
-	public T get(String name) {
+	protected T get(String name) {
 		return instancesCache.get(name.intern());
 	}
 
-	public Set<String> nameSet() {
+	protected Set<String> nameSet() {
 		return instancesCache.keySet();
 	}
 }

@@ -309,13 +309,10 @@ public class ScriptManager {
 		}
 	}
 
-	public static ScriptMultiClient getClient(boolean removeMe)
-			throws URISyntaxException {
-		HashSet<String> nodes = new HashSet<String>(ClusterManager.INSTANCE
+	public ScriptMultiClient getNewClient() throws URISyntaxException {
+		// pass executor
+		return new ScriptMultiClient(null, ClusterManager.INSTANCE
 				.getClusterClient().getActiveNodes(
-						JobServer.SERVICE_NAME_SCRIPT));
-		if (removeMe)
-			nodes.remove(ClusterManager.INSTANCE.myAddress);
-		return new ScriptMultiClient(nodes, 60000);
+						JobServer.SERVICE_NAME_SCRIPT), 60000);
 	}
 }
