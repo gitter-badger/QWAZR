@@ -37,7 +37,7 @@ public class GraphDefinition {
 	}
 
 	public static enum PropertyTypeEnum {
-		indexed, stored;
+		indexed, stored, boost;
 	}
 
 	@XmlTransient

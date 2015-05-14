@@ -37,13 +37,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.qwarz.database.CollectorInterface.LongCounter;
+import com.qwarz.database.FieldInterface;
 import com.qwarz.database.FieldInterface.FieldDefinition;
 import com.qwarz.database.Query;
 import com.qwarz.database.Query.OrGroup;
 import com.qwarz.database.Query.QueryHook;
 import com.qwarz.database.Query.TermQuery;
 import com.qwarz.database.Table;
-import com.qwarz.database.UniqueKey;
+import com.qwarz.database.UniqueKey.UniqueStringKey;
 import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphDefinition.PropertyTypeEnum;
 import com.qwarz.graph.model.GraphNode;
@@ -59,7 +60,6 @@ public class GraphInstance {
 	private static final Logger logger = LoggerFactory
 			.getLogger(GraphInstance.class);
 
-	static final String FIELD_NODE_ID = "node_id";
 	static final String FIELD_PREFIX_PROPERTY = "prop.";
 	static final String FIELD_PREFIX_EDGE = "edge.";
 
@@ -96,9 +96,6 @@ public class GraphInstance {
 
 		List<FieldDefinition> fieldDefinitions = new ArrayList<FieldDefinition>();
 
-		fieldDefinitions.add(new FieldDefinition(FIELD_NODE_ID,
-				FieldDefinition.Type.STORED));
-
 		// Build the property fields
 		if (graphDef.node_properties != null) {
 			for (Map.Entry<String, PropertyTypeEnum> entry : graphDef.node_properties
@@ -107,11 +104,18 @@ public class GraphInstance {
 				switch (entry.getValue()) {
 				case indexed:
 					fieldDefinitions.add(new FieldDefinition(fieldName,
-							FieldDefinition.Type.INDEXED));
+							FieldDefinition.Type.STRING,
+							FieldDefinition.Mode.INDEXED));
 					break;
 				case stored:
 					fieldDefinitions.add(new FieldDefinition(fieldName,
-							FieldDefinition.Type.STORED));
+							FieldDefinition.Type.STRING,
+							FieldDefinition.Mode.STORED));
+					break;
+				case boost:
+					fieldDefinitions.add(new FieldDefinition(fieldName,
+							FieldDefinition.Type.DOUBLE,
+							FieldDefinition.Mode.INDEXED));
 					break;
 				}
 			}
@@ -122,7 +126,8 @@ public class GraphInstance {
 			for (String type : graphDef.edge_types) {
 				String fieldName = getEdgeField(type);
 				fieldDefinitions.add(new FieldDefinition(fieldName,
-						FieldDefinition.Type.INDEXED));
+						FieldDefinition.Type.STRING,
+						FieldDefinition.Mode.INDEXED));
 			}
 		}
 
@@ -148,20 +153,21 @@ public class GraphInstance {
 			throws ServerException, IOException {
 
 		Integer id = table.getPrimaryKeyIndex().getIdOrNew(node_id, null);
-		table.setValue(id, FIELD_NODE_ID, node_id);
 
 		// Populate the property fields
 		if (node.properties != null && !node.properties.isEmpty()) {
 			if (graphDef.node_properties == null)
 				throw new ServerException(Status.BAD_REQUEST,
 						"This graph database does not define any property.");
-			for (Map.Entry<String, String> entry : node.properties.entrySet()) {
+			for (Map.Entry<String, Object> entry : node.properties.entrySet()) {
 				String field = entry.getKey();
 				if (!graphDef.node_properties.containsKey(field))
 					throw new ServerException(Status.BAD_REQUEST,
 							"Unknown property name: " + field);
-				table.setValue(id, getPropertyField(field), entry.getValue()
-						.toString());
+				@SuppressWarnings("unchecked")
+				FieldInterface<String> fieldInterface = (FieldInterface<String>) table
+						.getField(getPropertyField(field));
+				fieldInterface.setValue(id, entry.getValue().toString());
 			}
 		}
 
@@ -170,15 +176,17 @@ public class GraphInstance {
 			if (graphDef.edge_types == null)
 				throw new ServerException(Status.BAD_REQUEST,
 						"This graph database does not define any edge.");
-			for (Map.Entry<String, Set<String>> entry : node.edges.entrySet()) {
+			for (Map.Entry<String, Set<Object>> entry : node.edges.entrySet()) {
 				String type = entry.getKey();
 				if (!graphDef.edge_types.contains(type))
 					throw new ServerException(Status.BAD_REQUEST,
 							"Unknown edge type: " + type);
 				if (entry.getValue() == null)
-					System.out.println("M'enfin !");
-				else
-					table.setValues(id, getEdgeField(type), entry.getValue());
+					continue;
+				@SuppressWarnings("unchecked")
+				FieldInterface<Object> fieldInterface = (FieldInterface<Object>) table
+						.getField(getEdgeField(type));
+				fieldInterface.setValues(id, entry.getValue());
 			}
 		}
 	}
@@ -273,13 +281,12 @@ public class GraphInstance {
 				returnedFields.add(getEdgeField(type));
 	}
 
-	private void populateGraphNode(Map<String, List<String>> document,
-			GraphNode node) {
+	private void populateGraphNode(Map<String, List<?>> document, GraphNode node) {
 		if (document == null)
 			return;
-		for (Map.Entry<String, List<String>> entry : document.entrySet()) {
+		for (Map.Entry<String, List<?>> entry : document.entrySet()) {
 			String field = entry.getKey();
-			List<String> values = entry.getValue();
+			List<?> values = entry.getValue();
 			if (values == null || values.isEmpty())
 				continue;
 			else if (field.startsWith(FIELD_PREFIX_PROPERTY)) {
@@ -287,7 +294,7 @@ public class GraphInstance {
 						field.substring(FIELD_PREFIX_PROPERTY.length()),
 						values.get(0));
 			} else if (field.startsWith(FIELD_PREFIX_EDGE)) {
-				for (String value : values)
+				for (Object value : values)
 					node.addEdge(field.substring(FIELD_PREFIX_EDGE.length()),
 							value);
 			}
@@ -313,7 +320,7 @@ public class GraphInstance {
 		Collection<String> returnedFields = new ArrayList<String>();
 		populateReturnedFields(returnedFields);
 
-		Map<String, List<String>> document = table.getDocument(node_id,
+		Map<String, List<?>> document = table.getDocument(node_id,
 				returnedFields);
 		if (document == null)
 			throw new ServerException(Status.NOT_FOUND, "Node not found: "
@@ -342,13 +349,13 @@ public class GraphInstance {
 		Collection<String> returnedFields = new ArrayList<String>();
 		populateReturnedFields(returnedFields);
 
-		List<Map<String, List<String>>> documents = table.getDocuments(
-				node_ids, returnedFields);
+		List<Map<String, List<?>>> documents = table.getDocuments(node_ids,
+				returnedFields);
 		if (documents == null || documents.isEmpty())
 			return null;
 		Iterator<String> iteratorId = node_ids.iterator();
 		Map<String, GraphNode> graphNodes = new LinkedHashMap<String, GraphNode>();
-		for (Map<String, List<String>> document : documents) {
+		for (Map<String, List<?>> document : documents) {
 			GraphNode node = new GraphNode();
 			populateGraphNode(document, node);
 			graphNodes.put(iteratorId.next(), node);
@@ -468,7 +475,7 @@ public class GraphInstance {
 				if (edge_set == null || edge_set.isEmpty())
 					continue;
 				for (String term : edge_set)
-					orGroup.add(new TermQuery(field, term));
+					orGroup.add(new TermQuery<String>(field, term));
 			}
 		}
 
@@ -478,13 +485,11 @@ public class GraphInstance {
 			Query query = Query.prepare(request.filters, new QueryHook() {
 
 				@Override
-				public Query query(Query query) {
+				public void query(Query query) {
 					if (query instanceof TermQuery) {
-						TermQuery tq = (TermQuery) query;
-						return new TermQuery(getPropertyField(tq.getField()),
-								tq.getValue());
+						TermQuery<?> tq = (TermQuery<?>) query;
+						tq.setField(getPropertyField(tq.getField()));
 					}
-					return query;
 				}
 			});
 			filterBitset = table.query(query, null);
@@ -554,7 +559,7 @@ public class GraphInstance {
 		private final Map<String, NodeScore> nodeScoreMap;
 		private final Double weight;
 		private final RoaringBitmap filterBitset;
-		private final UniqueKey primaryKeys;
+		private final UniqueStringKey primaryKeys;
 
 		public ScoreThread(Map<String, LongCounter> facets,
 				Map<String, NodeScore> nodeScoreMap, Double weight,

@@ -30,8 +30,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_EMPTY)
 public class GraphNode {
 
-	public Map<String, String> properties;
-	public Map<String, Set<String>> edges;
+	public Map<String, Object> properties;
+	public Map<String, Set<Object>> edges;
 
 	public GraphNode() {
 		properties = null;
@@ -40,36 +40,36 @@ public class GraphNode {
 
 	@JsonIgnore
 	@XmlTransient
-	public boolean addProperty(String name, String value) {
-		if (name == null || name.isEmpty() || value == null || value.isEmpty())
+	public boolean addProperty(String name, Object value) {
+		if (name == null || name.isEmpty() || value == null)
 			return false;
 		if (properties == null)
-			properties = new LinkedHashMap<String, String>();
+			properties = new LinkedHashMap<String, Object>();
 		else if (properties.containsKey(name))
 			return false;
 		properties.put(name, value);
 		return true;
 	}
 
-	private Set<String> getEdgeSet(String type) {
+	private Set<Object> getEdgeSet(String type) {
 		if (type == null || type.isEmpty())
 			return null;
 		if (edges == null)
-			edges = new LinkedHashMap<String, Set<String>>();
-		Set<String> nodeIdSet = edges.get(type);
+			edges = new LinkedHashMap<String, Set<Object>>();
+		Set<Object> nodeIdSet = edges.get(type);
 		if (nodeIdSet != null)
 			return nodeIdSet;
-		nodeIdSet = new TreeSet<String>();
+		nodeIdSet = new TreeSet<Object>();
 		edges.put(type, nodeIdSet);
 		return nodeIdSet;
 	}
 
 	@JsonIgnore
 	@XmlTransient
-	public boolean addEdge(String type, String value) {
-		if (value == null || value.isEmpty())
+	public boolean addEdge(String type, Object value) {
+		if (value == null)
 			return false;
-		Set<String> nodeIdSet = getEdgeSet(type);
+		Set<Object> nodeIdSet = getEdgeSet(type);
 		if (nodeIdSet == null)
 			return false;
 		nodeIdSet.add(value);
@@ -78,10 +78,10 @@ public class GraphNode {
 
 	@JsonIgnore
 	@XmlTransient
-	public boolean addEdges(String type, Collection<String> values) {
+	public boolean addEdges(String type, Collection<Object> values) {
 		if (values == null || values.isEmpty())
 			return false;
-		Set<String> nodeIdSet = getEdgeSet(type);
+		Set<Object> nodeIdSet = getEdgeSet(type);
 		if (nodeIdSet == null)
 			return false;
 		nodeIdSet.addAll(values);
@@ -97,7 +97,7 @@ public class GraphNode {
 			return false;
 		if (type == null || type.isEmpty())
 			return false;
-		Set<String> nodeIdSet = edges.get(type);
+		Set<Object> nodeIdSet = edges.get(type);
 		if (nodeIdSet == null)
 			return false;
 		return nodeIdSet.remove(value);
@@ -109,10 +109,10 @@ public class GraphNode {
 		if (node == null)
 			return;
 		if (node.properties != null)
-			for (Map.Entry<String, String> entry : node.properties.entrySet())
+			for (Map.Entry<String, Object> entry : node.properties.entrySet())
 				addProperty(entry.getKey(), entry.getValue());
 		if (node.edges != null)
-			for (Map.Entry<String, Set<String>> entry : node.edges.entrySet())
+			for (Map.Entry<String, Set<Object>> entry : node.edges.entrySet())
 				addEdges(entry.getKey(), entry.getValue());
 	}
 

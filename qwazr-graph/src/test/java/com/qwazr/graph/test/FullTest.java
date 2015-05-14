@@ -95,7 +95,7 @@ public class FullTest {
 	public void test100PutProductNodes() throws IOException {
 		for (int i = 0; i < PRODUCT_NUMBER; i++) {
 			GraphNode node = new GraphNode();
-			node.properties = new HashMap<String, String>();
+			node.properties = new HashMap<String, Object>();
 			node.properties.put("type", "product");
 			node.properties.put("name", "product" + i);
 			HttpResponse response = Request
@@ -112,21 +112,21 @@ public class FullTest {
 			Map<String, GraphNode> nodeMap = new LinkedHashMap<String, GraphNode>();
 			for (int k = 0; k < 100; k++) {
 				GraphNode node = new GraphNode();
-				node.properties = new HashMap<String, String>();
+				node.properties = new HashMap<String, Object>();
 				node.properties.put("type", "visit");
 				node.properties.put("user",
 						"user" + RandomUtils.nextInt(0, 100));
 				node.properties.put("date",
 						"201501" + RandomUtils.nextInt(10, 31));
-				node.edges = new HashMap<String, Set<String>>();
+				node.edges = new HashMap<String, Set<Object>>();
 				int seePages = RandomUtils.nextInt(3, 12);
-				Set<String> set = new TreeSet<String>();
+				Set<Object> set = new TreeSet<Object>();
 				for (int j = 0; j < seePages; j++)
 					set.add("p" + RandomUtils.nextInt(0, PRODUCT_NUMBER / 2));
 				node.edges.put("see", set);
 				if (RandomUtils.nextInt(0, 10) == 0) {
 					int buyItems = RandomUtils.nextInt(1, 5);
-					set = new TreeSet<String>();
+					set = new TreeSet<Object>();
 					for (int j = 0; j < buyItems; j++)
 						set.add("p"
 								+ RandomUtils.nextInt(0, PRODUCT_NUMBER / 2));
