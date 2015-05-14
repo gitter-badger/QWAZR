@@ -71,6 +71,7 @@
 		<module>qwazr-cluster</module>
 		<module>qwazr-connectors</module>
 		<module>qwazr-crawlers</module>
+		<module>qwazr-database</module>
 		<module>qwazr-extractor</module>
 		<module>qwazr-graph</module>
 		<module>qwazr-job</module>

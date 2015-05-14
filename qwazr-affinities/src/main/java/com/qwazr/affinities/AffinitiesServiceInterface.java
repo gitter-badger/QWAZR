@@ -15,6 +15,7 @@
  */
 package com.qwazr.affinities;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -58,7 +59,7 @@ public interface AffinitiesServiceInterface {
 	@Path("/{name}")
 	@Produces(APPLICATION_JSON_UTF8)
 	public Affinity delete(@Context UriInfo uriInfo,
-			@PathParam("name") String name) throws ServerException;
+			@PathParam("name") String name) throws ServerException, IOException;
 
 	@POST
 	@PUT

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph.database;
+package com.qwarz.database;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-abstract class FieldAbstract implements FieldInterface {
+abstract class FieldAbstract<T> implements FieldInterface<T> {
 
 	protected static final Logger logger = LoggerFactory
 			.getLogger(FieldAbstract.class);

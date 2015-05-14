@@ -22,6 +22,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.JsonNode;
 
 @JsonInclude(Include.NON_EMPTY)
 public class GraphRequest {
@@ -29,10 +30,14 @@ public class GraphRequest {
 	public Integer start;
 	public Integer rows;
 
+	public JsonNode filters;
+
 	public Set<String> exclude_nodes;
 
 	public Map<String, Double> edge_type_weight;
 	public Map<String, Set<String>> edges;
+
+	public Set<String> node_property_boost;
 
 	public GraphRequest() {
 		start = null;

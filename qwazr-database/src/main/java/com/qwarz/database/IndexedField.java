@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph.database;
+package com.qwarz.database;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,23 +22,25 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.roaringbitmap.RoaringBitmap;
 import org.xerial.snappy.Snappy;
 
-import com.qwarz.graph.database.CollectorInterface.LongCounter;
+import com.qwarz.database.CollectorInterface.LongCounter;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.SerializationUtils;
 
-public class IndexedField extends FieldAbstract {
+public abstract class IndexedField<T> extends FieldAbstract<T> {
 
 	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
 
-	private final UniqueKey indexedDictionary;
+	private final UniqueKey<T> indexedDictionary;
 
 	private final HashMap<Integer, RoaringBitmap> docBitsetsMap;
 	private final File docBitsetsFile;
@@ -48,11 +50,11 @@ public class IndexedField extends FieldAbstract {
 	private final File termVectorFile;
 	private boolean termVectorMustBeSaved;
 
-	private final Map<Integer, String> storedInvertedDictionaryMap;
+	private final Map<Integer, T> storedInvertedDictionaryMap;
 
 	public IndexedField(String name, long fieldId, File directory,
-			UniqueKey indexedDictionary,
-			Map<Integer, String> storedInvertedDictionaryMap,
+			UniqueKey<T> indexedDictionary,
+			Map<Integer, T> storedInvertedDictionaryMap,
 			AtomicBoolean wasExisting) throws FileNotFoundException {
 		super(name, fieldId);
 		docBitsetsMustBeSaved = false;
@@ -109,7 +111,7 @@ public class IndexedField extends FieldAbstract {
 		}
 	}
 
-	private Integer getTermIdOrNew(String term) {
+	private Integer getTermIdOrNew(T term) {
 		AtomicBoolean isNewTerm = new AtomicBoolean();
 		Integer termId = indexedDictionary.getIdOrNew(term, isNewTerm);
 		// Its a new term, we store it in the dictionary
@@ -176,15 +178,17 @@ public class IndexedField extends FieldAbstract {
 		boolean isIdentical = termIdSet != null && termIdSet.size() == 1
 				&& termIdSet.contains(termId);
 
-		if (!isIdentical)
+		if (!isIdentical) {
+			termIdSet.add(termId);
 			putTermVectorIdSet(docId, termIdSet);
+		}
 
 		// Update the bitmap
 		setTermDocNoLock(docId, termId);
 	}
 
 	@Override
-	public void setValues(final Integer docId, Collection<String> values)
+	public void setValues(final Integer docId, Collection<Object> values)
 			throws IOException {
 
 		if (values == null || values.isEmpty())
@@ -192,8 +196,8 @@ public class IndexedField extends FieldAbstract {
 
 		// Prepare the id of the terms
 		final Set<Integer> newTermIdSet = new HashSet<Integer>();
-		for (String value : values)
-			newTermIdSet.add(getTermIdOrNew(value));
+		for (Object value : values)
+			newTermIdSet.add(getTermIdOrNew(convertValue(value)));
 
 		rwl.w.lock();
 		try {
@@ -204,16 +208,29 @@ public class IndexedField extends FieldAbstract {
 	}
 
 	@Override
-	public void setValue(final Integer docId, String value) throws IOException {
+	public void setValue(final Integer docId, Object value) throws IOException {
 		if (value == null)
 			return;
 		// Get the term ID
-		final Integer termId = getTermIdOrNew(value);
+		final Integer termId = getTermIdOrNew(convertValue(value));
 		rwl.w.lock();
 		try {
 			setTerm(docId, termId);
 		} finally {
 			rwl.w.unlock();
+		}
+	}
+
+	@Override
+	public T getValue(final Integer docId) throws IOException {
+		rwl.r.lock();
+		try {
+			int[] termIdArray = getIntArrayOrNull(termVectorMap.get(docId));
+			if (termIdArray == null || termIdArray.length == 0)
+				return null;
+			return storedInvertedDictionaryMap.get(termIdArray[0]);
+		} finally {
+			rwl.r.unlock();
 		}
 	}
 
@@ -227,13 +244,13 @@ public class IndexedField extends FieldAbstract {
 	}
 
 	@Override
-	public List<String> getValues(Integer docId) throws IOException {
+	public List<T> getValues(Integer docId) throws IOException {
 		rwl.r.lock();
 		try {
 			int[] termIdArray = getIntArrayOrNull(termVectorMap.get(docId));
 			if (termIdArray == null || termIdArray.length == 0)
 				return null;
-			List<String> list = new ArrayList<String>(termIdArray.length);
+			List<T> list = new ArrayList<T>(termIdArray.length);
 			for (int termId : termIdArray)
 				list.add(storedInvertedDictionaryMap.get(termId));
 			return list;
@@ -242,18 +259,47 @@ public class IndexedField extends FieldAbstract {
 		}
 	}
 
-	private RoaringBitmap getDocBitSetNoLock(String term) {
+	@Override
+	public void collectValues(Iterator<Integer> docIds,
+			FieldValueCollector<T> collector) throws IOException {
+		rwl.r.lock();
+		try {
+			Integer docId;
+			while ((docId = docIds.next()) != null) {
+				int[] termIdArray = getIntArrayOrNull(termVectorMap.get(docId));
+				if (termIdArray == null || termIdArray.length == 0)
+					continue;
+				for (int termId : termIdArray)
+					collector.collect(storedInvertedDictionaryMap.get(termId));
+			}
+		} catch (NoSuchElementException | ArrayIndexOutOfBoundsException e) {
+			// Faster use the exception than calling hasNext for each document
+		} finally {
+			rwl.r.unlock();
+		}
+	}
+
+	private RoaringBitmap getDocBitSetNoLock(T term) {
 		Integer termId = indexedDictionary.getExistingId(term);
 		if (termId == null)
 			return null;
 		return docBitsetsMap.get(termId);
 	}
 
-	RoaringBitmap getTermBitSetOr(Set<String> terms) {
+	RoaringBitmap getDocBitSet(T term) {
+		rwl.r.lock();
+		try {
+			return getDocBitSetNoLock(term);
+		} finally {
+			rwl.r.unlock();
+		}
+	}
+
+	RoaringBitmap getDocBitSetOr(Set<T> terms) {
 		rwl.r.lock();
 		try {
 			RoaringBitmap finalBitMap = null;
-			for (String term : terms) {
+			for (T term : terms) {
 				RoaringBitmap bitMap = getDocBitSetNoLock(term);
 				if (bitMap == null)
 					continue;
@@ -268,11 +314,11 @@ public class IndexedField extends FieldAbstract {
 		}
 	}
 
-	RoaringBitmap getDocBitSetAnd(Set<String> terms) {
+	RoaringBitmap getDocBitSetAnd(Set<T> terms) {
 		rwl.r.lock();
 		try {
 			RoaringBitmap finalBitMap = null;
-			for (String term : terms) {
+			for (T term : terms) {
 				RoaringBitmap bitMap = getDocBitSetNoLock(term);
 				if (bitMap == null)
 					continue;
@@ -324,7 +370,8 @@ public class IndexedField extends FieldAbstract {
 		rwl.r.lock();
 		try {
 			for (Map.Entry<Integer, LongCounter> entry : termIdMap.entrySet()) {
-				String term = storedInvertedDictionaryMap.get(entry.getKey());
+				String term = storedInvertedDictionaryMap.get(entry.getKey())
+						.toString();
 				termMap.put(term, entry.getValue());
 			}
 		} finally {
@@ -332,4 +379,39 @@ public class IndexedField extends FieldAbstract {
 		}
 	}
 
+	public static class IndexedStringField extends IndexedField<String> {
+
+		public IndexedStringField(String name, long fieldId, File directory,
+				UniqueKey<String> indexedDictionary,
+				Map<Integer, String> storedInvertedDictionaryMap,
+				AtomicBoolean wasExisting) throws FileNotFoundException {
+			super(name, fieldId, directory, indexedDictionary,
+					storedInvertedDictionaryMap, wasExisting);
+		}
+
+		@Override
+		final public String convertValue(final Object value) {
+			if (value instanceof String)
+				return (String) value;
+			return value.toString();
+		}
+	}
+
+	public static class IndexedDoubleField extends IndexedField<Double> {
+
+		public IndexedDoubleField(String name, long fieldId, File directory,
+				UniqueKey<Double> indexedDictionary,
+				Map<Integer, Double> storedInvertedDictionaryMap,
+				AtomicBoolean wasExisting) throws FileNotFoundException {
+			super(name, fieldId, directory, indexedDictionary,
+					storedInvertedDictionaryMap, wasExisting);
+		}
+
+		@Override
+		final public Double convertValue(final Object value) {
+			if (value instanceof Double)
+				return (Double) value;
+			return Double.valueOf(value.toString());
+		}
+	}
 }

@@ -32,11 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.qwarz.graph.model.GraphBase;
+import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
-import com.qwarz.graph.process.GraphProcess;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.ServerException;
 
@@ -81,60 +80,61 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphBase createUpdateBase(String db_name, GraphBase base,
-			Integer msTimeOut, Boolean local) {
+	public GraphDefinition createUpdateGraph(String graphName,
+			GraphDefinition graphDef, Integer msTimeOut, Boolean local) {
 		try {
 			GraphMultiClient client = getMultiClient(msTimeOut, local);
 			if (client == null) {
-				GraphManager.INSTANCE.set(db_name, base);
-				GraphProcess.createDataIndex(db_name, base);
+				GraphManager.INSTANCE.createUpdateGraph(graphName, graphDef);
 			} else
-				client.createUpdateBase(db_name, base, msTimeOut, false);
-			return base;
+				client.createUpdateGraph(graphName, graphDef, msTimeOut, false);
+			return graphDef;
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}
 
-	private GraphBase getBaseOrNotFound(String db_name) throws ServerException {
-		GraphBase base = GraphManager.INSTANCE.get(db_name);
-		if (base != null)
-			return base;
-		throw new ServerException(Status.NOT_FOUND, "Graph base not found: "
-				+ db_name);
+	private GraphDefinition getGraphOrNotFound(String graphName)
+			throws ServerException {
+		GraphDefinition graph = GraphManager.INSTANCE.get(graphName);
+		if (graph != null)
+			return graph;
+		throw new ServerException(Status.NOT_FOUND, "Graph not found: "
+				+ graphName);
 	}
 
 	@Override
-	public GraphBase getBase(String db_name, Integer msTimeOut, Boolean local) {
+	public GraphDefinition getGraph(String graphName, Integer msTimeOut,
+			Boolean local) {
 		try {
 			GraphMultiClient client = getMultiClient(msTimeOut, local);
 			if (client == null)
-				return getBaseOrNotFound(db_name);
+				return getGraphOrNotFound(graphName);
 			else
-				return client.getBase(db_name, msTimeOut, false);
+				return client.getGraph(graphName, msTimeOut, false);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}
 
-	private GraphBase deleteBaseLocal(String db_name) throws IOException,
-			URISyntaxException, ServerException {
-		GraphBase base = getBaseOrNotFound(db_name);
-		GraphProcess.deleteDataIndex(db_name, base);
-		GraphManager.INSTANCE.delete(db_name);
+	private GraphDefinition deleteGraphLocal(String graphName)
+			throws IOException, URISyntaxException, ServerException {
+		GraphDefinition base = getGraphOrNotFound(graphName);
+		GraphManager.INSTANCE.delete(graphName);
 		return base;
 	}
 
 	@Override
-	public GraphBase deleteBase(String db_name, Integer msTimeOut, Boolean local) {
+	public GraphDefinition deleteGraph(String graphName, Integer msTimeOut,
+			Boolean local) {
 		try {
 			GraphMultiClient client = getMultiClient(msTimeOut, local);
 			if (client == null)
-				return deleteBaseLocal(db_name);
+				return deleteGraphLocal(graphName);
 			else
-				return client.deleteBase(db_name, msTimeOut, false);
+				return client.deleteGraph(graphName, msTimeOut, false);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
@@ -142,10 +142,10 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphNode createUpdateNode(String db_name, String node_id,
+	public GraphNode createUpdateNode(String graphName, String node_id,
 			GraphNode node, Boolean upsert) {
 		try {
-			GraphProcess.createUpdateNode(db_name, getBaseOrNotFound(db_name),
+			GraphManager.INSTANCE.getGraphInstance(graphName).createUpdateNode(
 					node_id, node, upsert);
 			return node;
 		} catch (Exception e) {
@@ -155,11 +155,11 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public Set<String> createUpdateNodes(String db_name,
+	public Set<String> createUpdateNodes(String graphName,
 			LinkedHashMap<String, GraphNode> nodes, Boolean upsert) {
 		try {
-			GraphProcess.createUpdateNodes(db_name, getBaseOrNotFound(db_name),
-					nodes, upsert);
+			GraphManager.INSTANCE.getGraphInstance(graphName)
+					.createUpdateNodes(nodes, upsert);
 			return nodes.keySet();
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
@@ -171,10 +171,11 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	};
 
 	@Override
-	public Long createUpdateNodes(String db_name, Boolean upsert,
+	public Long createUpdateNodes(String graphName, Boolean upsert,
 			InputStream inputStream) {
 		try {
-			GraphBase base = getBaseOrNotFound(db_name);
+			GraphInstance graphInstance = GraphManager.INSTANCE
+					.getGraphInstance(graphName);
 			InputStreamReader irs = null;
 			BufferedReader br = null;
 			try {
@@ -188,8 +189,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 						continue;
 					Map<String, GraphNode> nodeMap = JsonMapper.MAPPER
 							.readValue(line, MapStringGraphNodeTypeRef);
-					GraphProcess.createUpdateNodes(db_name, base, nodeMap,
-							upsert);
+					graphInstance.createUpdateNodes(nodeMap, upsert);
 					count += nodeMap.size();
 				}
 				return count;
@@ -205,10 +205,10 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		}
 	}
 
-	private GraphNode getNodeOrNotFound(String db_name, GraphBase base,
+	private GraphNode getNodeOrNotFound(GraphInstance graphInstance,
 			String node_id) throws ServerException, IOException,
 			URISyntaxException {
-		GraphNode node = GraphProcess.getNode(db_name, base, node_id);
+		GraphNode node = graphInstance.getNode(node_id);
 		if (node != null)
 			return node;
 		throw new ServerException(Status.NOT_FOUND, "Graph node not found: "
@@ -216,10 +216,11 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphNode getNode(String db_name, String node_id) {
+	public GraphNode getNode(String graphName, String node_id) {
 		try {
-			GraphBase base = getBaseOrNotFound(db_name);
-			return getNodeOrNotFound(db_name, base, node_id);
+			GraphInstance graphInstance = GraphManager.INSTANCE
+					.getGraphInstance(graphName);
+			return getNodeOrNotFound(graphInstance, node_id);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
@@ -227,11 +228,12 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphNode deleteNode(String db_name, String node_id) {
+	public GraphNode deleteNode(String graphName, String node_id) {
 		try {
-			GraphBase base = getBaseOrNotFound(db_name);
-			GraphNode node = getNodeOrNotFound(db_name, base, node_id);
-			GraphProcess.deleteNode(db_name, base, node_id);
+			GraphInstance graphInstance = GraphManager.INSTANCE
+					.getGraphInstance(graphName);
+			GraphNode node = getNodeOrNotFound(graphInstance, node_id);
+			graphInstance.deleteNode(node_id);
 			return node;
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
@@ -240,11 +242,12 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphNode createEdge(String db_name, String node_id,
+	public GraphNode createEdge(String graphName, String node_id,
 			String edge_type, String to_node_id) {
 		try {
-			return GraphProcess.createEdge(db_name, getBaseOrNotFound(db_name),
-					node_id, edge_type, to_node_id);
+			GraphInstance graphInstance = GraphManager.INSTANCE
+					.getGraphInstance(graphName);
+			return graphInstance.createEdge(node_id, edge_type, to_node_id);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
@@ -252,11 +255,12 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphNode deleteEdge(String db_name, String node_id,
+	public GraphNode deleteEdge(String graphName, String node_id,
 			String edge_type, String to_node_id) {
 		try {
-			return GraphProcess.deleteEdge(db_name, getBaseOrNotFound(db_name),
-					node_id, edge_type, to_node_id);
+			GraphInstance graphInstance = GraphManager.INSTANCE
+					.getGraphInstance(graphName);
+			return graphInstance.deleteEdge(node_id, edge_type, to_node_id);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
@@ -264,11 +268,12 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public List<GraphNodeResult> requestNodes(String db_name,
+	public List<GraphNodeResult> requestNodes(String graphName,
 			GraphRequest request) {
 		try {
-			return GraphProcess.request(db_name, getBaseOrNotFound(db_name),
-					request);
+			GraphInstance graphInstance = GraphManager.INSTANCE
+					.getGraphInstance(graphName);
+			return graphInstance.request(request);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);

@@ -120,7 +120,7 @@ public class StoreNameManager extends
 	}
 
 	StoreSchemaDefinition deleteSchema(String schemaName)
-			throws ServerException {
+			throws ServerException, IOException {
 		rwlSchemas.w.lock();
 		try {
 			StoreNameInstance nameInstance = nameInstanceMap.get(schemaName);

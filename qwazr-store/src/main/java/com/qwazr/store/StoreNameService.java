@@ -187,7 +187,7 @@ public class StoreNameService implements StoreServiceInterface {
 						schemaName, false, msTimeout);
 				return schemaDefinition;
 			}
-		} catch (ServerException | URISyntaxException e) {
+		} catch (ServerException | URISyntaxException | IOException e) {
 			throw ServerException.getJsonException(e);
 		}
 	}

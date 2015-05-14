@@ -23,25 +23,21 @@ import javax.xml.bind.annotation.XmlTransient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.opensearchserver.client.ServerResource;
 
 @JsonInclude(Include.NON_EMPTY)
-public class GraphBase {
-
-	public ServerResource data;
+public class GraphDefinition {
 
 	public Map<String, PropertyTypeEnum> node_properties;
 
 	public Set<String> edge_types;
 
-	public GraphBase() {
-		data = null;
+	public GraphDefinition() {
 		node_properties = null;
 		edge_types = null;
 	}
 
 	public static enum PropertyTypeEnum {
-		indexed, stored;
+		indexed, stored, boost;
 	}
 
 	@XmlTransient

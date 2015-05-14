@@ -43,8 +43,8 @@ import org.junit.runners.MethodSorters;
 
 import com.google.common.io.Files;
 import com.qwarz.graph.GraphServer;
-import com.qwarz.graph.model.GraphBase;
-import com.qwarz.graph.model.GraphBase.PropertyTypeEnum;
+import com.qwarz.graph.model.GraphDefinition;
+import com.qwarz.graph.model.GraphDefinition.PropertyTypeEnum;
 import com.qwarz.graph.model.GraphNode;
 import com.qwazr.utils.json.JsonMapper;
 
@@ -74,19 +74,19 @@ public class FullTest {
 	@Test
 	public void test000CreateDatabase() throws IOException {
 
-		GraphBase base = new GraphBase();
-		base.node_properties = new HashMap<String, PropertyTypeEnum>();
-		base.node_properties.put("type", PropertyTypeEnum.indexed);
-		base.node_properties.put("date", PropertyTypeEnum.indexed);
-		base.node_properties.put("name", PropertyTypeEnum.stored);
-		base.node_properties.put("user", PropertyTypeEnum.stored);
-		base.edge_types = new HashSet<String>();
-		base.edge_types.add("see");
-		base.edge_types.add("buy");
+		GraphDefinition graphDef = new GraphDefinition();
+		graphDef.node_properties = new HashMap<String, PropertyTypeEnum>();
+		graphDef.node_properties.put("type", PropertyTypeEnum.indexed);
+		graphDef.node_properties.put("date", PropertyTypeEnum.indexed);
+		graphDef.node_properties.put("name", PropertyTypeEnum.stored);
+		graphDef.node_properties.put("user", PropertyTypeEnum.stored);
+		graphDef.edge_types = new HashSet<String>();
+		graphDef.edge_types.add("see");
+		graphDef.edge_types.add("buy");
 
 		HttpResponse response = Request
 				.Put(BASE_URL + '/' + TEST_BASE)
-				.bodyString(JsonMapper.MAPPER.writeValueAsString(base),
+				.bodyString(JsonMapper.MAPPER.writeValueAsString(graphDef),
 						APPLICATION_JSON_UTF8).execute().returnResponse();
 		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 	}
@@ -95,7 +95,7 @@ public class FullTest {
 	public void test100PutProductNodes() throws IOException {
 		for (int i = 0; i < PRODUCT_NUMBER; i++) {
 			GraphNode node = new GraphNode();
-			node.properties = new HashMap<String, String>();
+			node.properties = new HashMap<String, Object>();
 			node.properties.put("type", "product");
 			node.properties.put("name", "product" + i);
 			HttpResponse response = Request
@@ -112,21 +112,21 @@ public class FullTest {
 			Map<String, GraphNode> nodeMap = new LinkedHashMap<String, GraphNode>();
 			for (int k = 0; k < 100; k++) {
 				GraphNode node = new GraphNode();
-				node.properties = new HashMap<String, String>();
+				node.properties = new HashMap<String, Object>();
 				node.properties.put("type", "visit");
 				node.properties.put("user",
 						"user" + RandomUtils.nextInt(0, 100));
 				node.properties.put("date",
 						"201501" + RandomUtils.nextInt(10, 31));
-				node.edges = new HashMap<String, Set<String>>();
+				node.edges = new HashMap<String, Set<Object>>();
 				int seePages = RandomUtils.nextInt(3, 12);
-				Set<String> set = new TreeSet<String>();
+				Set<Object> set = new TreeSet<Object>();
 				for (int j = 0; j < seePages; j++)
 					set.add("p" + RandomUtils.nextInt(0, PRODUCT_NUMBER / 2));
 				node.edges.put("see", set);
 				if (RandomUtils.nextInt(0, 10) == 0) {
 					int buyItems = RandomUtils.nextInt(1, 5);
-					set = new TreeSet<String>();
+					set = new TreeSet<Object>();
 					for (int j = 0; j < buyItems; j++)
 						set.add("p"
 								+ RandomUtils.nextInt(0, PRODUCT_NUMBER / 2));

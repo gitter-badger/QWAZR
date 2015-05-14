@@ -15,6 +15,7 @@
  */
 package com.qwazr.affinities;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -51,7 +52,8 @@ public class AffinitiesServiceImpl implements AffinitiesServiceInterface {
 	}
 
 	@Override
-	public Affinity delete(UriInfo uriInfo, String name) throws ServerException {
+	public Affinity delete(UriInfo uriInfo, String name)
+			throws ServerException, IOException {
 		Affinity affinity = AffinityManager.INSTANCE.delete(name);
 		if (affinity == null)
 			throw new ServerException(Status.NOT_FOUND, "Unknown: " + name);

@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph.database;
+package com.qwarz.database;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
-public interface FieldInterface {
+public interface FieldInterface<T> {
 
-	void setValues(Integer docId, Collection<String> values) throws IOException;
+	T convertValue(Object value);
 
-	void setValue(Integer docId, String value) throws IOException;
+	void setValues(Integer docId, Collection<Object> values) throws IOException;
 
-	List<String> getValues(Integer docId) throws IOException;
+	void setValue(Integer docId, Object value) throws IOException;
+
+	T getValue(Integer docId) throws IOException;
+
+	List<T> getValues(Integer docId) throws IOException;
+
+	void collectValues(Iterator<Integer> docIds,
+			FieldValueCollector<T> collector) throws IOException;
 
 	void deleteDocument(Integer id) throws IOException;
 
@@ -36,19 +44,30 @@ public interface FieldInterface {
 	public static class FieldDefinition {
 
 		public static enum Type {
+			STRING, DOUBLE;
+		}
+
+		public static enum Mode {
 			INDEXED, STORED;
 		}
 
 		public final String name;
 		public final Type type;
+		public final Mode mode;
 
 		public FieldDefinition() {
-			this(null, null);
+			this(null, null, null);
 		}
 
-		public FieldDefinition(String name, Type type) {
+		public FieldDefinition(String name, Type type, Mode mode) {
 			this.name = name;
 			this.type = type;
+			this.mode = mode;
 		}
+	}
+
+	public static interface FieldValueCollector<T> {
+
+		void collect(T value);
 	}
 }

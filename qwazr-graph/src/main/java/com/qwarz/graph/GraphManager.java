@@ -18,18 +18,25 @@ package com.qwarz.graph;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.qwarz.graph.model.GraphBase;
-import com.qwarz.graph.process.GraphProcess;
+import javax.ws.rs.core.Response.Status;
+
+import com.qwarz.database.Table;
+import com.qwarz.graph.model.GraphDefinition;
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;
 import com.qwazr.utils.server.ServerException;
 
-public class GraphManager extends DirectoryJsonManager<GraphBase> {
+public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
+
+	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
 
 	public static volatile GraphManager INSTANCE = null;
 
@@ -37,18 +44,21 @@ public class GraphManager extends DirectoryJsonManager<GraphBase> {
 
 	public final ExecutorService executor;
 
+	private final Map<String, GraphInstance> graphMap;
+
 	public static void load(File directory) throws IOException,
 			URISyntaxException, ServerException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		INSTANCE = new GraphManager(directory);
 		for (String name : INSTANCE.nameSet())
-			GraphProcess.load(name, INSTANCE.get(name));
+			INSTANCE.addNewInstance(name, INSTANCE.get(name));
 	}
 
 	private GraphManager(File directory) throws ServerException, IOException {
-		super(directory, GraphBase.class);
+		super(directory, GraphDefinition.class);
 		this.directory = directory;
+		graphMap = new HashMap<String, GraphInstance>();
 		executor = Executors.newFixedThreadPool(8);
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -58,25 +68,67 @@ public class GraphManager extends DirectoryJsonManager<GraphBase> {
 		});
 	}
 
+	private GraphInstance addNewInstance(String graphName,
+			GraphDefinition graphDef) throws IOException, ServerException {
+		File dbDirectory = new File(directory, graphName);
+		if (!dbDirectory.exists())
+			dbDirectory.mkdir();
+		Table table = Table.getInstance(dbDirectory);
+		GraphInstance graphInstance = new GraphInstance(graphName, table,
+				graphDef);
+		graphInstance.checkFields();
+		graphMap.put(graphName, graphInstance);
+		return graphInstance;
+	}
+
+	public GraphInstance getGraphInstance(String graphName)
+			throws ServerException {
+		rwl.r.lock();
+		try {
+			GraphInstance graphInstance = graphMap.get(graphName);
+			if (graphInstance == null)
+				throw new ServerException(Status.NOT_FOUND,
+						"Graph instance not found");
+			return graphInstance;
+		} finally {
+			rwl.r.unlock();
+		}
+	}
+
 	@Override
 	public Set<String> nameSet() {
 		return super.nameSet();
 	}
 
 	@Override
-	public GraphBase get(String name) {
+	public GraphDefinition get(String name) {
 		return super.get(name);
 	}
 
-	@Override
-	public void set(String name, GraphBase affinity) throws IOException,
-			ServerException {
-		super.set(name, affinity);
+	public void createUpdateGraph(String graphName, GraphDefinition graphDef)
+			throws IOException, ServerException {
+		rwl.w.lock();
+		try {
+			super.set(graphName, graphDef);
+			graphMap.remove(graphName);
+			addNewInstance(graphName, graphDef);
+		} finally {
+			rwl.w.unlock();
+		}
 	}
 
 	@Override
-	public GraphBase delete(String name) throws ServerException {
-		return super.delete(name);
+	public GraphDefinition delete(String graphName) throws ServerException,
+			IOException {
+		rwl.w.lock();
+		try {
+			GraphDefinition graphDef = super.delete(graphName);
+			Table.deleteTable(new File(directory, graphName));
+			graphMap.remove(graphName);
+			return graphDef;
+		} finally {
+			rwl.w.unlock();
+		}
 	}
 
 	GraphMultiClient getMultiClient(int msTimeOut) throws URISyntaxException {
