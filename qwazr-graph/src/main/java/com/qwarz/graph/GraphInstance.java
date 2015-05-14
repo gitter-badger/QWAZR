@@ -165,9 +165,9 @@ public class GraphInstance {
 					throw new ServerException(Status.BAD_REQUEST,
 							"Unknown property name: " + field);
 				@SuppressWarnings("unchecked")
-				FieldInterface<String> fieldInterface = (FieldInterface<String>) table
+				FieldInterface<Object> fieldInterface = (FieldInterface<Object>) table
 						.getField(getPropertyField(field));
-				fieldInterface.setValue(id, entry.getValue().toString());
+				fieldInterface.setValue(id, entry.getValue());
 			}
 		}
 
@@ -501,6 +501,17 @@ public class GraphInstance {
 		if (docBitset == null || docBitset.isEmpty())
 			return resultList;
 
+		// Get the boost fields
+		FieldInterface<?>[] boostFields = null;
+		if (request.node_property_boost != null
+				&& !request.node_property_boost.isEmpty()) {
+			boostFields = new FieldInterface<?>[request.node_property_boost
+					.size()];
+			int i = 0;
+			for (String boostField : request.node_property_boost)
+				boostFields[i++] = table.getField(getPropertyField(boostField));
+		}
+
 		// Compute the score using facets (multithreaded)
 		Map<String, NodeScore> nodeScoreMap = new PatriciaTrie<NodeScore>();
 		List<ScoreThread> scoreThreads = new ArrayList<ScoreThread>(
@@ -512,7 +523,7 @@ public class GraphInstance {
 			Double weight = request.getEdgeWeight(field
 					.substring(FIELD_PREFIX_EDGE.length()));
 			ScoreThread scoreThread = new ScoreThread(facets, nodeScoreMap,
-					weight, filterBitset);
+					weight, filterBitset, boostFields);
 			scoreThreads.add(scoreThread);
 		}
 		try {
@@ -560,24 +571,27 @@ public class GraphInstance {
 		private final Double weight;
 		private final RoaringBitmap filterBitset;
 		private final UniqueStringKey primaryKeys;
+		private final FieldInterface<?>[] boostFields;
 
 		public ScoreThread(Map<String, LongCounter> facets,
 				Map<String, NodeScore> nodeScoreMap, Double weight,
-				RoaringBitmap filterBitset) {
+				RoaringBitmap filterBitset, FieldInterface<?>[] boostFields) {
 			this.facets = facets;
 			this.nodeScoreMap = nodeScoreMap;
 			this.weight = weight;
 			this.filterBitset = filterBitset;
 			this.primaryKeys = table.getPrimaryKeyIndex();
+			this.boostFields = boostFields;
 		}
 
 		@Override
-		public void execute() {
+		public void execute() throws IOException {
 			for (Map.Entry<String, LongCounter> facet : facets.entrySet()) {
 				NodeScore nodeScore;
+				Integer docId = null;
 				String term = facet.getKey();
 				if (filterBitset != null) {
-					Integer docId = primaryKeys.getExistingId(term);
+					docId = primaryKeys.getExistingId(term);
 					if (docId == null)
 						continue;
 					synchronized (filterBitset) {
@@ -585,6 +599,7 @@ public class GraphInstance {
 							continue;
 					}
 				}
+
 				long count = facet.getValue().count;
 				synchronized (nodeScoreMap) {
 					nodeScore = nodeScoreMap.get(term);
@@ -593,8 +608,21 @@ public class GraphInstance {
 						nodeScoreMap.put(term, nodeScore);
 					}
 				}
+				double scoreInc = count * weight;
+				if (boostFields != null) {
+					if (docId == null)
+						docId = primaryKeys.getExistingId(term);
+					if (docId != null) {
+						for (FieldInterface<?> boostField : boostFields) {
+							Double fieldBoost = (Double) boostField
+									.getValue(docId);
+							if (fieldBoost != null)
+								scoreInc = fieldBoost * scoreInc;
+						}
+					}
+				}
 				synchronized (nodeScore) {
-					nodeScore.score += count * weight;
+					nodeScore.score += scoreInc;
 				}
 			}
 		}
