@@ -20,7 +20,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.qwarz.graph.process.GraphProcess.NodeScore;
+import com.qwarz.graph.GraphInstance.NodeScore;
 
 @JsonInclude(Include.NON_EMPTY)
 public class GraphNodeResult extends GraphNode {

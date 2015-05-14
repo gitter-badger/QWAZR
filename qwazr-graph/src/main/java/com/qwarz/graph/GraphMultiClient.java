@@ -30,7 +30,7 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwarz.graph.model.GraphBase;
+import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
@@ -87,21 +87,21 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphBase createUpdateBase(String db_name, GraphBase base,
-			Integer msTimeOut, Boolean local) {
+	public GraphDefinition createUpdateGraph(String graphName,
+			GraphDefinition graphDef, Integer msTimeOut, Boolean local) {
 
 		try {
 
 			if (local != null && local)
 				throw new ServerException(Status.NOT_IMPLEMENTED);
 
-			List<FunctionExceptionCatcher<GraphBase>> threads = new ArrayList<>(
+			List<FunctionExceptionCatcher<GraphDefinition>> threads = new ArrayList<>(
 					size());
 			for (GraphSingleClient client : this) {
-				threads.add(new FunctionExceptionCatcher<GraphBase>() {
+				threads.add(new FunctionExceptionCatcher<GraphDefinition>() {
 					@Override
-					public GraphBase execute() throws Exception {
-						return client.createUpdateBase(db_name, base,
+					public GraphDefinition execute() throws Exception {
+						return client.createUpdateGraph(graphName, graphDef,
 								msTimeOut, true);
 					}
 				});
@@ -116,13 +116,14 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphBase getBase(String db_name, Integer msTimeOut, Boolean local) {
+	public GraphDefinition getGraph(String graphName, Integer msTimeOut,
+			Boolean local) {
 		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
 				logger);
 
 		for (GraphSingleClient client : this) {
 			try {
-				return client.getBase(db_name, msTimeOut, true);
+				return client.getGraph(graphName, msTimeOut, true);
 			} catch (WebApplicationException e) {
 				if (e.getResponse().getStatus() == 404)
 					logger.warn(e.getMessage(), e);
@@ -136,21 +137,23 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphBase deleteBase(String db_name, Integer msTimeOut, Boolean local) {
+	public GraphDefinition deleteGraph(String graphName, Integer msTimeOut,
+			Boolean local) {
 
 		try {
 
 			if (local != null && local)
 				throw new ServerException(Status.NOT_IMPLEMENTED);
 
-			List<FunctionExceptionCatcher<GraphBase>> threads = new ArrayList<>(
+			List<FunctionExceptionCatcher<GraphDefinition>> threads = new ArrayList<>(
 					size());
 			for (GraphSingleClient client : this) {
-				threads.add(new FunctionExceptionCatcher<GraphBase>() {
+				threads.add(new FunctionExceptionCatcher<GraphDefinition>() {
 					@Override
-					public GraphBase execute() throws Exception {
+					public GraphDefinition execute() throws Exception {
 						try {
-							return client.deleteBase(db_name, msTimeOut, true);
+							return client.deleteGraph(graphName, msTimeOut,
+									true);
 						} catch (WebApplicationException e) {
 							if (e.getResponse().getStatus() == 404)
 								return null;
@@ -161,11 +164,11 @@ public class GraphMultiClient extends
 				});
 			}
 			ThreadUtils.invokeAndJoin(executor, threads);
-			GraphBase base = ThreadUtils.getFirstResult(threads);
-			if (base == null)
-				throw new ServerException(Status.NOT_FOUND, "Base not found: "
-						+ db_name);
-			return base;
+			GraphDefinition graphDef = ThreadUtils.getFirstResult(threads);
+			if (graphDef == null)
+				throw new ServerException(Status.NOT_FOUND, "Graph not found: "
+						+ graphName);
+			return graphDef;
 
 		} catch (Exception e) {
 			throw ServerException.getJsonException(e);

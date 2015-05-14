@@ -31,7 +31,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import com.qwarz.graph.model.GraphBase;
+import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
@@ -48,87 +48,92 @@ public interface GraphServiceInterface {
 
 	@PUT
 	@POST
-	@Path("/{db_name}")
+	@Path("/{graph_name}")
 	@Consumes(RestApplication.APPLICATION_JSON_UTF8)
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphBase createUpdateBase(@PathParam("db_name") String db_name,
-			GraphBase base, @QueryParam("timeout") Integer msTimeOut,
+	public GraphDefinition createUpdateGraph(
+			@PathParam("graph_name") String graph_name,
+			GraphDefinition graph_def,
+			@QueryParam("timeout") Integer msTimeOut,
 			@QueryParam("local") Boolean local);
 
 	@GET
-	@Path("/{db_name}")
+	@Path("/{graph_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphBase getBase(@PathParam("db_name") String db_name,
+	public GraphDefinition getGraph(@PathParam("graph_name") String graph_name,
 			@QueryParam("timeout") Integer msTimeOut,
 			@QueryParam("local") Boolean local);
 
 	@DELETE
-	@Path("/{db_name}")
+	@Path("/{graph_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphBase deleteBase(@PathParam("db_name") String db_name,
+	public GraphDefinition deleteGraph(
+			@PathParam("graph_name") String graph_name,
 			@QueryParam("timeout") Integer msTimeOut,
 			@QueryParam("local") Boolean local);
 
 	@PUT
 	@POST
-	@Path("/{db_name}/node")
+	@Path("/{graph_name}/node")
 	@Consumes(RestApplication.APPLICATION_JSON_UTF8)
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public Set<String> createUpdateNodes(@PathParam("db_name") String db_name,
+	public Set<String> createUpdateNodes(
+			@PathParam("graph_name") String graph_name,
 			LinkedHashMap<String, GraphNode> nodes,
 			@QueryParam("upsert") Boolean upsert);
 
 	@PUT
 	@POST
-	@Path("/{db_name}/node")
+	@Path("/{graph_name}/node")
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public Long createUpdateNodes(@PathParam("db_name") String db_name,
+	public Long createUpdateNodes(@PathParam("graph_name") String graph_name,
 			@QueryParam("upsert") Boolean upsert, InputStream inpustStream);
 
 	@PUT
 	@POST
-	@Path("/{db_name}/node/{node_id}")
+	@Path("/{graph_name}/node/{node_id}")
 	@Consumes(RestApplication.APPLICATION_JSON_UTF8)
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphNode createUpdateNode(@PathParam("db_name") String db_name,
+	public GraphNode createUpdateNode(
+			@PathParam("graph_name") String graph_name,
 			@PathParam("node_id") String node_id, GraphNode node,
 			@QueryParam("upsert") Boolean upsert);
 
 	@GET
-	@Path("/{db_name}/node/{node_id}")
+	@Path("/{graph_name}/node/{node_id}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphNode getNode(@PathParam("db_name") String db_name,
+	public GraphNode getNode(@PathParam("graph_name") String graph_name,
 			@PathParam("node_id") String node_id);
 
 	@DELETE
-	@Path("/{db_name}/node/{node_id}")
+	@Path("/{graph_name}/node/{node_id}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphNode deleteNode(@PathParam("db_name") String db_name,
+	public GraphNode deleteNode(@PathParam("graph_name") String graph_name,
 			@PathParam("node_id") String node_id);
 
 	@PUT
 	@POST
-	@Path("/{db_name}/node/{node_id}/edge/{edge_type}/{to_node_id}")
+	@Path("/{graph_name}/node/{node_id}/edge/{edge_type}/{to_node_id}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphNode createEdge(@PathParam("db_name") String db_name,
+	public GraphNode createEdge(@PathParam("graph_name") String graph_name,
 			@PathParam("node_id") String node_id,
 			@PathParam("edge_type") String edge_type,
 			@PathParam("to_node_id") String to_node_id);
 
 	@DELETE
-	@Path("/{db_name}/node/{node_id}/edge/{edge_type}/{to_node_id}")
+	@Path("/{graph_name}/node/{node_id}/edge/{edge_type}/{to_node_id}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphNode deleteEdge(@PathParam("db_name") String db_name,
+	public GraphNode deleteEdge(@PathParam("graph_name") String graph_name,
 			@PathParam("node_id") String node_id,
 			@PathParam("edge_type") String edge_type,
 			@PathParam("to_node_id") String to_node_id);
 
 	@POST
-	@Path("/{db_name}/request")
+	@Path("/{graph_name}/request")
 	@Consumes(RestApplication.APPLICATION_JSON_UTF8)
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public List<GraphNodeResult> requestNodes(
-			@PathParam("db_name") String db_name, GraphRequest request);
+			@PathParam("graph_name") String graph_name, GraphRequest request);
 
 }

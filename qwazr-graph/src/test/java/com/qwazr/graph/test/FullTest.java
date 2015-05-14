@@ -43,8 +43,8 @@ import org.junit.runners.MethodSorters;
 
 import com.google.common.io.Files;
 import com.qwarz.graph.GraphServer;
-import com.qwarz.graph.model.GraphBase;
-import com.qwarz.graph.model.GraphBase.PropertyTypeEnum;
+import com.qwarz.graph.model.GraphDefinition;
+import com.qwarz.graph.model.GraphDefinition.PropertyTypeEnum;
 import com.qwarz.graph.model.GraphNode;
 import com.qwazr.utils.json.JsonMapper;
 
@@ -74,19 +74,19 @@ public class FullTest {
 	@Test
 	public void test000CreateDatabase() throws IOException {
 
-		GraphBase base = new GraphBase();
-		base.node_properties = new HashMap<String, PropertyTypeEnum>();
-		base.node_properties.put("type", PropertyTypeEnum.indexed);
-		base.node_properties.put("date", PropertyTypeEnum.indexed);
-		base.node_properties.put("name", PropertyTypeEnum.stored);
-		base.node_properties.put("user", PropertyTypeEnum.stored);
-		base.edge_types = new HashSet<String>();
-		base.edge_types.add("see");
-		base.edge_types.add("buy");
+		GraphDefinition graphDef = new GraphDefinition();
+		graphDef.node_properties = new HashMap<String, PropertyTypeEnum>();
+		graphDef.node_properties.put("type", PropertyTypeEnum.indexed);
+		graphDef.node_properties.put("date", PropertyTypeEnum.indexed);
+		graphDef.node_properties.put("name", PropertyTypeEnum.stored);
+		graphDef.node_properties.put("user", PropertyTypeEnum.stored);
+		graphDef.edge_types = new HashSet<String>();
+		graphDef.edge_types.add("see");
+		graphDef.edge_types.add("buy");
 
 		HttpResponse response = Request
 				.Put(BASE_URL + '/' + TEST_BASE)
-				.bodyString(JsonMapper.MAPPER.writeValueAsString(base),
+				.bodyString(JsonMapper.MAPPER.writeValueAsString(graphDef),
 						APPLICATION_JSON_UTF8).execute().returnResponse();
 		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 	}

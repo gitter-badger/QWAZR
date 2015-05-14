@@ -75,7 +75,7 @@ public class DirectoryJsonManager<T> {
 		instancesCache = new LinkedHashMap<String, T>(instancesMap);
 	}
 
-	protected T delete(String name) throws ServerException {
+	protected T delete(String name) throws ServerException, IOException {
 		if (StringUtils.isEmpty(name))
 			return null;
 		name = name.intern();

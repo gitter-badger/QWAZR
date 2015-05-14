@@ -59,7 +59,7 @@ public class AffinityManager extends DirectoryJsonManager<Affinity> {
 	}
 
 	@Override
-	public Affinity delete(String name) throws ServerException {
+	public Affinity delete(String name) throws ServerException, IOException {
 		return super.delete(name);
 	}
 }

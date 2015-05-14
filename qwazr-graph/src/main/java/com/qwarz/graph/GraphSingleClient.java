@@ -30,7 +30,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.qwarz.graph.model.GraphBase;
+import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
@@ -72,12 +72,13 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public GraphBase createUpdateBase(String db_name, GraphBase base,
-			Integer msTimeOut, Boolean local) {
+	public GraphDefinition createUpdateGraph(String db_name,
+			GraphDefinition graphDef, Integer msTimeOut, Boolean local) {
 		try {
 			URIBuilder uriBuilder = getGraphBaseUrl(db_name, local, msTimeOut);
 			Request request = Request.Post(uriBuilder.build());
-			return execute(request, base, msTimeOut, GraphBase.class, 200);
+			return execute(request, graphDef, msTimeOut, GraphDefinition.class,
+					200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {
@@ -87,11 +88,12 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public GraphBase getBase(String db_name, Integer msTimeOut, Boolean local) {
+	public GraphDefinition getGraph(String graphName, Integer msTimeOut,
+			Boolean local) {
 		try {
-			URIBuilder uriBuilder = getGraphBaseUrl(db_name, local, msTimeOut);
+			URIBuilder uriBuilder = getGraphBaseUrl(graphName, local, msTimeOut);
 			Request request = Request.Get(uriBuilder.build());
-			return execute(request, null, msTimeOut, GraphBase.class, 200);
+			return execute(request, null, msTimeOut, GraphDefinition.class, 200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {
@@ -101,11 +103,12 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public GraphBase deleteBase(String db_name, Integer msTimeOut, Boolean local) {
+	public GraphDefinition deleteGraph(String graphName, Integer msTimeOut,
+			Boolean local) {
 		try {
-			URIBuilder uriBuilder = getGraphBaseUrl(db_name, local, msTimeOut);
+			URIBuilder uriBuilder = getGraphBaseUrl(graphName, local, msTimeOut);
 			Request request = Request.Delete(uriBuilder.build());
-			return execute(request, null, msTimeOut, GraphBase.class, 200);
+			return execute(request, null, msTimeOut, GraphDefinition.class, 200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {

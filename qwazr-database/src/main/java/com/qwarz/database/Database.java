@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph.database;
+package com.qwarz.database;
 
 import java.io.Closeable;
 import java.io.File;
@@ -37,8 +37,8 @@ import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwarz.graph.database.CollectorInterface.LongCounter;
-import com.qwarz.graph.database.FieldInterface.FieldDefinition;
+import com.qwarz.database.CollectorInterface.LongCounter;
+import com.qwarz.database.FieldInterface.FieldDefinition;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
@@ -51,7 +51,7 @@ public class Database implements Closeable {
 
 	private final static LockUtils.ReadWriteLock rwlBases = new LockUtils.ReadWriteLock();
 
-	private final static Map<String, Database> bases = new HashMap<String, Database>();
+	private final static Map<File, Database> bases = new HashMap<File, Database>();
 
 	private final LockUtils.ReadWriteLock rwlFields = new LockUtils.ReadWriteLock();
 
@@ -137,11 +137,10 @@ public class Database implements Closeable {
 		fieldIdSequence = longSequence;
 	}
 
-	public static Database getInstance(String graphName, File directory)
-			throws IOException {
+	public static Database getInstance(File directory) throws IOException {
 		rwlBases.r.lock();
 		try {
-			Database base = bases.get(graphName);
+			Database base = bases.get(directory);
 			if (base != null)
 				return base;
 		} finally {
@@ -149,21 +148,21 @@ public class Database implements Closeable {
 		}
 		rwlBases.w.lock();
 		try {
-			Database base = bases.get(graphName);
+			Database base = bases.get(directory);
 			if (base != null)
 				return base;
 			base = new Database(directory);
-			bases.put(graphName, base);
+			bases.put(directory, base);
 			return base;
 		} finally {
 			rwlBases.w.unlock();
 		}
 	}
 
-	public static void deleteBase(String graphName) throws IOException {
+	public static void deleteBase(File directory) throws IOException {
 		rwlBases.r.lock();
 		try {
-			Database base = bases.get(graphName);
+			Database base = bases.get(directory);
 			if (base == null)
 				return;
 		} finally {
@@ -171,10 +170,10 @@ public class Database implements Closeable {
 		}
 		rwlBases.w.lock();
 		try {
-			Database base = bases.get(graphName);
+			Database base = bases.get(directory);
 			if (base == null)
 				return;
-			bases.remove(graphName);
+			bases.remove(directory);
 			base.delete();
 		} finally {
 			rwlBases.w.unlock();
@@ -244,7 +243,7 @@ public class Database implements Closeable {
 		FileUtils.deleteDirectory(directory);
 	}
 
-	void collectExistingFields(final Set<String> existingFields) {
+	public void collectExistingFields(final Collection<String> existingFields) {
 		rwlFields.r.lock();
 		try {
 			existingFields.addAll(fields.keySet());
@@ -443,7 +442,7 @@ public class Database implements Closeable {
 		}
 	}
 
-	private IndexedField getIndexedField(String fieldName) {
+	IndexedField getIndexedField(String fieldName) {
 		FieldInterface field = fields.get(fieldName);
 		if (field == null)
 			throw new IllegalArgumentException("Field not found: " + fieldName);
