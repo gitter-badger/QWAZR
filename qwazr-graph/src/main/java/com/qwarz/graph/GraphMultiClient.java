@@ -34,6 +34,7 @@ import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
+import com.qwarz.graph.model.GraphResult;
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
@@ -100,7 +101,7 @@ public class GraphMultiClient extends
 			for (GraphSingleClient client : this) {
 				threads.add(new FunctionExceptionCatcher<GraphDefinition>() {
 					@Override
-					public GraphDefinition execute() throws Exception {
+					public GraphResult execute() throws Exception {
 						return client.createUpdateGraph(graphName, graphDef,
 								msTimeOut, true);
 					}
@@ -116,7 +117,7 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphDefinition getGraph(String graphName, Integer msTimeOut,
+	public GraphResult getGraph(String graphName, Integer msTimeOut,
 			Boolean local) {
 		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
 				logger);

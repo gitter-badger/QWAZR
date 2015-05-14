@@ -27,13 +27,23 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_EMPTY)
 public class GraphDefinition {
 
-	public Map<String, PropertyTypeEnum> node_properties;
+	final public Map<String, PropertyTypeEnum> node_properties;
 
-	public Set<String> edge_types;
+	final public Set<String> edge_types;
 
 	public GraphDefinition() {
-		node_properties = null;
-		edge_types = null;
+		this(null, null);
+	}
+
+	public GraphDefinition(Map<String, PropertyTypeEnum> node_properties,
+			Set<String> edge_types) {
+		this.node_properties = node_properties;
+		this.edge_types = edge_types;
+	}
+
+	protected GraphDefinition(GraphDefinition graphDef) {
+		this.node_properties = graphDef.node_properties;
+		this.edge_types = graphDef.edge_types;
 	}
 
 	public static enum PropertyTypeEnum {

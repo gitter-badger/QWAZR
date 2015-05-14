@@ -34,6 +34,7 @@ import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
+import com.qwarz.graph.model.GraphResult;
 import com.qwazr.utils.http.HttpResponseEntityException;
 import com.qwazr.utils.json.client.JsonClientAbstract;
 
@@ -72,13 +73,12 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public GraphDefinition createUpdateGraph(String db_name,
+	public GraphResult createUpdateGraph(String db_name,
 			GraphDefinition graphDef, Integer msTimeOut, Boolean local) {
 		try {
 			URIBuilder uriBuilder = getGraphBaseUrl(db_name, local, msTimeOut);
 			Request request = Request.Post(uriBuilder.build());
-			return execute(request, graphDef, msTimeOut, GraphDefinition.class,
-					200);
+			return execute(request, graphDef, msTimeOut, GraphResult.class, 200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {
@@ -88,12 +88,12 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public GraphDefinition getGraph(String graphName, Integer msTimeOut,
+	public GraphResult getGraph(String graphName, Integer msTimeOut,
 			Boolean local) {
 		try {
 			URIBuilder uriBuilder = getGraphBaseUrl(graphName, local, msTimeOut);
 			Request request = Request.Get(uriBuilder.build());
-			return execute(request, null, msTimeOut, GraphDefinition.class, 200);
+			return execute(request, null, msTimeOut, GraphResult.class, 200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {
@@ -103,12 +103,12 @@ public class GraphSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public GraphDefinition deleteGraph(String graphName, Integer msTimeOut,
+	public GraphResult deleteGraph(String graphName, Integer msTimeOut,
 			Boolean local) {
 		try {
 			URIBuilder uriBuilder = getGraphBaseUrl(graphName, local, msTimeOut);
 			Request request = Request.Delete(uriBuilder.build());
-			return execute(request, null, msTimeOut, GraphDefinition.class, 200);
+			return execute(request, null, msTimeOut, GraphResult.class, 200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (URISyntaxException | IOException e) {
