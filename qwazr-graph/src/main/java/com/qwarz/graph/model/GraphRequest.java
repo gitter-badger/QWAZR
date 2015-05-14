@@ -30,7 +30,7 @@ public class GraphRequest {
 	public Integer start;
 	public Integer rows;
 
-	public JsonNode where;
+	public JsonNode filters;
 
 	public Set<String> exclude_nodes;
 

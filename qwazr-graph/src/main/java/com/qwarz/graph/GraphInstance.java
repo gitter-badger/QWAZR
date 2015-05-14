@@ -27,17 +27,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.collections4.trie.PatriciaTrie;
+import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.qwarz.database.CollectorInterface.LongCounter;
-import com.qwarz.database.Database;
 import com.qwarz.database.FieldInterface.FieldDefinition;
+import com.qwarz.database.Query;
+import com.qwarz.database.Query.OrGroup;
+import com.qwarz.database.Query.QueryHook;
+import com.qwarz.database.Query.TermQuery;
+import com.qwarz.database.Table;
+import com.qwarz.database.UniqueKey;
 import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphDefinition.PropertyTypeEnum;
 import com.qwarz.graph.model.GraphNode;
@@ -65,12 +71,12 @@ public class GraphInstance {
 		return StringUtils.fastConcat(FIELD_PREFIX_EDGE, name);
 	}
 
-	private final Database database;
+	private final Table table;
 
 	private final GraphDefinition graphDef;
 
-	GraphInstance(String name, Database database, GraphDefinition graphDef) {
-		this.database = database;
+	GraphInstance(String name, Table table, GraphDefinition graphDef) {
+		this.table = table;
 		this.graphDef = graphDef;
 	}
 
@@ -85,10 +91,13 @@ public class GraphInstance {
 	void checkFields() throws ServerException, IOException {
 
 		Set<String> fieldLeft = new HashSet<String>();
-		database.collectExistingFields(fieldLeft);
+		table.collectExistingFields(fieldLeft);
 		AtomicBoolean needCommit = new AtomicBoolean(false);
 
 		List<FieldDefinition> fieldDefinitions = new ArrayList<FieldDefinition>();
+
+		fieldDefinitions.add(new FieldDefinition(FIELD_NODE_ID,
+				FieldDefinition.Type.STORED));
 
 		// Build the property fields
 		if (graphDef.node_properties != null) {
@@ -118,7 +127,7 @@ public class GraphInstance {
 		}
 
 		try {
-			database.setFields(fieldDefinitions, fieldLeft, needCommit);
+			table.setFields(fieldDefinitions, fieldLeft, needCommit);
 		} catch (Exception e) {
 			throw ServerException.getServerException(e);
 		}
@@ -126,19 +135,20 @@ public class GraphInstance {
 		if (fieldLeft.size() > 0) {
 			needCommit.set(true);
 			for (String fieldName : fieldLeft)
-				database.removeField(fieldName);
+				table.removeField(fieldName);
 		}
 
 		if (needCommit.get())
-			database.commit();
+			table.commit();
 
 	}
 
-	private static void createUpdateNoCommit(Database database,
+	private static void createUpdateNoCommit(Table table,
 			GraphDefinition graphDef, String node_id, GraphNode node)
 			throws ServerException, IOException {
 
-		Integer id = database.getNewPrimaryId(node_id);
+		Integer id = table.getPrimaryKeyIndex().getIdOrNew(node_id, null);
+		table.setValue(id, FIELD_NODE_ID, node_id);
 
 		// Populate the property fields
 		if (node.properties != null && !node.properties.isEmpty()) {
@@ -150,7 +160,7 @@ public class GraphInstance {
 				if (!graphDef.node_properties.containsKey(field))
 					throw new ServerException(Status.BAD_REQUEST,
 							"Unknown property name: " + field);
-				database.setValue(id, getPropertyField(field), entry.getValue()
+				table.setValue(id, getPropertyField(field), entry.getValue()
 						.toString());
 			}
 		}
@@ -168,7 +178,7 @@ public class GraphInstance {
 				if (entry.getValue() == null)
 					System.out.println("M'enfin !");
 				else
-					database.setValues(id, getEdgeField(type), entry.getValue());
+					table.setValues(id, getEdgeField(type), entry.getValue());
 			}
 		}
 	}
@@ -207,8 +217,8 @@ public class GraphInstance {
 			}
 		}
 
-		createUpdateNoCommit(database, graphDef, node_id, node);
-		database.commit();
+		createUpdateNoCommit(table, graphDef, node_id, node);
+		table.commit();
 	}
 
 	/**
@@ -248,9 +258,9 @@ public class GraphInstance {
 		}
 
 		for (Map.Entry<String, GraphNode> entry : nodes.entrySet())
-			createUpdateNoCommit(database, graphDef, entry.getKey(),
+			createUpdateNoCommit(table, graphDef, entry.getKey(),
 					entry.getValue());
-		database.commit();
+		table.commit();
 
 	}
 
@@ -303,7 +313,7 @@ public class GraphInstance {
 		Collection<String> returnedFields = new ArrayList<String>();
 		populateReturnedFields(returnedFields);
 
-		Map<String, List<String>> document = database.getDocument(node_id,
+		Map<String, List<String>> document = table.getDocument(node_id,
 				returnedFields);
 		if (document == null)
 			throw new ServerException(Status.NOT_FOUND, "Node not found: "
@@ -332,7 +342,7 @@ public class GraphInstance {
 		Collection<String> returnedFields = new ArrayList<String>();
 		populateReturnedFields(returnedFields);
 
-		List<Map<String, List<String>>> documents = database.getDocuments(
+		List<Map<String, List<String>>> documents = table.getDocuments(
 				node_ids, returnedFields);
 		if (documents == null || documents.isEmpty())
 			return null;
@@ -412,7 +422,7 @@ public class GraphInstance {
 	 *             if any server exception occurs
 	 */
 	void deleteNode(String node_id) throws ServerException, IOException {
-		if (!database.deleteDocument(node_id))
+		if (!table.deleteDocument(node_id))
 			throw new ServerException(Status.NOT_FOUND, "Node not found: "
 					+ node_id);
 	}
@@ -436,10 +446,11 @@ public class GraphInstance {
 		List<GraphNodeResult> resultList = new ArrayList<GraphNodeResult>(
 				request.getRowsOrDefault());
 
-		Map<String, Set<String>> orTermQuery = new HashMap<String, Set<String>>();
 		Map<String, Map<String, LongCounter>> facetFields = new HashMap<String, Map<String, LongCounter>>();
 
-		// Prepare the query
+		OrGroup orGroup = new OrGroup();
+
+		// Prepare the Graph query
 		if (request.edges != null && !request.edges.isEmpty()) {
 			for (Map.Entry<String, Set<String>> entry : request.edges
 					.entrySet()) {
@@ -456,21 +467,37 @@ public class GraphInstance {
 
 				if (edge_set == null || edge_set.isEmpty())
 					continue;
-				Set<String> termSet = orTermQuery.get(field);
-				if (termSet == null) {
-					termSet = new HashSet<String>();
-					orTermQuery.put(field, termSet);
-				}
-				termSet.addAll(edge_set);
+				for (String term : edge_set)
+					orGroup.add(new TermQuery(field, term));
 			}
 		}
 
-		int found = database.findDocumentsOr(orTermQuery, null, facetFields);
-		if (found == 0)
+		final RoaringBitmap filterBitset;
+		if (request.filters != null) {
+			// Add user filters if any
+			Query query = Query.prepare(request.filters, new QueryHook() {
+
+				@Override
+				public Query query(Query query) {
+					if (query instanceof TermQuery) {
+						TermQuery tq = (TermQuery) query;
+						return new TermQuery(getPropertyField(tq.getField()),
+								tq.getValue());
+					}
+					return query;
+				}
+			});
+			filterBitset = table.query(query, null);
+		} else
+			filterBitset = null;
+
+		// Do the query
+		RoaringBitmap docBitset = table.query(orGroup, facetFields);
+		if (docBitset == null || docBitset.isEmpty())
 			return resultList;
 
 		// Compute the score using facets (multithreaded)
-		Map<String, NodeScore> nodeScoreMap = new TreeMap<String, NodeScore>();
+		Map<String, NodeScore> nodeScoreMap = new PatriciaTrie<NodeScore>();
 		List<ScoreThread> scoreThreads = new ArrayList<ScoreThread>(
 				facetFields.size());
 		for (Map.Entry<String, Map<String, LongCounter>> entry : facetFields
@@ -480,7 +507,7 @@ public class GraphInstance {
 			Double weight = request.getEdgeWeight(field
 					.substring(FIELD_PREFIX_EDGE.length()));
 			ScoreThread scoreThread = new ScoreThread(facets, nodeScoreMap,
-					weight);
+					weight, filterBitset);
 			scoreThreads.add(scoreThread);
 		}
 		try {
@@ -503,7 +530,7 @@ public class GraphInstance {
 				.getRowsOrDefault() && i < nodeScoreArray.length; i++)
 			resultList.add(new GraphNodeResult().set(nodeScoreArray[i]));
 
-		Map<String, GraphNodeResult> nodeResultMap = new TreeMap<String, GraphNodeResult>();
+		Map<String, GraphNodeResult> nodeResultMap = new PatriciaTrie<GraphNodeResult>();
 		for (GraphNodeResult nodeResult : resultList)
 			nodeResultMap.put(nodeResult.node_id, nodeResult);
 
@@ -526,12 +553,17 @@ public class GraphInstance {
 		private final Map<String, LongCounter> facets;
 		private final Map<String, NodeScore> nodeScoreMap;
 		private final Double weight;
+		private final RoaringBitmap filterBitset;
+		private final UniqueKey primaryKeys;
 
 		public ScoreThread(Map<String, LongCounter> facets,
-				Map<String, NodeScore> nodeScoreMap, Double weight) {
+				Map<String, NodeScore> nodeScoreMap, Double weight,
+				RoaringBitmap filterBitset) {
 			this.facets = facets;
 			this.nodeScoreMap = nodeScoreMap;
 			this.weight = weight;
+			this.filterBitset = filterBitset;
+			this.primaryKeys = table.getPrimaryKeyIndex();
 		}
 
 		@Override
@@ -539,6 +571,15 @@ public class GraphInstance {
 			for (Map.Entry<String, LongCounter> facet : facets.entrySet()) {
 				NodeScore nodeScore;
 				String term = facet.getKey();
+				if (filterBitset != null) {
+					Integer docId = primaryKeys.getExistingId(term);
+					if (docId == null)
+						continue;
+					synchronized (filterBitset) {
+						if (!filterBitset.contains(docId))
+							continue;
+					}
+				}
 				long count = facet.getValue().count;
 				synchronized (nodeScoreMap) {
 					nodeScore = nodeScoreMap.get(term);

@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 
 import javax.ws.rs.core.Response.Status;
 
-import com.qwarz.database.Database;
+import com.qwarz.database.Table;
 import com.qwarz.graph.model.GraphDefinition;
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
@@ -73,8 +73,8 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 		File dbDirectory = new File(directory, graphName);
 		if (!dbDirectory.exists())
 			dbDirectory.mkdir();
-		Database database = Database.getInstance(dbDirectory);
-		GraphInstance graphInstance = new GraphInstance(graphName, database,
+		Table table = Table.getInstance(dbDirectory);
+		GraphInstance graphInstance = new GraphInstance(graphName, table,
 				graphDef);
 		graphInstance.checkFields();
 		graphMap.put(graphName, graphInstance);
@@ -123,7 +123,7 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 		rwl.w.lock();
 		try {
 			GraphDefinition graphDef = super.delete(graphName);
-			Database.deleteBase(new File(directory, graphName));
+			Table.deleteTable(new File(directory, graphName));
 			graphMap.remove(graphName);
 			return graphDef;
 		} finally {
