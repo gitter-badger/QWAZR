@@ -51,7 +51,21 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 
 	@Override
 	public Response getFile(String schemaName, String path, Integer msTimeout) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
+		try {
+			for (V client : this) {
+				Response response = client
+						.headFile(schemaName, path, msTimeout);
+				if (StoreFileResult.isFile(response)) {
+					return Response.status(Status.TEMPORARY_REDIRECT)
+							.location(StoreFileResult.getAddr(response))
+							.build();
+				}
+			}
+			throw new ServerException(Status.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getTextException(e);
+		}
 	}
 
 	@Override
@@ -61,7 +75,16 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 
 	@Override
 	public Response headFile(String schemaName, String path, Integer msTimeout) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
+				logger);
+		for (V client : this) {
+			try {
+				return client.headFile(schemaName, path, msTimeout);
+			} catch (WebApplicationException e) {
+				exceptionHolder.switchAndWarn(e);
+			}
+		}
+		throw exceptionHolder.getException();
 	}
 
 	@Override

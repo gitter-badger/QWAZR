@@ -197,4 +197,5 @@ public class StoreNameService implements StoreServiceInterface {
 			throw ServerException.getJsonException(e);
 		}
 	}
+
 }

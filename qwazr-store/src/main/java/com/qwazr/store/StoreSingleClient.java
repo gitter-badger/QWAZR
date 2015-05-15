@@ -17,6 +17,7 @@ package com.qwazr.store;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -47,6 +48,7 @@ public class StoreSingleClient extends JsonClientAbstract implements
 		PrefixPath(String path) {
 			this.path = path;
 		}
+
 	}
 
 	private final PrefixPath prefixPath;
@@ -75,10 +77,11 @@ public class StoreSingleClient extends JsonClientAbstract implements
 					"/", path);
 			if (msTimeout != null)
 				uriBuilder.setParameter("timeout", msTimeout.toString());
-			Request request = Request.Head(uriBuilder.build());
+			URI uri = uriBuilder.build();
+			Request request = Request.Head(uri);
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
-			return StoreFileResult.buildHeaders(response, Response.ok())
+			return StoreFileResult.buildHeaders(response, uri, Response.ok())
 					.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
@@ -105,7 +108,7 @@ public class StoreSingleClient extends JsonClientAbstract implements
 			Request request = Request.Post(uriBuilder.build());
 			HttpResponse response = execute(request, inputStream, msTimeout);
 			HttpUtils.checkStatusCodes(response, 200);
-			return StoreFileResult.buildHeaders(response,
+			return StoreFileResult.buildHeaders(response, null,
 					Response.ok("File created: " + path, MediaType.TEXT_PLAIN))
 					.build();
 		} catch (HttpResponseEntityException e) {
@@ -128,6 +131,7 @@ public class StoreSingleClient extends JsonClientAbstract implements
 			HttpUtils.checkStatusCodes(response, 200);
 			return StoreFileResult.buildHeaders(
 					response,
+					null,
 					Response.ok(response.getStatusLine().getReasonPhrase(),
 							MediaType.TEXT_PLAIN)).build();
 		} catch (HttpResponseEntityException e) {
