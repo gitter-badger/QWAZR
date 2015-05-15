@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -69,7 +70,7 @@ public class ClusterManager {
 				// First, we get the node list from another master (if any)
 				ClusterManager.INSTANCE.loadNodesFromOtherMaster();
 				// All is set, let's start the monitoring
-				INSTANCE.startMonitoringThread();
+				INSTANCE.startPeriodicThreads();
 			}
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
@@ -165,16 +166,16 @@ public class ClusterManager {
 	}
 
 	/**
-	 * Start the monitoring thread
+	 * Start the periodic threads
 	 */
-	private synchronized void startMonitoringThread() {
+	private synchronized void startPeriodicThreads() {
 		if (!isMaster)
 			return;
 		if (periodicThreads != null)
 			return;
 		logger.info("Starting the periodic threads");
 		periodicThreads = new ArrayList<PeriodicThread>(2);
-		periodicThreads.add(new ClusterMasterThread(600));
+		periodicThreads.add(new ClusterMasterThread(120));
 		periodicThreads.add(new ClusterMonitoringThread(60));
 	}
 
@@ -309,10 +310,21 @@ public class ClusterManager {
 		if (clusterClient == null || clusterMasterArray == null
 				|| services == null || services.length == 0)
 			return;
-		logger.info("Registering to the master: "
+		logger.info("Registering to the masters: "
 				+ StringUtils.join(services, ' '));
-		clusterClient
-				.register(new ClusterNodeRegisterJson(myAddress, services));
+		for (int i = 0; i < 10; i++) {
+			try {
+				if (clusterClient.register(new ClusterNodeRegisterJson(
+						myAddress, services)) != null)
+					break;
+			} catch (WebApplicationException e) {
+				try {
+					Thread.sleep(15000);
+				} catch (InterruptedException e1) {
+					throw new RuntimeException(e1);
+				}
+			}
+		}
 		if (clusterNodeShutdownThread == null) {
 			clusterNodeShutdownThread = new Thread() {
 				@Override

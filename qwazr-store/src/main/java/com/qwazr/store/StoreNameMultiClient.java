@@ -21,12 +21,18 @@ import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.core.Response.Status;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.qwazr.store.StoreSingleClient.PrefixPath;
 import com.qwazr.utils.server.ServerException;
 
 public class StoreNameMultiClient extends
 		StoreMultiClientAbstract<String, StoreSingleClient> implements
 		StoreServiceInterface {
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(StoreNameMultiClient.class);
 
 	protected StoreNameMultiClient(ExecutorService executor, String[] urls,
 			int msTimeOut) throws URISyntaxException {
@@ -50,6 +56,7 @@ public class StoreNameMultiClient extends
 			return iterator().next().getSchemas(true, msTimeout);
 
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}
@@ -66,6 +73,7 @@ public class StoreNameMultiClient extends
 			return iterator().next().getSchema(schemaName, true, msTimeout);
 
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}

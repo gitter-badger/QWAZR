@@ -26,6 +26,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
@@ -33,6 +36,9 @@ import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 
 public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterface>
 		extends JsonMultiClientAbstract<K, V> implements StoreServiceInterface {
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(StoreMultiClientAbstract.class);
 
 	private final boolean childLocal;
 
@@ -45,7 +51,21 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 
 	@Override
 	public Response getFile(String schemaName, String path, Integer msTimeout) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
+		try {
+			for (V client : this) {
+				Response response = client
+						.headFile(schemaName, path, msTimeout);
+				if (StoreFileResult.isFile(response)) {
+					return Response.status(Status.TEMPORARY_REDIRECT)
+							.location(StoreFileResult.getAddr(response))
+							.build();
+				}
+			}
+			throw new ServerException(Status.NOT_ACCEPTABLE);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getTextException(e);
+		}
 	}
 
 	@Override
@@ -55,7 +75,16 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 
 	@Override
 	public Response headFile(String schemaName, String path, Integer msTimeout) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
+				logger);
+		for (V client : this) {
+			try {
+				return client.headFile(schemaName, path, msTimeout);
+			} catch (WebApplicationException e) {
+				exceptionHolder.switchAndWarn(e);
+			}
+		}
+		throw exceptionHolder.getException();
 	}
 
 	@Override
@@ -105,6 +134,7 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 			return schemaDef;
 
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}
@@ -139,6 +169,7 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 			return ThreadUtils.getFirstResult(threads);
 
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}

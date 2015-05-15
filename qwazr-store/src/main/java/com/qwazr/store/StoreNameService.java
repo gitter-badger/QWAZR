@@ -26,6 +26,7 @@ import javax.ws.rs.core.Response.Status;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.qwazr.utils.HashUtils;
 import com.qwazr.utils.server.ServerException;
 
 @Path("/store")
@@ -89,16 +90,21 @@ public class StoreNameService implements StoreServiceInterface {
 			Integer target) {
 		try {
 			StoreSchemaDefinition schemaDef = getSchemaOrNotFound(schemaName);
-			if (target == null) {
-				HashFunction m3 = Hashing.murmur3_128();
-				target = (m3.hashString(path).asInt() % schemaDef.distribution_factor);
-			}
+			if (target == null)
+				target = HashUtils.getMurmur3Mod(path,
+						schemaDef.distribution_factor);
 			return getDataClient(schemaDef.nodes, msTimeout).putFile(
 					schemaName, path, inputStream, lastModified, msTimeout,
 					target);
 		} catch (ServerException | URISyntaxException e) {
 			throw ServerException.getJsonException(e);
 		}
+	}
+
+	public static void main(String[] argv) {
+		HashFunction m3 = Hashing.murmur3_128();
+		System.out.println(m3.hashString("subdir/file2.png").asInt()
+				% new Integer(3));
 	}
 
 	@Override
@@ -191,4 +197,5 @@ public class StoreNameService implements StoreServiceInterface {
 			throw ServerException.getJsonException(e);
 		}
 	}
+
 }
