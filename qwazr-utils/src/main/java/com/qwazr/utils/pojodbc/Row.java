@@ -2,7 +2,7 @@
  * License Agreement for OpenSearchServer Pojodbc
  *
  * Copyright 2008-2013 Emmanuel Keller / Jaeksoft
- * Copyright 2014-2015 OpenSearchServer Inc.
+ * Copyright 2014-2015 Emmanuel Keller / QWAZR
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

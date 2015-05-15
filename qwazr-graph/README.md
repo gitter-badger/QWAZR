@@ -13,7 +13,6 @@ Requirement
 -----------
 
 - Java Runtime 7
-- OpenSearchServer v1.5.10 or newer
 - Maven 3.0 or newer (for building only)
 
 How to build
@@ -24,7 +23,7 @@ The compilation and packaging requires [Maven 3.0 or newer](http://maven.apache.
 Clone the source code:
 
 ```shell
-git clone https://github.com/opensearchserver/oss-graph.git
+git clone https://github.com/qwazr/oss-graph.git
 ```
 
 Compile and package (the binary will located in the target directory):
@@ -46,7 +45,7 @@ mkdir ~/oss_graph
 
 Run QWAZR Graph. Here are the parameters:
 
-- 'd': The path of the data directory (~/opensearchserver_graph by default).
+- 'd': The path of the data directory (~/qwazr/graph by default).
 - 'p': The TCP port used by the daemon (9093 by default).
 - 'h': The hostname (0.0.0.0 by default).
 
@@ -68,7 +67,7 @@ The provided [REST/Json Web Service is described here](src/doc/usage.md).
 License Apache 2
 ----------------
 
-Copyright 2014-2015 [OpenSearchServer Inc.](http://www.opensearchserver.com)
+Copyright 2014-2015 [Emmanuel Keller](http://www.qwazr.com)
 
 
 Licensed under the Apache License, Version 2.0 (the "License");
