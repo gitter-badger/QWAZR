@@ -74,15 +74,16 @@ public class FullTest {
 	@Test
 	public void test000CreateDatabase() throws IOException {
 
-		GraphDefinition graphDef = new GraphDefinition();
-		graphDef.node_properties = new HashMap<String, PropertyTypeEnum>();
-		graphDef.node_properties.put("type", PropertyTypeEnum.indexed);
-		graphDef.node_properties.put("date", PropertyTypeEnum.indexed);
-		graphDef.node_properties.put("name", PropertyTypeEnum.stored);
-		graphDef.node_properties.put("user", PropertyTypeEnum.stored);
-		graphDef.edge_types = new HashSet<String>();
-		graphDef.edge_types.add("see");
-		graphDef.edge_types.add("buy");
+		HashMap<String, PropertyTypeEnum> node_properties = new HashMap<String, PropertyTypeEnum>();
+		node_properties.put("type", PropertyTypeEnum.indexed);
+		node_properties.put("date", PropertyTypeEnum.indexed);
+		node_properties.put("name", PropertyTypeEnum.stored);
+		node_properties.put("user", PropertyTypeEnum.stored);
+		HashSet<String> edge_types = new HashSet<String>();
+		edge_types.add("see");
+		edge_types.add("buy");
+		GraphDefinition graphDef = new GraphDefinition(node_properties,
+				edge_types);
 
 		HttpResponse response = Request
 				.Put(BASE_URL + '/' + TEST_BASE)

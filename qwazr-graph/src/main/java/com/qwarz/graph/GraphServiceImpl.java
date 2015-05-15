@@ -36,6 +36,7 @@ import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
+import com.qwarz.graph.model.GraphResult;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.ServerException;
 
@@ -97,21 +98,24 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	private GraphDefinition getGraphOrNotFound(String graphName)
 			throws ServerException {
-		GraphDefinition graph = GraphManager.INSTANCE.get(graphName);
-		if (graph != null)
-			return graph;
-		throw new ServerException(Status.NOT_FOUND, "Graph not found: "
-				+ graphName);
+		GraphDefinition graphDef = GraphManager.INSTANCE.get(graphName);
+		if (graphDef == null)
+			throw new ServerException(Status.NOT_FOUND, "Graph not found: "
+					+ graphName);
+		return graphDef;
 	}
 
 	@Override
-	public GraphDefinition getGraph(String graphName, Integer msTimeOut,
+	public GraphResult getGraph(String graphName, Integer msTimeOut,
 			Boolean local) {
 		try {
 			GraphMultiClient client = getMultiClient(msTimeOut, local);
-			if (client == null)
-				return getGraphOrNotFound(graphName);
-			else
+			if (client == null) {
+				GraphDefinition graphDef = getGraphOrNotFound(graphName);
+				GraphInstance graphInstance = GraphManager.INSTANCE
+						.getGraphInstance(graphName);
+				return new GraphResult(graphDef, graphInstance.getSize());
+			} else
 				return client.getGraph(graphName, msTimeOut, false);
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);

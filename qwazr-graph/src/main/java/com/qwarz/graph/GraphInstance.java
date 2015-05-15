@@ -455,7 +455,7 @@ public class GraphInstance {
 
 		Map<String, Map<String, LongCounter>> facetFields = new HashMap<String, Map<String, LongCounter>>();
 
-		OrGroup orGroup = new OrGroup();
+		OrGroup orGroup = null;
 
 		// Prepare the Graph query
 		if (request.edges != null && !request.edges.isEmpty()) {
@@ -474,14 +474,21 @@ public class GraphInstance {
 
 				if (edge_set == null || edge_set.isEmpty())
 					continue;
+				if (orGroup == null)
+					orGroup = new OrGroup();
 				for (String term : edge_set)
 					orGroup.add(new TermQuery<String>(field, term));
 			}
 		}
 
+		// Do the query
+		RoaringBitmap docBitset = table.query(orGroup, facetFields);
+		if (docBitset == null || docBitset.isEmpty())
+			return resultList;
+
+		// Add user filters if any
 		final RoaringBitmap filterBitset;
 		if (request.filters != null) {
-			// Add user filters if any
 			Query query = Query.prepare(request.filters, new QueryHook() {
 
 				@Override
@@ -495,11 +502,6 @@ public class GraphInstance {
 			filterBitset = table.query(query, null);
 		} else
 			filterBitset = null;
-
-		// Do the query
-		RoaringBitmap docBitset = table.query(orGroup, facetFields);
-		if (docBitset == null || docBitset.isEmpty())
-			return resultList;
 
 		// Get the boost fields
 		FieldInterface<?>[] boostFields = null;
@@ -646,5 +648,9 @@ public class GraphInstance {
 			return Double.compare(o.score, score);
 		}
 
+	}
+
+	public int getSize() {
+		return table.getSize();
 	}
 }

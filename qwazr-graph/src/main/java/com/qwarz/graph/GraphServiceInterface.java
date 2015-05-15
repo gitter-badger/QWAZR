@@ -35,6 +35,7 @@ import com.qwarz.graph.model.GraphDefinition;
 import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
+import com.qwarz.graph.model.GraphResult;
 import com.qwazr.utils.server.RestApplication;
 
 @Path("/graph")
@@ -60,7 +61,7 @@ public interface GraphServiceInterface {
 	@GET
 	@Path("/{graph_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public GraphDefinition getGraph(@PathParam("graph_name") String graph_name,
+	public GraphResult getGraph(@PathParam("graph_name") String graph_name,
 			@QueryParam("timeout") Integer msTimeOut,
 			@QueryParam("local") Boolean local);
 
