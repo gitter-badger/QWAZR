@@ -371,6 +371,33 @@
 					</postinstallScriptlet>
 				</configuration>
 			</plugin>
-		</plugins>
+     <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.4.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <executable>java</executable>
+          <!-- optional -->
+          <workingDirectory>/tmp</workingDirectory>
+          <arguments>
+            <argument>-l</argument>
+            <argument>localhost</argument>
+            <argument>-a</argument>
+            <argument>localhost</argument>
+            <argument>-sp</argument>
+            <argument>9191</argument>
+            <argument>-d</argument>
+            <argument>${project.basedir}/src/test/data1</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
 	</build>
 </project>

@@ -194,12 +194,16 @@ public class Qwazr extends AbstractServer {
 		return new QwazrApplication();
 	}
 
-	public static void main(String[] args) throws IOException,
-			ServletException, ParseException {
+	public static void main(String[] args) {
 		// Start the server
-		Qwazr server = new Qwazr();
-		server.start(args);
-		// Register the services
-		ClusterManager.INSTANCE.registerMe(server.services);
+		try {
+			Qwazr server = new Qwazr();
+			server.start(args);
+			// Register the services
+			ClusterManager.INSTANCE.registerMe(server.services);
+		} catch (IOException | ParseException | ServletException e) {
+			logger.error(e.getMessage(), e);
+			System.exit(1);
+		}
 	}
 }
