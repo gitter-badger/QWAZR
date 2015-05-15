@@ -11,6 +11,9 @@ do
 		-l 127.0.0.1 -sp 9${i}91 -wp 9${i}90 -d master${i} >logs/log${i}.out 2>&1 &
 done
 
+# Wait 10 seconds until the masters are up
+sleep 10
+
 # Then we launch the nodes
 for i in 3 4 5 6
 do

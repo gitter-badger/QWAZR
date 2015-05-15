@@ -26,6 +26,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
@@ -33,6 +36,9 @@ import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 
 public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterface>
 		extends JsonMultiClientAbstract<K, V> implements StoreServiceInterface {
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(StoreMultiClientAbstract.class);
 
 	private final boolean childLocal;
 
@@ -105,6 +111,7 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 			return schemaDef;
 
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}
@@ -139,6 +146,7 @@ public abstract class StoreMultiClientAbstract<K, V extends StoreServiceInterfac
 			return ThreadUtils.getFirstResult(threads);
 
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}

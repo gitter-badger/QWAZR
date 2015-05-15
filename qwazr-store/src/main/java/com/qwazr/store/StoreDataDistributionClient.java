@@ -26,6 +26,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.qwazr.store.StoreSingleClient.PrefixPath;
 import com.qwazr.utils.server.ServerException;
@@ -35,6 +37,9 @@ import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 public class StoreDataDistributionClient extends
 		StoreMultiClientAbstract<String, StoreSingleClient> implements
 		StoreServiceInterface {
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(StoreDataDistributionClient.class);
 
 	protected StoreDataDistributionClient(ExecutorService executor,
 			String[] urls, int msTimeOut) throws URISyntaxException {
@@ -57,7 +62,8 @@ public class StoreDataDistributionClient extends
 			return getClientByPos(target).putFile(schemaName, path,
 					inputStream, lastModified, msTimeout, target);
 		} catch (Exception e) {
-			throw new ServerException(e).getTextException();
+			logger.error(e.getMessage(), e);
+			throw ServerException.getTextException(e);
 		} finally {
 			IOUtils.closeQuietly(inputStream);
 		}
@@ -93,6 +99,7 @@ public class StoreDataDistributionClient extends
 						+ path);
 			return response;
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getTextException(e);
 		}
 	}

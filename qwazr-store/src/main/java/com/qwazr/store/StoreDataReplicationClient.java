@@ -27,6 +27,9 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.qwazr.store.StoreSingleClient.PrefixPath;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.server.ServerException;
@@ -36,6 +39,9 @@ import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 public class StoreDataReplicationClient extends
 		StoreMultiClientAbstract<String[], StoreDataDistributionClient>
 		implements StoreServiceInterface {
+
+	private static final Logger logger = LoggerFactory
+			.getLogger(StoreDataReplicationClient.class);
 
 	protected StoreDataReplicationClient(ExecutorService executor,
 			String[][] urlMap, PrefixPath prefixPath, int msTimeOut)
@@ -77,6 +83,7 @@ public class StoreDataReplicationClient extends
 						+ path);
 			return response;
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getTextException(e);
 		}
 	}
@@ -109,6 +116,7 @@ public class StoreDataReplicationClient extends
 			ThreadUtils.invokeAndJoin(executor, threads);
 			return ThreadUtils.getFirstResult(threads);
 		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw ServerException.getTextException(e);
 		} finally {
 			if (tmpFile != null)
