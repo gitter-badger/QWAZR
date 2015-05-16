@@ -47,32 +47,37 @@ public class HttpResponseEntityException extends HttpResponseException {
 	}
 
 	private static String setMessage(String message, HttpEntity entity) {
-		if (entity == null)
-			return message;
+		StringBuilder sb = new StringBuilder();
+		if (message != null)
+			sb.append(message);
 		try {
-			String content = IOUtils.toString(entity.getContent());
-			if (message == null || message.isEmpty())
-				return content;
+			if (entity != null) {
+				sb.append(' ');
+				sb.append(IOUtils.toString(entity.getContent()));
+			}
 			ContentType contentType = ContentType.get(entity);
-			return StringUtils.fastConcat(
-					message,
-					" - ",
-					contentType == null ? "no content-type" : contentType
-							.toString(), " - ", content);
+			if (contentType != null) {
+				sb.append(" - ");
+				sb.append(contentType.toString());
+			}
 		} catch (IllegalStateException | IOException e) {
-			return message;
 		}
+		return sb.toString();
 	}
 
 	public HttpEntity getEntity() {
 		return entity;
 	}
 
-	public WebApplicationException getWebApplicationException() {
+	public WebApplicationException getWebApplicationException(
+			Object... additionalMessages) {
+		String message = getMessage();
+		if (additionalMessages != null)
+			message = StringUtils.fastConcat(message, additionalMessages);
 		int code = getStatusCode();
 		if (code != 0)
-			return new WebApplicationException(getMessage(), code);
-		return new WebApplicationException(this);
+			return new WebApplicationException(message, code);
+		return new WebApplicationException(message, this);
 	}
 
 }

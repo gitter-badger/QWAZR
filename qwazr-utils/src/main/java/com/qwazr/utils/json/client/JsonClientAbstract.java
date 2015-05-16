@@ -104,7 +104,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		JsonHttpResponseHandler.JsonValueResponse<T> responseHandler = new JsonHttpResponseHandler.JsonValueResponse<T>(
 				ContentType.APPLICATION_JSON, jsonResultClass, expectedCodes);
 		return request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
-				.addHeader("accept", ContentType.APPLICATION_JSON.toString())
+				.addHeader("Accept", ContentType.APPLICATION_JSON.toString())
 				.execute().handleResponse(responseHandler);
 	}
 

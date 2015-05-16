@@ -18,7 +18,6 @@ package com.qwazr.store;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
@@ -26,10 +25,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.qwazr.utils.server.ServerException;
 
 @Path("/store_local")
-public class StoreDataService implements StoreServiceInterface {
+public class StoreNodeDataService implements StoreDataServiceInterface {
 
 	private File getExistingFile(String schemaName, String path)
 			throws ServerException {
@@ -58,8 +59,14 @@ public class StoreDataService implements StoreServiceInterface {
 	}
 
 	@Override
-	public Response getFile(String schemaName, Integer msTimeout) {
-		return getFile(schemaName, "/", msTimeout);
+	public StoreFileResult getDirectory(String schemaName, String path,
+			Integer msTimeout) {
+		try {
+			File file = getExistingFile(schemaName, path);
+			return new StoreFileResult(file, file.isDirectory());
+		} catch (ServerException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
@@ -120,35 +127,37 @@ public class StoreDataService implements StoreServiceInterface {
 	}
 
 	@Override
-	public Set<String> getSchemas(Boolean local, Integer msTimeout) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getJsonException();
+	final public StoreFileResult getDirectory(String schemaName,
+			Integer msTimeout) {
+		return getDirectory(schemaName, StringUtils.EMPTY, msTimeout);
 	}
 
 	@Override
-	public StoreSchemaDefinition getSchema(String schemaName, Boolean local,
-			Integer msTimeout) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getJsonException();
+	final public Response getFile(String schemaName, Integer msTimeout) {
+		return getFile(schemaName, StringUtils.EMPTY, msTimeout);
 	}
 
 	@Override
-	public StoreSchemaDefinition createSchema(String schemaName,
-			StoreSchemaDefinition schemaDefinition, Boolean local,
-			Integer msTimeout) {
+	final public Response headFile(String schemaName, Integer msTimeout) {
+		return headFile(schemaName, StringUtils.EMPTY, msTimeout);
+	}
+
+	@Override
+	public Response createSchema(String schemaName, Integer msTimeout) {
 		try {
 			StoreDataManager.INSTANCE.createSchema(schemaName);
-			return schemaDefinition;
+			return Response.ok("Schema created: " + schemaName).build();
 		} catch (IOException e) {
 			throw new ServerException(e).getJsonException();
 		}
 	}
 
 	@Override
-	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local,
-			Integer msTimeout) {
+	public Response deleteSchema(String schemaName, Integer msTimeout) {
 		try {
 			StoreDataManager.INSTANCE.deleteSchema(schemaName);
-			return new StoreSchemaDefinition();
-		} catch (IOException e) {
+			return Response.ok("Schema deleted: " + schemaName).build();
+		} catch (IOException | ServerException e) {
 			throw new ServerException(e).getJsonException();
 		}
 	}
