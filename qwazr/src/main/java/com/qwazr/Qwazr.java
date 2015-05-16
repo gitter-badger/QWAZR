@@ -45,8 +45,9 @@ import com.qwazr.job.scheduler.SchedulerServiceImpl;
 import com.qwazr.job.script.ScriptServiceImpl;
 import com.qwazr.search.SearchServer;
 import com.qwazr.search.index.IndexServiceImpl;
-import com.qwazr.store.StoreDataService;
-import com.qwazr.store.StoreNameService;
+import com.qwazr.store.StoreMasterDataService;
+import com.qwazr.store.StoreMasterSchemaService;
+import com.qwazr.store.StoreNodeDataService;
 import com.qwazr.store.StoreServer;
 import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.server.AbstractServer;
@@ -98,9 +99,11 @@ public class Qwazr extends AbstractServer {
 			if (ServiceEnum.graph.isActive(serverConfiguration))
 				classes.add(GraphServiceImpl.class);
 			if (ServiceEnum.store.isActive(serverConfiguration)) {
-				classes.add(StoreDataService.class);
-				if (ClusterManager.INSTANCE.isMaster())
-					classes.add(StoreNameService.class);
+				classes.add(StoreNodeDataService.class);
+				if (ClusterManager.INSTANCE.isMaster()) {
+					classes.add(StoreMasterDataService.class);
+					classes.add(StoreMasterSchemaService.class);
+				}
 			}
 			return classes;
 		}

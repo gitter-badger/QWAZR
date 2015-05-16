@@ -29,28 +29,67 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwazr.store.StoreSingleClient.PrefixPath;
+import com.qwazr.store.StoreDataSingleClient.PrefixPath;
+import com.qwazr.store.StoreFileResult.DirMerger;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
+import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
 public class StoreDataDistributionClient extends
-		StoreMultiClientAbstract<String, StoreSingleClient> implements
-		StoreServiceInterface {
+		StoreDataMultiClientAbstract<String, StoreDataSingleClient> implements
+		StoreDataServiceInterface {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(StoreDataDistributionClient.class);
 
 	protected StoreDataDistributionClient(ExecutorService executor,
 			String[] urls, int msTimeOut) throws URISyntaxException {
-		super(executor, new StoreSingleClient[urls.length], urls, msTimeOut,
-				true);
+		super(executor, new StoreDataSingleClient[urls.length], urls,
+				msTimeOut, true);
 	}
 
 	@Override
-	protected StoreSingleClient newClient(String url, int msTimeOut)
+	protected StoreDataSingleClient newClient(String url, int msTimeOut)
 			throws URISyntaxException {
-		return new StoreSingleClient(url, PrefixPath.data, msTimeOut);
+		return new StoreDataSingleClient(url, PrefixPath.data, msTimeOut);
+	}
+
+	@Override
+	public StoreFileResult getDirectory(String schemaName, String path,
+			Integer msTimeout) {
+
+		try {
+
+			final DirMerger dirMerger = new DirMerger();
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (StoreDataSingleClient client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+						try {
+							dirMerger.syncMerge(client.getDirectory(schemaName,
+									path, msTimeout));
+						} catch (WebApplicationException e) {
+							switch (e.getResponse().getStatus()) {
+							case 404:
+							case 406:
+								break;
+							default:
+								throw e;
+							}
+						}
+					}
+				});
+			}
+
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return dirMerger.mergedDirResult;
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getTextException(e);
+		}
 	}
 
 	@Override
@@ -76,7 +115,7 @@ public class StoreDataDistributionClient extends
 
 			List<FunctionExceptionCatcher<Response>> threads = new ArrayList<>(
 					size());
-			for (StoreSingleClient client : this) {
+			for (StoreDataSingleClient client : this) {
 				threads.add(new FunctionExceptionCatcher<Response>() {
 					@Override
 					public Response execute() throws Exception {

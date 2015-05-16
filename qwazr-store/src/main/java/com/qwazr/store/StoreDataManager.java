@@ -19,8 +19,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.ws.rs.core.Response.Status;
 
@@ -28,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
+import com.qwazr.store.StoreDataSingleClient.PrefixPath;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.server.ServerException;
@@ -45,8 +49,10 @@ class StoreDataManager {
 	private final LockUtils.ReadWriteLock rwlSchemas = new LockUtils.ReadWriteLock();
 	private final Map<String, File> schemaDataDirectoryMap;
 	private final File storeDirectory;
+	private final ExecutorService executor;
 
 	private StoreDataManager(File storeDirectory) throws IOException {
+		executor = Executors.newFixedThreadPool(8);
 		this.schemaDataDirectoryMap = new ConcurrentHashMap<String, File>();
 		this.storeDirectory = storeDirectory;
 		File[] schemaFiles = storeDirectory
@@ -90,11 +96,12 @@ class StoreDataManager {
 		}
 	}
 
-	void deleteSchema(String schemaName) throws IOException {
+	void deleteSchema(String schemaName) throws IOException, ServerException {
 		rwlSchemas.r.lock();
 		try {
 			if (!schemaDataDirectoryMap.containsKey(schemaName))
-				return;
+				throw new ServerException(Status.NOT_FOUND,
+						"Schema not found: " + schemaName);
 		} finally {
 			rwlSchemas.r.unlock();
 		}
@@ -102,7 +109,8 @@ class StoreDataManager {
 		try {
 			File schemaFile = schemaDataDirectoryMap.remove(schemaName);
 			if (schemaFile == null)
-				return;
+				throw new ServerException(Status.NOT_FOUND,
+						"Schema not found: " + schemaName);
 			FileUtils.deleteDirectory(schemaFile);
 		} finally {
 			rwlSchemas.w.unlock();
@@ -211,5 +219,11 @@ class StoreDataManager {
 		if (parent.list().length == 0)
 			parent.delete();
 		return file;
+	}
+
+	public StoreDataReplicationClient getNewDataClient(String[][] nodes,
+			Integer msTimeOut) throws URISyntaxException {
+		return new StoreDataReplicationClient(executor, nodes, PrefixPath.data,
+				msTimeOut == null ? 60000 : msTimeOut);
 	}
 }

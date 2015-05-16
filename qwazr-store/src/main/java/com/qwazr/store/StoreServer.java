@@ -52,9 +52,11 @@ public class StoreServer extends AbstractServer {
 		@Override
 		public Set<Class<?>> getClasses() {
 			Set<Class<?>> classes = super.getClasses();
-			classes.add(StoreDataService.class);
-			if (ClusterManager.INSTANCE.isMaster())
-				classes.add(StoreNameService.class);
+			classes.add(StoreNodeDataService.class);
+			if (ClusterManager.INSTANCE.isMaster()) {
+				classes.add(StoreMasterDataService.class);
+				classes.add(StoreMasterSchemaService.class);
+			}
 			classes.add(ClusterServiceImpl.class);
 			return classes;
 		}
@@ -70,7 +72,7 @@ public class StoreServer extends AbstractServer {
 			storeDir.mkdir();
 		StoreDataManager.load(storeDir);
 		if (ClusterManager.INSTANCE.isMaster())
-			StoreNameManager.load(storeDir);
+			StoreSchemaManager.load(storeDir);
 	}
 
 	@Override

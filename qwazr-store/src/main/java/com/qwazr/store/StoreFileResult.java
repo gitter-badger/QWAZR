@@ -50,6 +50,15 @@ public class StoreFileResult {
 
 	public final Map<String, StoreFileResult> childs;
 
+	public StoreFileResult() {
+		file = null;
+		inputStream = null;
+		type = null;
+		lastModified = null;
+		size = null;
+		childs = null;
+	}
+
 	StoreFileResult(File file, boolean retrieveChilds) {
 		inputStream = null;
 		this.file = file;
@@ -60,8 +69,7 @@ public class StoreFileResult {
 				if (files != null) {
 					childs = new TreeMap<String, StoreFileResult>();
 					for (File f : files)
-						childs.put(file.getName(),
-								new StoreFileResult(f, false));
+						childs.put(f.getName(), new StoreFileResult(f, false));
 				} else
 					childs = null;
 			} else
@@ -111,7 +119,7 @@ public class StoreFileResult {
 		}
 	}
 
-	final static ResponseBuilder buildHeaders(HttpResponse response, URI uri,
+	final static void buildHeaders(HttpResponse response, URI uri,
 			ResponseBuilder builder) {
 		Header header = response.getFirstHeader(QWAZR_TYPE);
 		if (header != null)
@@ -124,11 +132,17 @@ public class StoreFileResult {
 			builder.header(LAST_MODIFIED, header.getValue());
 		if (uri != null)
 			builder.header(QWAZR_ADDR, uri.toASCIIString());
-		return builder;
 	}
 
-	final static boolean isFile(Response response) {
-		return Type.FILE.name().equals(response.getHeaderString(QWAZR_TYPE));
+	final static Type getType(Response response) {
+		String h = response.getHeaderString(QWAZR_TYPE);
+		if (h == null)
+			return Type.UNKNOWN;
+		try {
+			return Type.valueOf(h);
+		} catch (IllegalArgumentException e) {
+			return Type.UNKNOWN;
+		}
 	}
 
 	final static URI getAddr(Response response) throws URISyntaxException {
@@ -136,6 +150,29 @@ public class StoreFileResult {
 		if (u == null)
 			throw new NullPointerException("No address");
 		return new URI(u);
+	}
+
+	static class DirMerger {
+
+		StoreFileResult mergedDirResult = null;
+
+		final void syncMerge(StoreFileResult dirResult) {
+			synchronized (this) {
+				if (dirResult == null)
+					return;
+				if (mergedDirResult == null) {
+					mergedDirResult = dirResult;
+					return;
+				}
+				if (dirResult.childs == null)
+					return;
+				if (mergedDirResult.childs == null) {
+					mergedDirResult = dirResult;
+					return;
+				}
+				mergedDirResult.childs.putAll(dirResult.childs);
+			}
+		}
 	}
 
 }

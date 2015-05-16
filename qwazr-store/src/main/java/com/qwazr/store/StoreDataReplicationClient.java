@@ -25,20 +25,23 @@ import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwazr.store.StoreSingleClient.PrefixPath;
+import com.qwazr.store.StoreDataSingleClient.PrefixPath;
+import com.qwazr.store.StoreFileResult.DirMerger;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
+import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
 public class StoreDataReplicationClient extends
-		StoreMultiClientAbstract<String[], StoreDataDistributionClient>
-		implements StoreServiceInterface {
+		StoreDataMultiClientAbstract<String[], StoreDataDistributionClient>
+		implements StoreDataServiceInterface {
 
 	private static final Logger logger = LoggerFactory
 			.getLogger(StoreDataReplicationClient.class);
@@ -54,6 +57,70 @@ public class StoreDataReplicationClient extends
 	protected StoreDataDistributionClient newClient(String[] urls, int msTimeOut)
 			throws URISyntaxException {
 		return new StoreDataDistributionClient(executor, urls, msTimeOut);
+	}
+
+	@Override
+	public StoreFileResult getDirectory(String schemaName, String path,
+			Integer msTimeout) {
+
+		try {
+
+			final DirMerger dirMerger = new DirMerger();
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (StoreDataDistributionClient client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+
+						try {
+							dirMerger.syncMerge(client.getDirectory(schemaName,
+									path, msTimeout));
+						} catch (WebApplicationException e) {
+							if (e.getResponse().getStatus() != 404)
+								throw e;
+						}
+					}
+				});
+			}
+
+			ThreadUtils.invokeAndJoin(executor, threads);
+			if (dirMerger.mergedDirResult == null)
+				throw new ServerException(Status.NOT_FOUND, "File not found: "
+						+ path);
+			return dirMerger.mergedDirResult;
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getTextException(e);
+		}
+	}
+
+	@Override
+	public Response getFile(String schemaName, String path, Integer msTimeout) {
+
+		try {
+
+			Response response = headFile(schemaName, path, msTimeout);
+			switch (StoreFileResult.getType(response)) {
+			case FILE:
+				return Response.status(Status.TEMPORARY_REDIRECT)
+						.location(StoreFileResult.getAddr(response)).build();
+			case DIRECTORY:
+				StoreFileResult directoryResult = getDirectory(schemaName,
+						path, msTimeout);
+				ResponseBuilder builder = Response.ok();
+				directoryResult.buildHeader(builder);
+				directoryResult.buildEntity(builder);
+				return builder.build();
+			default:
+				throw new ServerException(Status.INTERNAL_SERVER_ERROR,
+						"Unknown file type: " + schemaName + '/' + path);
+			}
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getTextException(e);
+		}
 	}
 
 	@Override

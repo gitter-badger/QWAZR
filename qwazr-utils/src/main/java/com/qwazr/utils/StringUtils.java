@@ -151,7 +151,8 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 			return charSeqs[0];
 		StringBuilder sb = new StringBuilder();
 		for (CharSequence charSeq : charSeqs)
-			sb.append(charSeq);
+			if (charSeq != null)
+				sb.append(charSeq);
 		return sb;
 	}
 

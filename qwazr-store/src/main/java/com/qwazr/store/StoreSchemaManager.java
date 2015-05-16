@@ -34,65 +34,71 @@ import org.apache.commons.lang3.RandomUtils;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.store.StoreSingleClient.PrefixPath;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;
 import com.qwazr.utils.server.ServerException;
 
-public class StoreNameManager extends
+public class StoreSchemaManager extends
 		DirectoryJsonManager<StoreSchemaDefinition> {
 
-	public static volatile StoreNameManager INSTANCE = null;
+	public static volatile StoreSchemaManager INSTANCE = null;
 
 	public static void load(File storeDirectory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
-			INSTANCE = new StoreNameManager(storeDirectory);
+			INSTANCE = new StoreSchemaManager(storeDirectory);
 		} catch (ServerException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private final LockUtils.ReadWriteLock rwlSchemas = new LockUtils.ReadWriteLock();
-	private final Map<String, StoreNameInstance> nameInstanceMap;
+	private final Map<String, StoreSchemaInstance> schemaInstanceMap;
 	private final ExecutorService executor;
 
-	private StoreNameManager(File storeDirectory) throws IOException,
+	private StoreSchemaManager(File storeDirectory) throws IOException,
 			ServerException {
 		super(storeDirectory, StoreSchemaDefinition.class);
-		nameInstanceMap = new HashMap<String, StoreNameInstance>();
+		schemaInstanceMap = new HashMap<String, StoreSchemaInstance>();
 		executor = Executors.newFixedThreadPool(8);
 	}
 
-	StoreNameInstance getNameInstance(String schemaName) throws ServerException {
+	StoreSchemaInstance getSchemaInstance(String schemaName)
+			throws ServerException {
 		rwlSchemas.r.lock();
 		try {
-			StoreNameInstance nameInstance = nameInstanceMap.get(schemaName);
-			if (nameInstance != null)
-				return nameInstance;
+			StoreSchemaInstance schemaInstance = schemaInstanceMap
+					.get(schemaName);
+			if (schemaInstance != null)
+				return schemaInstance;
 		} finally {
 			rwlSchemas.r.unlock();
 		}
 		rwlSchemas.w.lock();
 		try {
-			StoreNameInstance nameInstance = nameInstanceMap.get(schemaName);
-			if (nameInstance != null)
-				return nameInstance;
+			StoreSchemaInstance schemaInstance = schemaInstanceMap
+					.get(schemaName);
+			if (schemaInstance != null)
+				return schemaInstance;
 			StoreSchemaDefinition schemaDefininition = get(schemaName);
 			if (schemaDefininition == null)
 				throw new ServerException(Status.NOT_FOUND,
 						"Schema not found : " + schemaName);
-			nameInstance = new StoreNameInstance(directory, schemaName);
-			nameInstanceMap.put(schemaName, nameInstance);
-			return nameInstance;
+			schemaInstance = new StoreSchemaInstance(directory, schemaName);
+			schemaInstanceMap.put(schemaName, schemaInstance);
+			return schemaInstance;
 		} finally {
 			rwlSchemas.w.unlock();
 		}
 	}
 
-	StoreSchemaDefinition getSchema(String schemaName) {
-		return super.get(schemaName);
+	StoreSchemaDefinition getSchema(String schemaName) throws ServerException {
+		StoreSchemaDefinition schemaDefinition = super.get(schemaName);
+		if (schemaDefinition != null)
+			return schemaDefinition;
+		throw new ServerException(Status.NOT_FOUND, "Schema not found: "
+				+ schemaName);
 	}
 
 	Set<String> getSchemas() {
@@ -123,11 +129,12 @@ public class StoreNameManager extends
 			throws ServerException, IOException {
 		rwlSchemas.w.lock();
 		try {
-			StoreNameInstance nameInstance = nameInstanceMap.get(schemaName);
-			if (nameInstance != null) {
-				nameInstance.close();
-				nameInstanceMap.remove(schemaName);
-				nameInstance.delete();
+			StoreSchemaInstance schemaInstance = schemaInstanceMap
+					.get(schemaName);
+			if (schemaInstance != null) {
+				schemaInstance.close();
+				schemaInstanceMap.remove(schemaName);
+				schemaInstance.delete();
 			}
 			StoreSchemaDefinition schemaDefinition = super.delete(schemaName);
 			if (schemaDefinition == null)
@@ -193,16 +200,10 @@ public class StoreNameManager extends
 		}
 	}
 
-	public StoreNameMultiClient getNewNameClient(Integer msTimeOut)
+	public StoreSchemaMultiClient getNewSchemaClient(Integer msTimeOut)
 			throws URISyntaxException {
-		return new StoreNameMultiClient(executor,
+		return new StoreSchemaMultiClient(executor,
 				ClusterManager.INSTANCE.getMasterArray(),
-				msTimeOut == null ? 60000 : msTimeOut);
-	}
-
-	public StoreDataReplicationClient getNewDataClient(String[][] nodes,
-			Integer msTimeOut) throws URISyntaxException {
-		return new StoreDataReplicationClient(executor, nodes, PrefixPath.data,
 				msTimeOut == null ? 60000 : msTimeOut);
 	}
 
