@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.schema;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -22,6 +22,8 @@ import java.util.Set;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response.Status;
 
+import com.qwazr.store.data.StoreDataManager;
+import com.qwazr.store.data.StoreDataReplicationClient;
 import com.qwazr.utils.server.ServerException;
 
 @Path("/store_schema")
@@ -124,6 +126,27 @@ public class StoreMasterSchemaService implements StoreSchemaServiceInterface {
 		} catch (ServerException | URISyntaxException | IOException e) {
 			throw ServerException.getJsonException(e);
 		}
+	}
+
+	@Override
+	public StoreSchemaRepairStatus getRepairStatus(String schemaName,
+			Boolean local, Integer msTimeout) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StoreSchemaRepairStatus startRepairStatus(String schemaName,
+			Boolean local, Integer msTimeout) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StoreSchemaRepairStatus stopRepairStatus(String schemaName,
+			Boolean local, Integer msTimeout) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -25,38 +23,36 @@ import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwazr.store.StoreDataSingleClient.PrefixPath;
-import com.qwazr.store.StoreFileResult.DirMerger;
-import com.qwazr.utils.IOUtils;
+import com.qwazr.store.data.StoreDataSingleClient.PrefixPath;
+import com.qwazr.store.data.StoreFileResult.DirMerger;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
-public class StoreDataReplicationClient extends
-		StoreDataMultiClientAbstract<String[], StoreDataDistributionClient>
-		implements StoreDataServiceInterface {
+public class StoreDataDistributionClient extends
+		StoreDataMultiClientAbstract<String, StoreDataSingleClient> implements
+		StoreDataServiceInterface {
 
 	private static final Logger logger = LoggerFactory
-			.getLogger(StoreDataReplicationClient.class);
+			.getLogger(StoreDataDistributionClient.class);
 
-	protected StoreDataReplicationClient(ExecutorService executor,
-			String[][] urlMap, PrefixPath prefixPath, int msTimeOut)
-			throws URISyntaxException {
-		super(executor, new StoreDataDistributionClient[urlMap.length], urlMap,
-				msTimeOut, false);
+	protected StoreDataDistributionClient(ExecutorService executor,
+			String[] urls, int msTimeOut) throws URISyntaxException {
+		super(executor, new StoreDataSingleClient[urls.length], urls,
+				msTimeOut, true);
 	}
 
 	@Override
-	protected StoreDataDistributionClient newClient(String[] urls, int msTimeOut)
+	protected StoreDataSingleClient newClient(String url, int msTimeOut)
 			throws URISyntaxException {
-		return new StoreDataDistributionClient(executor, urls, msTimeOut);
+		return new StoreDataSingleClient(url, PrefixPath.data, msTimeOut);
 	}
 
 	@Override
@@ -67,26 +63,27 @@ public class StoreDataReplicationClient extends
 
 			final DirMerger dirMerger = new DirMerger();
 			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
-			for (StoreDataDistributionClient client : this) {
+			for (StoreDataSingleClient client : this) {
 				threads.add(new ProcedureExceptionCatcher() {
 					@Override
 					public void execute() throws Exception {
-
 						try {
 							dirMerger.syncMerge(client.getDirectory(schemaName,
 									path, msTimeout));
 						} catch (WebApplicationException e) {
-							if (e.getResponse().getStatus() != 404)
+							switch (e.getResponse().getStatus()) {
+							case 404:
+							case 406:
+								break;
+							default:
 								throw e;
+							}
 						}
 					}
 				});
 			}
 
 			ThreadUtils.invokeAndJoin(executor, threads);
-			if (dirMerger.mergedDirResult == null)
-				throw new ServerException(Status.NOT_FOUND, "File not found: "
-						+ path);
 			return dirMerger.mergedDirResult;
 
 		} catch (Exception e) {
@@ -96,39 +93,29 @@ public class StoreDataReplicationClient extends
 	}
 
 	@Override
-	public Response getFile(String schemaName, String path, Integer msTimeout) {
+	public Response putFile(String schemaName, String path,
+			InputStream inputStream, Long lastModified, Integer msTimeout,
+			Integer target) {
 
 		try {
-
-			Response response = headFile(schemaName, path, msTimeout);
-			switch (StoreFileResult.getType(response)) {
-			case FILE:
-				return Response.status(Status.TEMPORARY_REDIRECT)
-						.location(StoreFileResult.getAddr(response)).build();
-			case DIRECTORY:
-				StoreFileResult directoryResult = getDirectory(schemaName,
-						path, msTimeout);
-				ResponseBuilder builder = Response.ok();
-				directoryResult.buildHeader(builder);
-				directoryResult.buildEntity(builder);
-				return builder.build();
-			default:
-				throw new ServerException(Status.INTERNAL_SERVER_ERROR,
-						"Unknown file type: " + schemaName + '/' + path);
-			}
-
+			return getClientByPos(target).putFile(schemaName, path,
+					inputStream, lastModified, msTimeout, target);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw ServerException.getTextException(e);
+		} finally {
+			IOUtils.closeQuietly(inputStream);
 		}
 	}
 
 	@Override
 	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
+
 		try {
+
 			List<FunctionExceptionCatcher<Response>> threads = new ArrayList<>(
 					size());
-			for (StoreDataDistributionClient client : this) {
+			for (StoreDataSingleClient client : this) {
 				threads.add(new FunctionExceptionCatcher<Response>() {
 					@Override
 					public Response execute() throws Exception {
@@ -143,6 +130,7 @@ public class StoreDataReplicationClient extends
 					}
 				});
 			}
+
 			ThreadUtils.invokeAndJoin(executor, threads);
 			Response response = ThreadUtils.getFirstResult(threads);
 			if (response == null)
@@ -155,39 +143,4 @@ public class StoreDataReplicationClient extends
 		}
 	}
 
-	@Override
-	public Response putFile(String schemaName, String path,
-			InputStream inputStream, Long lastModified, Integer msTimeout,
-			Integer target) {
-
-		File tmpFile = null;
-
-		try {
-			tmpFile = IOUtils.storeAsTempFile(inputStream);
-
-			final File file = tmpFile;
-
-			List<FunctionExceptionCatcher<Response>> threads = new ArrayList<>(
-					size());
-			for (StoreDataDistributionClient client : this) {
-				threads.add(new FunctionExceptionCatcher<Response>() {
-					@Override
-					public Response execute() throws Exception {
-						return client.putFile(schemaName, path,
-								new FileInputStream(file), lastModified,
-								msTimeout, target);
-					}
-				});
-			}
-
-			ThreadUtils.invokeAndJoin(executor, threads);
-			return ThreadUtils.getFirstResult(threads);
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw ServerException.getTextException(e);
-		} finally {
-			if (tmpFile != null)
-				tmpFile.delete();
-		}
-	}
 }

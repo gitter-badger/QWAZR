@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +27,8 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.qwazr.store.data.StoreDataServiceInterface;
+import com.qwazr.store.data.StoreFileResult;
 import com.qwazr.utils.server.ServerException;
 
 @Path("/store_local")

@@ -15,7 +15,6 @@
  */
 package com.qwarz.graph;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
@@ -23,11 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
-
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.utils.URIBuilder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.qwarz.graph.model.GraphDefinition;
@@ -35,86 +30,57 @@ import com.qwarz.graph.model.GraphNode;
 import com.qwarz.graph.model.GraphNodeResult;
 import com.qwarz.graph.model.GraphRequest;
 import com.qwarz.graph.model.GraphResult;
-import com.qwazr.utils.http.HttpResponseEntityException;
 import com.qwazr.utils.json.client.JsonClientAbstract;
 
 public class GraphSingleClient extends JsonClientAbstract implements
 		GraphServiceInterface {
 
+	private final static String GRAPH_PREFIX = "/graph/";
+
 	GraphSingleClient(String url, int msTimeOut) throws URISyntaxException {
 		super(url, msTimeOut);
-	}
-
-	private URIBuilder getGraphBaseUrl(String db_name, Boolean local,
-			Integer msTimeout) throws URISyntaxException {
-		URIBuilder uriBuilder = getBaseUrl("/graph/", db_name);
-		if (local != null)
-			uriBuilder.setParameter("local", local.toString());
-		if (msTimeout != null)
-			uriBuilder.setParameter("timeout", msTimeout.toString());
-		return uriBuilder;
 	}
 
 	public final static TypeReference<TreeSet<String>> SetStringTypeRef = new TypeReference<TreeSet<String>>() {
 	};
 
 	@Override
-	public Set<String> list(Integer msTimeOut, Boolean local) {
-		try {
-			URIBuilder uriBuilder = getGraphBaseUrl(null, local, null);
-			Request request = Request.Get(uriBuilder.build());
-			return execute(request, null, msTimeOut, SetStringTypeRef, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+	public Set<String> list(Integer msTimeout, Boolean local) {
+		UBuilder uBuilder = new UBuilder(GRAPH_PREFIX).setParameters(local,
+				msTimeout);
+		Request request = Request.Get(uBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut, SetStringTypeRef,
+				200);
 	}
 
 	@Override
-	public GraphResult createUpdateGraph(String db_name,
-			GraphDefinition graphDef, Integer msTimeOut, Boolean local) {
-		try {
-			URIBuilder uriBuilder = getGraphBaseUrl(db_name, local, msTimeOut);
-			Request request = Request.Post(uriBuilder.build());
-			return execute(request, graphDef, msTimeOut, GraphResult.class, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+	public GraphResult createUpdateGraph(String graphName,
+			GraphDefinition graphDef, Integer msTimeout, Boolean local) {
+		UBuilder uBuilder = new UBuilder(GRAPH_PREFIX, graphName)
+				.setParameters(local, msTimeout);
+		Request request = Request.Post(uBuilder.build());
+		return commonServiceRequest(request, graphDef, msTimeOut,
+				GraphResult.class, 200);
 	}
 
 	@Override
-	public GraphResult getGraph(String graphName, Integer msTimeOut,
+	public GraphResult getGraph(String graphName, Integer msTimeout,
 			Boolean local) {
-		try {
-			URIBuilder uriBuilder = getGraphBaseUrl(graphName, local, msTimeOut);
-			Request request = Request.Get(uriBuilder.build());
-			return execute(request, null, msTimeOut, GraphResult.class, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+		UBuilder uBuilder = new UBuilder(GRAPH_PREFIX, graphName)
+				.setParameters(local, msTimeout);
+		Request request = Request.Get(uBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut,
+				GraphResult.class, 200);
 	}
 
 	@Override
-	public GraphResult deleteGraph(String graphName, Integer msTimeOut,
+	public GraphResult deleteGraph(String graphName, Integer msTimeout,
 			Boolean local) {
-		try {
-			URIBuilder uriBuilder = getGraphBaseUrl(graphName, local, msTimeOut);
-			Request request = Request.Delete(uriBuilder.build());
-			return execute(request, null, msTimeOut, GraphResult.class, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+		UBuilder uBuilder = new UBuilder(GRAPH_PREFIX, graphName)
+				.setParameters(local, msTimeout);
+		Request request = Request.Delete(uBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut,
+				GraphResult.class, 200);
 	}
 
 	@Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -24,6 +24,8 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.qwazr.store.schema.StoreSchemaDefinition;
+import com.qwazr.store.schema.StoreSchemaManager;
 import com.qwazr.utils.HashUtils;
 import com.qwazr.utils.server.ServerException;
 

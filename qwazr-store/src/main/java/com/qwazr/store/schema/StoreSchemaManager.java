@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.schema;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +34,7 @@ import org.apache.commons.lang3.RandomUtils;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.store.StoreServer;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;
 import com.qwazr.utils.server.ServerException;
@@ -93,7 +94,8 @@ public class StoreSchemaManager extends
 		}
 	}
 
-	StoreSchemaDefinition getSchema(String schemaName) throws ServerException {
+	public StoreSchemaDefinition getSchema(String schemaName)
+			throws ServerException {
 		StoreSchemaDefinition schemaDefinition = super.get(schemaName);
 		if (schemaDefinition != null)
 			return schemaDefinition;

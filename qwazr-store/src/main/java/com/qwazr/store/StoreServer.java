@@ -27,6 +27,11 @@ import org.apache.commons.cli.ParseException;
 
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
+import com.qwazr.store.data.StoreDataManager;
+import com.qwazr.store.data.StoreMasterDataService;
+import com.qwazr.store.data.StoreNodeDataService;
+import com.qwazr.store.schema.StoreMasterSchemaService;
+import com.qwazr.store.schema.StoreSchemaManager;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServletApplication;

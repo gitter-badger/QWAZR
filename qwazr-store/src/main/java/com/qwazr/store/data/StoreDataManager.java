@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -31,12 +31,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
-import com.qwazr.store.StoreDataSingleClient.PrefixPath;
+import com.qwazr.store.data.StoreDataSingleClient.PrefixPath;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.server.ServerException;
 
-class StoreDataManager {
+public class StoreDataManager {
 
 	public static volatile StoreDataManager INSTANCE = null;
 

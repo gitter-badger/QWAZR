@@ -20,6 +20,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response.Status;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
@@ -28,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.qwazr.utils.http.HttpResponseEntityException;
 import com.qwazr.utils.json.JsonHttpResponseHandler;
 import com.qwazr.utils.json.JsonMapper;
 
@@ -59,31 +63,6 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		this.path = u.getPath();
 		this.port = u.getPort() == -1 ? 80 : u.getPort();
 		this.msTimeOut = msTimeOut;
-	}
-
-	/**
-	 * Helper for URL building. The URL is built by concatening the url
-	 * parameters given in the constructor and an array of pathes.
-	 * 
-	 * @param paths
-	 *            An array of path
-	 * @return a prepared URIBuilder
-	 * @throws URISyntaxException
-	 *             if the final URI is not valid.
-	 */
-	public URIBuilder getBaseUrl(String... paths) throws URISyntaxException {
-		StringBuilder sb = new StringBuilder();
-		if (path != null)
-			sb.append(path);
-		if (paths != null)
-			for (String path : paths)
-				if (path != null)
-					sb.append(path);
-		URIBuilder uriBuilder = new URIBuilder().setScheme(scheme)
-				.setHost(host).setPort(port).setFragment(fragment);
-		if (sb.length() > 0)
-			uriBuilder.setPath(sb.toString());
-		return uriBuilder;
 	}
 
 	/**
@@ -160,4 +139,90 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 				.execute().returnResponse();
 	}
 
+	final public <T> T commonServiceRequest(Request request, Object body,
+			Integer msTimeout, Class<T> objectClass, int... expectedCodes) {
+		try {
+			return execute(request, body, msTimeOut, objectClass, expectedCodes);
+		} catch (HttpResponseEntityException e) {
+			throw e.getWebApplicationException();
+		} catch (IOException e) {
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	final public <T> T commonServiceRequest(Request request, Object body,
+			Integer msTimeout, TypeReference<T> typeRef, int... expectedCodes) {
+		try {
+			return execute(request, body, msTimeOut, typeRef, expectedCodes);
+		} catch (HttpResponseEntityException e) {
+			throw e.getWebApplicationException();
+		} catch (IOException e) {
+			throw new WebApplicationException(e.getMessage(), e,
+					Status.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	public class UBuilder extends URIBuilder {
+
+		/**
+		 * Helper for URL building. The URL is built by concatening the url
+		 * parameters given in the constructor and an array of pathes.
+		 * 
+		 * @param paths
+		 *            An array of path
+		 */
+		public UBuilder(String... paths) {
+			StringBuilder sb = new StringBuilder();
+			if (path != null)
+				sb.append(path);
+			if (paths != null)
+				for (String path : paths)
+					if (path != null)
+						sb.append(path);
+			setScheme(scheme).setHost(host).setPort(port).setFragment(fragment);
+			if (sb.length() > 0)
+				setPath(sb.toString());
+		}
+
+		/**
+		 * Add the query parameters if the object parameter is not null
+		 * 
+		 * @param object
+		 *            an optional parameter
+		 * @return the current UBuilder
+		 */
+		public UBuilder setParameterObject(String param, Object object) {
+			if (object == null)
+				return this;
+			setParameter(param, object.toString());
+			return this;
+		}
+
+		/**
+		 * Set common parameters for QWAZR services
+		 * 
+		 * @param local
+		 *            an optional local parameter
+		 * @param msTimeout
+		 *            an optional timeout parameter in milliseconds
+		 * @return the current UBuilder
+		 */
+		public UBuilder setParameters(Boolean local, Integer msTimeout) {
+			setParameterObject("local", local);
+			setParameterObject("timeout", msTimeout);
+			return this;
+		}
+
+		@Override
+		public URI build() {
+			try {
+				return super.build();
+			} catch (URISyntaxException e) {
+				throw new WebApplicationException(e.getMessage(), e,
+						Status.INTERNAL_SERVER_ERROR);
+			}
+		}
+
+	}
 }
