@@ -29,9 +29,9 @@ public class SchedulerDefinition {
 	public final Map<String, String> variables;
 
 	/**
-	 * Name of the script
+	 * The path to the script
 	 */
-	public final String script_name;
+	public final String script_path;
 
 	/**
 	 * The cron expression
@@ -50,7 +50,7 @@ public class SchedulerDefinition {
 
 	public SchedulerDefinition() {
 		variables = null;
-		script_name = null;
+		script_path = null;
 		cron = null;
 		time_zone = null;
 		enabled = null;
@@ -58,7 +58,7 @@ public class SchedulerDefinition {
 
 	public SchedulerDefinition(SchedulerDefinition scheduler) {
 		this.variables = scheduler.variables;
-		this.script_name = scheduler.script_name;
+		this.script_path = scheduler.script_path;
 		this.cron = scheduler.cron;
 		this.time_zone = scheduler.time_zone;
 		this.enabled = scheduler.enabled;

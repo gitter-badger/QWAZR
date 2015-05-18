@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.http.HttpResponse;
@@ -36,96 +35,36 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 		ScriptServiceInterface {
 
 	private final static String SCRIPT_PREFIX = "/scripts/";
+	private final static String SCRIPT_PREFIX_RUN = SCRIPT_PREFIX + "run/";
+	private final static String SCRIPT_PREFIX_STATUS = SCRIPT_PREFIX
+			+ "status/";
 
 	ScriptSingleClient(String url, int msTimeOut) throws URISyntaxException {
 		super(url, msTimeOut);
 	}
 
-	public final static TypeReference<TreeMap<String, ScriptFileStatus>> MapStringFileStatusTypeRef = new TypeReference<TreeMap<String, ScriptFileStatus>>() {
-	};
-
 	@Override
-	public TreeMap<String, ScriptFileStatus> getScripts(Boolean local) {
-		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX).setParameters(local,
-				null);
-		Request request = Request.Get(uriBuilder.build());
-		return (TreeMap<String, ScriptFileStatus>) commonServiceRequest(
-				request, null, msTimeOut, MapStringFileStatusTypeRef, 200);
-	}
-
-	@Override
-	public String getScript(String script_name) {
-		try {
-			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name);
-			Request request = Request.Get(uriBuilder.build());
-			HttpResponse response = execute(request, null, msTimeOut);
-			return HttpUtils.checkTextPlainEntity(response, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	@Override
-	public Response deleteScript(String script_name, Boolean local) {
-		try {
-			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name);
-			Request request = Request.Delete(uriBuilder.build());
-			HttpResponse response = execute(request, null, msTimeOut);
-			HttpUtils.checkStatusCodes(response, 200);
-			return Response.status(response.getStatusLine().getStatusCode())
-					.build();
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	@Override
-	public Response setScript(String script_name, Long last_modified,
-			Boolean local, String script) {
-		try {
-			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name);
-			uriBuilder.setParameterObject("last_modified", last_modified);
-			Request request = Request.Post(uriBuilder.build());
-			HttpResponse response = execute(request, script, msTimeOut);
-			HttpUtils.checkStatusCodes(response, 200);
-			return Response.ok().build();
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
-	}
-
-	@Override
-	public ScriptRunStatus runScript(String script_name) {
-		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name, "/run");
+	public ScriptRunStatus runScript(String scriptPath) {
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_RUN, scriptPath);
 		Request request = Request.Get(uriBuilder.build());
 		return commonServiceRequest(request, null, msTimeOut,
 				ScriptRunStatus.class, 200, 202);
 	}
 
 	@Override
-	public ScriptRunStatus runScriptVariables(String script_name,
+	public ScriptRunStatus runScriptVariables(String scriptPath,
 			Map<String, String> variables) {
 		if (variables == null)
-			return runScript(script_name);
-		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name, "/run");
+			return runScript(scriptPath);
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_RUN, scriptPath);
 		Request request = Request.Post(uriBuilder.build());
 		return commonServiceRequest(request, variables, msTimeOut,
 				ScriptRunStatus.class, 200, 202);
 	}
 
 	@Override
-	public ScriptRunStatus getRunStatus(String script_name, String run_id) {
-		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name,
-				"/status/", run_id);
+	public ScriptRunStatus getRunStatus(String run_id) {
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_STATUS, run_id);
 		Request request = Request.Get(uriBuilder.build());
 		return commonServiceRequest(request, null, msTimeOut,
 				ScriptRunStatus.class, 200);
@@ -135,20 +74,19 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 	};
 
 	@Override
-	public Map<String, ScriptRunStatus> getRunsStatus(String script_name,
-			Boolean local) {
-		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name,
-				"/status/").setParameters(local, null);
+	public Map<String, ScriptRunStatus> getRunsStatus(Boolean local) {
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_STATUS).setParameters(
+				local, null);
 		Request request = Request.Get(uriBuilder.build());
 		return commonServiceRequest(request, null, msTimeOut,
 				MapRunStatusTypeRef, 200);
 	}
 
 	@Override
-	public String getRunOut(String script_name, String run_id) {
+	public String getRunOut(String run_id) {
 		try {
-			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name,
-					"/status/", run_id, "/out");
+			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_STATUS, run_id,
+					"/out");
 			Request request = Request.Get(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			return HttpUtils.checkTextPlainEntity(response, 200);
@@ -161,10 +99,10 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public String getRunErr(String script_name, String run_id) {
+	public String getRunErr(String run_id) {
 		try {
-			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name,
-					"/status/", run_id, "/err");
+			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_STATUS, run_id,
+					"/err");
 			Request request = Request.Get(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			return HttpUtils.checkTextPlainEntity(response, 200);

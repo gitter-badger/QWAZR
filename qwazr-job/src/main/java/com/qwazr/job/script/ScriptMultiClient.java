@@ -22,16 +22,12 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
-import com.qwazr.utils.server.ServerException;
 
 public class ScriptMultiClient extends
 		JsonMultiClientAbstract<String, ScriptSingleClient> implements
@@ -52,120 +48,12 @@ public class ScriptMultiClient extends
 	}
 
 	@Override
-	public TreeMap<String, ScriptFileStatus> getScripts(Boolean local) {
-		// If not global, just request the local node
-		if (local != null && local) {
-			ScriptSingleClient client = getClientByUrl(ClusterManager.INSTANCE.myAddress);
-			if (client == null)
-				throw new ServerException(Status.NOT_ACCEPTABLE,
-						"Node not valid: " + ClusterManager.INSTANCE.myAddress)
-						.getJsonException();
-			return client.getScripts(true);
-		}
-
-		// We merge the result of all the nodes
-		TreeMap<String, ScriptFileStatus> globalMap = new TreeMap<String, ScriptFileStatus>();
-		for (ScriptSingleClient client : this) {
-			try {
-				TreeMap<String, ScriptFileStatus> localMap = client
-						.getScripts(true);
-				if (localMap == null)
-					continue;
-				ScriptFileStatus.merge(globalMap, client.url, localMap);
-			} catch (WebApplicationException e) {
-				logger.warn(e.getMessage(), e);
-			}
-		}
-		return globalMap;
-	}
-
-	@Override
-	public String getScript(String script_name) {
+	public ScriptRunStatus runScript(String scriptPath) {
 		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
 				logger);
 		for (ScriptSingleClient client : this) {
 			try {
-				return client.getScript(script_name);
-			} catch (WebApplicationException e) {
-				if (e.getResponse().getStatus() == 404)
-					logger.warn(e.getMessage(), e);
-				else
-					exceptionHolder.switchAndWarn(e);
-			}
-		}
-		if (exceptionHolder.getException() != null)
-			throw exceptionHolder.getException();
-		return StringUtils.EMPTY;
-	}
-
-	@Override
-	public Response deleteScript(String script_name, Boolean local) {
-
-		if (local != null && local) {
-			ScriptSingleClient client = getClientByUrl(ClusterManager.INSTANCE.myAddress);
-			if (client == null)
-				throw new ServerException(Status.NOT_ACCEPTABLE,
-						"Node not valid: " + ClusterManager.INSTANCE.myAddress)
-						.getJsonException();
-			return client.deleteScript(script_name, true);
-		}
-
-		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
-				logger);
-		boolean deleted = false;
-		for (ScriptSingleClient client : this) {
-			try {
-				if (client.deleteScript(script_name, true).getStatus() == 200)
-					deleted = true;
-			} catch (WebApplicationException e) {
-				if (e.getResponse().getStatus() == 404)
-					logger.warn(e.getMessage(), e);
-				else
-					exceptionHolder.switchAndWarn(e);
-			}
-		}
-		if (exceptionHolder.getException() != null)
-			throw exceptionHolder.getException();
-		if (!deleted)
-			throw new WebApplicationException("Script not found",
-					Status.NOT_FOUND);
-		return Response.ok("Script deleted").build();
-	}
-
-	@Override
-	public Response setScript(String script_name, Long last_modified,
-			Boolean local, String script) {
-
-		if (local != null && local) {
-			ScriptSingleClient client = getClientByUrl(ClusterManager.INSTANCE.myAddress);
-			if (client == null)
-				throw new ServerException(Status.NOT_ACCEPTABLE,
-						"Node not valid: " + ClusterManager.INSTANCE.myAddress)
-						.getJsonException();
-			return client.setScript(script_name, last_modified, true, script);
-		}
-
-		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
-				logger);
-		for (ScriptSingleClient client : this) {
-			try {
-				client.setScript(script_name, last_modified, true, script);
-			} catch (WebApplicationException e) {
-				exceptionHolder.switchAndWarn(e);
-			}
-		}
-		if (exceptionHolder.getException() != null)
-			throw exceptionHolder.getException();
-		return Response.ok().build();
-	}
-
-	@Override
-	public ScriptRunStatus runScript(String script_name) {
-		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
-				logger);
-		for (ScriptSingleClient client : this) {
-			try {
-				return client.runScript(script_name);
+				return client.runScript(scriptPath);
 			} catch (WebApplicationException e) {
 				exceptionHolder.switchAndWarn(e);
 			}
@@ -176,13 +64,13 @@ public class ScriptMultiClient extends
 	}
 
 	@Override
-	public ScriptRunStatus runScriptVariables(String script_name,
+	public ScriptRunStatus runScriptVariables(String scriptPath,
 			Map<String, String> variables) {
 		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
 				logger);
 		for (ScriptSingleClient client : this) {
 			try {
-				return client.runScriptVariables(script_name, variables);
+				return client.runScriptVariables(scriptPath, variables);
 			} catch (WebApplicationException e) {
 				exceptionHolder.switchAndWarn(e);
 			}
@@ -192,26 +80,25 @@ public class ScriptMultiClient extends
 		return null;
 	}
 
-	public ScriptRunStatus runScript(String script_name, String... variables) {
+	public ScriptRunStatus runScript(String scriptPath, String... variables) {
 		if (variables == null || variables.length == 0)
-			return runScript(script_name);
+			return runScript(scriptPath);
 		HashMap<String, String> variablesMap = new HashMap<String, String>();
 		int l = variables.length / 2;
 		for (int i = 0; i < l; i++)
 			variablesMap.put(variables[i * 2], variables[i * 2 + 1]);
-		return runScriptVariables(script_name, variablesMap);
+		return runScriptVariables(scriptPath, variablesMap);
 	}
 
 	@Override
-	public Map<String, ScriptRunStatus> getRunsStatus(String script_name,
-			Boolean local) {
+	public Map<String, ScriptRunStatus> getRunsStatus(Boolean local) {
 		if (local != null && local)
 			return getClientByUrl(ClusterManager.INSTANCE.myAddress)
-					.getRunsStatus(script_name, true);
+					.getRunsStatus(true);
 		TreeMap<String, ScriptRunStatus> results = new TreeMap<String, ScriptRunStatus>();
 		for (ScriptSingleClient client : this) {
 			try {
-				results.putAll(client.getRunsStatus(script_name, true));
+				results.putAll(client.getRunsStatus(true));
 			} catch (WebApplicationException e) {
 				if (e.getResponse().getStatus() != 404)
 					throw e;
@@ -221,10 +108,10 @@ public class ScriptMultiClient extends
 	}
 
 	@Override
-	public ScriptRunStatus getRunStatus(String script_name, String run_id) {
+	public ScriptRunStatus getRunStatus(String run_id) {
 		for (ScriptSingleClient client : this) {
 			try {
-				return client.getRunStatus(script_name, run_id);
+				return client.getRunStatus(run_id);
 			} catch (WebApplicationException e) {
 				throw e;
 			}
@@ -233,10 +120,10 @@ public class ScriptMultiClient extends
 	}
 
 	@Override
-	public String getRunOut(String script_name, String run_id) {
+	public String getRunOut(String run_id) {
 		for (ScriptSingleClient client : this) {
 			try {
-				return client.getRunOut(script_name, run_id);
+				return client.getRunOut(run_id);
 			} catch (WebApplicationException e) {
 				throw e;
 			}
@@ -245,10 +132,10 @@ public class ScriptMultiClient extends
 	}
 
 	@Override
-	public String getRunErr(String script_name, String run_id) {
+	public String getRunErr(String run_id) {
 		for (ScriptSingleClient client : this) {
 			try {
-				return client.getRunErr(script_name, run_id);
+				return client.getRunErr(run_id);
 			} catch (WebApplicationException e) {
 				throw e;
 			}

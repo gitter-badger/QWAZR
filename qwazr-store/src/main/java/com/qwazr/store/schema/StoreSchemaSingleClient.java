@@ -16,6 +16,7 @@
 package com.qwazr.store.schema;
 
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.http.client.fluent.Request;
@@ -73,17 +74,17 @@ public class StoreSchemaSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public StoreSchemaRepairStatus getRepairStatus(String schemaName,
-			Boolean local, Integer msTimeout) {
+	public Map<String, StoreSchemaRepairStatus> getRepairStatus(
+			String schemaName, Boolean local, Integer msTimeout) {
 		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH)
 				.setParameters(local, msTimeout);
 		Request request = Request.Get(uBuilder.build());
 		return commonServiceRequest(request, null, msTimeOut,
-				StoreSchemaRepairStatus.class, 200);
+				MapStringRepairTypeRef, 200);
 	}
 
 	@Override
-	public StoreSchemaRepairStatus startRepairStatus(String schemaName,
+	public StoreSchemaRepairStatus startRepair(String schemaName,
 			Boolean local, Integer msTimeout) {
 		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH)
 				.setParameters(local, msTimeout);
@@ -93,13 +94,13 @@ public class StoreSchemaSingleClient extends JsonClientAbstract implements
 	}
 
 	@Override
-	public StoreSchemaRepairStatus stopRepairStatus(String schemaName,
+	public Map<String, StoreSchemaRepairStatus> stopRepair(String schemaName,
 			Boolean local, Integer msTimeout) {
 		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH)
 				.setParameters(local, msTimeout);
 		Request request = Request.Delete(uBuilder.build());
 		return commonServiceRequest(request, null, msTimeOut,
-				StoreSchemaRepairStatus.class, 200);
+				MapStringRepairTypeRef, 200);
 	}
 
 }

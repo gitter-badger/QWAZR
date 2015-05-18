@@ -15,7 +15,9 @@
  */
 package com.qwazr.store.schema;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.ws.rs.DELETE;
@@ -65,10 +67,13 @@ public interface StoreSchemaServiceInterface {
 			@QueryParam("local") Boolean local,
 			@QueryParam("timeout") Integer msTimeout);
 
+	public final static TypeReference<TreeMap<String, StoreSchemaRepairStatus>> MapStringRepairTypeRef = new TypeReference<TreeMap<String, StoreSchemaRepairStatus>>() {
+	};
+
 	@GET
 	@Path("/{schema_name}/repair")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreSchemaRepairStatus getRepairStatus(
+	public Map<String, StoreSchemaRepairStatus> getRepairStatus(
 			@PathParam("schema_name") String schemaName,
 			@QueryParam("local") Boolean local,
 			@QueryParam("timeout") Integer msTimeout);
@@ -76,7 +81,7 @@ public interface StoreSchemaServiceInterface {
 	@POST
 	@Path("/{schema_name}/repair")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreSchemaRepairStatus startRepairStatus(
+	public StoreSchemaRepairStatus startRepair(
 			@PathParam("schema_name") String schemaName,
 			@QueryParam("local") Boolean local,
 			@QueryParam("timeout") Integer msTimeout);
@@ -84,7 +89,7 @@ public interface StoreSchemaServiceInterface {
 	@DELETE
 	@Path("/{schema_name}/repair")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreSchemaRepairStatus stopRepairStatus(
+	public Map<String, StoreSchemaRepairStatus> stopRepair(
 			@PathParam("schema_name") String schemaName,
 			@QueryParam("local") Boolean local,
 			@QueryParam("timeout") Integer msTimeout);

@@ -33,4 +33,19 @@ public class StoreSchemaInstance {
 
 	}
 
+	public StoreSchemaRepairStatus startRepair() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public StoreSchemaRepairStatus getRepairStatus() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public StoreSchemaRepairStatus stopRepair() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
