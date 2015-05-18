@@ -16,6 +16,7 @@
 package com.qwazr.store.schema;
 
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -25,9 +26,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.qwazr.utils.server.RestApplication;
 
 public interface StoreSchemaServiceInterface {
+
+	public final static TypeReference<TreeSet<String>> SetStringTypeRef = new TypeReference<TreeSet<String>>() {
+	};
 
 	@GET
 	@Path("/")

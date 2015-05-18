@@ -17,11 +17,9 @@ package com.qwazr.store.schema;
 
 import java.net.URISyntaxException;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.http.client.fluent.Request;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.qwazr.utils.json.client.JsonClientAbstract;
 
 public class StoreSchemaSingleClient extends JsonClientAbstract implements
@@ -34,9 +32,6 @@ public class StoreSchemaSingleClient extends JsonClientAbstract implements
 			throws URISyntaxException {
 		super(url, msTimeOut);
 	}
-
-	public final static TypeReference<TreeSet<String>> SetStringTypeRef = new TypeReference<TreeSet<String>>() {
-	};
 
 	@Override
 	public Set<String> getSchemas(Boolean local, Integer msTimeout) {

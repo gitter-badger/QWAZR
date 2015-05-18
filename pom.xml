@@ -37,6 +37,7 @@
 		<url>http://jenkins.opensearchserver.com/view/QWAZR/</url>
 	</ciManagement>
 
+<!-- 
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
@@ -53,6 +54,7 @@
 			</snapshots>
 		</repository>
 	</repositories>
+-->
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

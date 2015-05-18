@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -30,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 
+import com.qwazr.store.schema.StoreSchemaServiceInterface;
 import com.qwazr.utils.http.HttpResponseEntityException;
 import com.qwazr.utils.http.HttpUtils;
 import com.qwazr.utils.json.client.JsonClientAbstract;
@@ -206,4 +208,12 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 		}
 	}
 
+	@Override
+	public Set<String> getSchemas(Integer msTimeout) {
+		UBuilder uBuilder = new UBuilder(prefixPath.path).setParameters(null,
+				msTimeout);
+		Request request = Request.Get(uBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut,
+				StoreSchemaServiceInterface.SetStringTypeRef, 200);
+	}
 }

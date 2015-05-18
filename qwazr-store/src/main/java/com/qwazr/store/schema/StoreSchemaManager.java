@@ -204,8 +204,10 @@ public class StoreSchemaManager extends
 
 	public StoreSchemaMultiClient getNewSchemaClient(Integer msTimeOut)
 			throws URISyntaxException {
-		return new StoreSchemaMultiClient(executor,
-				ClusterManager.INSTANCE.getMasterArray(),
+		String[] masters = ClusterManager.INSTANCE.getMasterArray();
+		if (masters == null)
+			return null;
+		return new StoreSchemaMultiClient(executor, masters,
 				msTimeOut == null ? 60000 : msTimeOut);
 	}
 

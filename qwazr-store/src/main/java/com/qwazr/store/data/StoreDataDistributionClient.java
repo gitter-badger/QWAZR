@@ -30,11 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.qwazr.store.data.StoreDataSingleClient.PrefixPath;
-import com.qwazr.store.data.StoreFileResult.DirMerger;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
-import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
 public class StoreDataDistributionClient extends
 		StoreDataMultiClientAbstract<String, StoreDataSingleClient> implements
@@ -53,43 +51,6 @@ public class StoreDataDistributionClient extends
 	protected StoreDataSingleClient newClient(String url, int msTimeOut)
 			throws URISyntaxException {
 		return new StoreDataSingleClient(url, PrefixPath.data, msTimeOut);
-	}
-
-	@Override
-	public StoreFileResult getDirectory(String schemaName, String path,
-			Integer msTimeout) {
-
-		try {
-
-			final DirMerger dirMerger = new DirMerger();
-			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
-			for (StoreDataSingleClient client : this) {
-				threads.add(new ProcedureExceptionCatcher() {
-					@Override
-					public void execute() throws Exception {
-						try {
-							dirMerger.syncMerge(client.getDirectory(schemaName,
-									path, msTimeout));
-						} catch (WebApplicationException e) {
-							switch (e.getResponse().getStatus()) {
-							case 404:
-							case 406:
-								break;
-							default:
-								throw e;
-							}
-						}
-					}
-				});
-			}
-
-			ThreadUtils.invokeAndJoin(executor, threads);
-			return dirMerger.mergedDirResult;
-
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw ServerException.getTextException(e);
-		}
 	}
 
 	@Override

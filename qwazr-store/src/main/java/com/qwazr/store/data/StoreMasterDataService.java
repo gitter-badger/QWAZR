@@ -17,6 +17,7 @@ package com.qwazr.store.data;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Set;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -26,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.qwazr.store.schema.StoreSchemaDefinition;
 import com.qwazr.store.schema.StoreSchemaManager;
+import com.qwazr.store.schema.StoreSchemaMultiClient;
 import com.qwazr.utils.HashUtils;
 import com.qwazr.utils.server.ServerException;
 
@@ -117,6 +119,20 @@ public class StoreMasterDataService implements StoreDataServiceInterface {
 					StoreSchemaManager.INSTANCE.getSchema(schemaName).nodes,
 					msTimeout).deleteFile(schemaName, path, msTimeout);
 		} catch (ServerException | URISyntaxException e) {
+			throw ServerException.getJsonException(e);
+		}
+	}
+
+	@Override
+	public Set<String> getSchemas(Integer msTimeout) {
+		try {
+			StoreSchemaMultiClient client = StoreSchemaManager.INSTANCE
+					.getNewSchemaClient(msTimeout);
+			if (client == null)
+				return StoreDataManager.INSTANCE.getSchemas();
+			else
+				return client.getSchemas(true, msTimeout);
+		} catch (URISyntaxException e) {
 			throw ServerException.getJsonException(e);
 		}
 	}

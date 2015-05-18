@@ -18,6 +18,7 @@ package com.qwazr.store.data;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
@@ -27,8 +28,6 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.qwazr.store.data.StoreDataServiceInterface;
-import com.qwazr.store.data.StoreFileResult;
 import com.qwazr.utils.server.ServerException;
 
 @Path("/store_local")
@@ -69,6 +68,11 @@ public class StoreNodeDataService implements StoreDataServiceInterface {
 		} catch (ServerException e) {
 			throw ServerException.getJsonException(e);
 		}
+	}
+
+	@Override
+	public Set<String> getSchemas(Integer msTimeout) {
+		return StoreDataManager.INSTANCE.getSchemas();
 	}
 
 	@Override

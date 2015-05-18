@@ -56,7 +56,7 @@ public class StoreSchemaMultiClient extends
 		try {
 
 			if (local != null && local)
-				throw new ServerException(Status.NOT_IMPLEMENTED);
+				return StoreSchemaManager.INSTANCE.getSchemas();
 
 			return iterator().next().getSchemas(true, msTimeout);
 

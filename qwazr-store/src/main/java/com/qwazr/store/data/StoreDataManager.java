@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -114,6 +116,17 @@ public class StoreDataManager {
 			FileUtils.deleteDirectory(schemaFile);
 		} finally {
 			rwlSchemas.w.unlock();
+		}
+	}
+
+	Set<String> getSchemas() {
+		rwlSchemas.r.lock();
+		try {
+			TreeSet<String> schemaSet = new TreeSet<String>();
+			schemaSet.addAll(schemaDataDirectoryMap.keySet());
+			return schemaSet;
+		} finally {
+			rwlSchemas.r.unlock();
 		}
 	}
 
@@ -226,4 +239,5 @@ public class StoreDataManager {
 		return new StoreDataReplicationClient(executor, nodes, PrefixPath.data,
 				msTimeOut == null ? 60000 : msTimeOut);
 	}
+
 }
