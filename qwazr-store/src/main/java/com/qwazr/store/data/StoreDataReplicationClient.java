@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,13 +31,11 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwazr.store.StoreDataSingleClient.PrefixPath;
-import com.qwazr.store.StoreFileResult.DirMerger;
+import com.qwazr.store.data.StoreDataSingleClient.PrefixPath;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
-import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
 public class StoreDataReplicationClient extends
 		StoreDataMultiClientAbstract<String[], StoreDataDistributionClient>
@@ -57,42 +55,6 @@ public class StoreDataReplicationClient extends
 	protected StoreDataDistributionClient newClient(String[] urls, int msTimeOut)
 			throws URISyntaxException {
 		return new StoreDataDistributionClient(executor, urls, msTimeOut);
-	}
-
-	@Override
-	public StoreFileResult getDirectory(String schemaName, String path,
-			Integer msTimeout) {
-
-		try {
-
-			final DirMerger dirMerger = new DirMerger();
-			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
-			for (StoreDataDistributionClient client : this) {
-				threads.add(new ProcedureExceptionCatcher() {
-					@Override
-					public void execute() throws Exception {
-
-						try {
-							dirMerger.syncMerge(client.getDirectory(schemaName,
-									path, msTimeout));
-						} catch (WebApplicationException e) {
-							if (e.getResponse().getStatus() != 404)
-								throw e;
-						}
-					}
-				});
-			}
-
-			ThreadUtils.invokeAndJoin(executor, threads);
-			if (dirMerger.mergedDirResult == null)
-				throw new ServerException(Status.NOT_FOUND, "File not found: "
-						+ path);
-			return dirMerger.mergedDirResult;
-
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-			throw ServerException.getTextException(e);
-		}
 	}
 
 	@Override

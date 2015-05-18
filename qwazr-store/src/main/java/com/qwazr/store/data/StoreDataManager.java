@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,12 +33,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
-import com.qwazr.store.StoreDataSingleClient.PrefixPath;
+import com.qwazr.store.data.StoreDataSingleClient.PrefixPath;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.server.ServerException;
 
-class StoreDataManager {
+public class StoreDataManager {
 
 	public static volatile StoreDataManager INSTANCE = null;
 
@@ -114,6 +116,17 @@ class StoreDataManager {
 			FileUtils.deleteDirectory(schemaFile);
 		} finally {
 			rwlSchemas.w.unlock();
+		}
+	}
+
+	Set<String> getSchemas() {
+		rwlSchemas.r.lock();
+		try {
+			TreeSet<String> schemaSet = new TreeSet<String>();
+			schemaSet.addAll(schemaDataDirectoryMap.keySet());
+			return schemaSet;
+		} finally {
+			rwlSchemas.r.unlock();
 		}
 	}
 
@@ -226,4 +239,5 @@ class StoreDataManager {
 		return new StoreDataReplicationClient(executor, nodes, PrefixPath.data,
 				msTimeOut == null ? 60000 : msTimeOut);
 	}
+
 }

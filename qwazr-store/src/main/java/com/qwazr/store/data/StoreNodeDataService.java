@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
@@ -67,6 +68,11 @@ public class StoreNodeDataService implements StoreDataServiceInterface {
 		} catch (ServerException e) {
 			throw ServerException.getJsonException(e);
 		}
+	}
+
+	@Override
+	public Set<String> getSchemas(Integer msTimeout) {
+		return StoreDataManager.INSTANCE.getSchemas();
 	}
 
 	@Override

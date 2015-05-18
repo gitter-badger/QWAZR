@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.schema;
 
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -25,9 +26,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.qwazr.utils.server.RestApplication;
 
 public interface StoreSchemaServiceInterface {
+
+	public final static TypeReference<TreeSet<String>> SetStringTypeRef = new TypeReference<TreeSet<String>>() {
+	};
 
 	@GET
 	@Path("/")
@@ -56,6 +61,30 @@ public interface StoreSchemaServiceInterface {
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public StoreSchemaDefinition deleteSchema(
+			@PathParam("schema_name") String schemaName,
+			@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
+
+	@GET
+	@Path("/{schema_name}/repair")
+	@Produces(RestApplication.APPLICATION_JSON_UTF8)
+	public StoreSchemaRepairStatus getRepairStatus(
+			@PathParam("schema_name") String schemaName,
+			@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
+
+	@POST
+	@Path("/{schema_name}/repair")
+	@Produces(RestApplication.APPLICATION_JSON_UTF8)
+	public StoreSchemaRepairStatus startRepairStatus(
+			@PathParam("schema_name") String schemaName,
+			@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
+
+	@DELETE
+	@Path("/{schema_name}/repair")
+	@Produces(RestApplication.APPLICATION_JSON_UTF8)
+	public StoreSchemaRepairStatus stopRepairStatus(
 			@PathParam("schema_name") String schemaName,
 			@QueryParam("local") Boolean local,
 			@QueryParam("timeout") Integer msTimeout);

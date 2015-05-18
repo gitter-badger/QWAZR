@@ -26,7 +26,6 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.utils.URIBuilder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.qwazr.utils.http.HttpResponseEntityException;
@@ -35,6 +34,8 @@ import com.qwazr.utils.json.client.JsonClientAbstract;
 
 public class ScriptSingleClient extends JsonClientAbstract implements
 		ScriptServiceInterface {
+
+	private final static String SCRIPT_PREFIX = "/scripts/";
 
 	ScriptSingleClient(String url, int msTimeOut) throws URISyntaxException {
 		super(url, msTimeOut);
@@ -45,31 +46,23 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 
 	@Override
 	public TreeMap<String, ScriptFileStatus> getScripts(Boolean local) {
-		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts");
-			if (local != null)
-				uriBuilder.setParameter("local", local.toString());
-			Request request = Request.Get(uriBuilder.build());
-			return (TreeMap<String, ScriptFileStatus>) execute(request, null,
-					msTimeOut, MapStringFileStatusTypeRef, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX).setParameters(local,
+				null);
+		Request request = Request.Get(uriBuilder.build());
+		return (TreeMap<String, ScriptFileStatus>) commonServiceRequest(
+				request, null, msTimeOut, MapStringFileStatusTypeRef, 200);
 	}
 
 	@Override
 	public String getScript(String script_name) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name);
+			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name);
 			Request request = Request.Get(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			return HttpUtils.checkTextPlainEntity(response, 200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
@@ -78,9 +71,7 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 	@Override
 	public Response deleteScript(String script_name, Boolean local) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name);
-			if (local != null)
-				uriBuilder.setParameter("local", local.toString());
+			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name);
 			Request request = Request.Delete(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
@@ -88,7 +79,7 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 					.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
@@ -98,19 +89,15 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 	public Response setScript(String script_name, Long last_modified,
 			Boolean local, String script) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name);
-			if (local != null)
-				uriBuilder.setParameter("local", local.toString());
-			if (last_modified != null)
-				uriBuilder.setParameter("last_modified",
-						last_modified.toString());
+			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name);
+			uriBuilder.setParameterObject("last_modified", last_modified);
 			Request request = Request.Post(uriBuilder.build());
 			HttpResponse response = execute(request, script, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
 			return Response.ok().build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
@@ -118,17 +105,10 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 
 	@Override
 	public ScriptRunStatus runScript(String script_name) {
-		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name, "/run");
-			Request request = Request.Get(uriBuilder.build());
-			return execute(request, null, msTimeOut, ScriptRunStatus.class,
-					200, 202);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name, "/run");
+		Request request = Request.Get(uriBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut,
+				ScriptRunStatus.class, 200, 202);
 	}
 
 	@Override
@@ -136,32 +116,19 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 			Map<String, String> variables) {
 		if (variables == null)
 			return runScript(script_name);
-		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name, "/run");
-			Request request = Request.Post(uriBuilder.build());
-			return execute(request, variables, msTimeOut,
-					ScriptRunStatus.class, 200, 202);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name, "/run");
+		Request request = Request.Post(uriBuilder.build());
+		return commonServiceRequest(request, variables, msTimeOut,
+				ScriptRunStatus.class, 200, 202);
 	}
 
 	@Override
 	public ScriptRunStatus getRunStatus(String script_name, String run_id) {
-		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name,
-					"/status/", run_id);
-			Request request = Request.Get(uriBuilder.build());
-			return execute(request, null, msTimeOut, ScriptRunStatus.class, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name,
+				"/status/", run_id);
+		Request request = Request.Get(uriBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut,
+				ScriptRunStatus.class, 200);
 	}
 
 	public final static TypeReference<TreeMap<String, ScriptRunStatus>> MapRunStatusTypeRef = new TypeReference<TreeMap<String, ScriptRunStatus>>() {
@@ -170,32 +137,24 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 	@Override
 	public Map<String, ScriptRunStatus> getRunsStatus(String script_name,
 			Boolean local) {
-		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name,
-					"/status");
-			if (local != null && local)
-				uriBuilder.setParameter("local", local.toString());
-			Request request = Request.Get(uriBuilder.build());
-			return execute(request, null, msTimeOut, MapRunStatusTypeRef, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name,
+				"/status/").setParameters(local, null);
+		Request request = Request.Get(uriBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut,
+				MapRunStatusTypeRef, 200);
 	}
 
 	@Override
 	public String getRunOut(String script_name, String run_id) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name,
+			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name,
 					"/status/", run_id, "/out");
 			Request request = Request.Get(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			return HttpUtils.checkTextPlainEntity(response, 200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
@@ -204,14 +163,14 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 	@Override
 	public String getRunErr(String script_name, String run_id) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl("/scripts/", script_name,
+			UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX, script_name,
 					"/status/", run_id, "/err");
 			Request request = Request.Get(uriBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			return HttpUtils.checkTextPlainEntity(response, 200);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}

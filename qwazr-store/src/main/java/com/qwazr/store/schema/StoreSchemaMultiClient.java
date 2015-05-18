@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.schema;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class StoreSchemaMultiClient extends
 		try {
 
 			if (local != null && local)
-				throw new ServerException(Status.NOT_IMPLEMENTED);
+				return StoreSchemaManager.INSTANCE.getSchemas();
 
 			return iterator().next().getSchemas(true, msTimeout);
 
@@ -142,6 +142,27 @@ public class StoreSchemaMultiClient extends
 			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
+	}
+
+	@Override
+	public StoreSchemaRepairStatus getRepairStatus(String schemaName,
+			Boolean local, Integer msTimeout) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StoreSchemaRepairStatus startRepairStatus(String schemaName,
+			Boolean local, Integer msTimeout) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StoreSchemaRepairStatus stopRepairStatus(String schemaName,
+			Boolean local, Integer msTimeout) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

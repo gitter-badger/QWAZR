@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.InputStream;
+import java.util.Set;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -100,5 +101,10 @@ public interface StoreDataServiceInterface {
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
 	public Response deleteSchema(@PathParam("schema_name") String schemaName,
 			@QueryParam("timeout") Integer msTimeout);
+
+	@GET
+	@Path("/")
+	@Produces(RestApplication.APPLICATION_JSON_UTF8)
+	public Set<String> getSchemas(@QueryParam("timeout") Integer msTimeout);
 
 }

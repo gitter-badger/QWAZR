@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
@@ -29,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.qwazr.store.data.StoreFileResult.DirMerger;
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
@@ -48,9 +51,75 @@ public abstract class StoreDataMultiClientAbstract<K, V extends StoreDataService
 	}
 
 	@Override
-	public StoreFileResult getDirectory(String schemaName, String path,
+	final public StoreFileResult getDirectory(String schemaName, String path,
 			Integer msTimeout) {
-		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
+
+		try {
+
+			final DirMerger dirMerger = new DirMerger();
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (StoreDataServiceInterface client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+
+						try {
+							dirMerger.syncMerge(client.getDirectory(schemaName,
+									path, msTimeout));
+						} catch (WebApplicationException e) {
+							if (e.getResponse().getStatus() != 404)
+								throw e;
+						}
+					}
+				});
+			}
+
+			ThreadUtils.invokeAndJoin(executor, threads);
+			if (dirMerger.mergedDirResult == null)
+				throw new ServerException(Status.NOT_FOUND, "File not found: "
+						+ path);
+			return dirMerger.mergedDirResult;
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getTextException(e);
+		}
+	}
+
+	@Override
+	public Set<String> getSchemas(Integer msTimeout) {
+
+		try {
+
+			final TreeSet<String> schemaSet = new TreeSet<String>();
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (StoreDataServiceInterface client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+						try {
+							synchronized (this) {
+								schemaSet.addAll(client.getSchemas(msTimeout));
+							}
+						} catch (WebApplicationException e) {
+							switch (e.getResponse().getStatus()) {
+							case 404:
+								break;
+							default:
+								throw e;
+							}
+						}
+					}
+				});
+			}
+
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return schemaSet;
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override

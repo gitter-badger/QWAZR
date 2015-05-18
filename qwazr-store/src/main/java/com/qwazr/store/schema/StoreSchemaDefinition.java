@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.schema;
 
-import java.io.File;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-public class StoreSchemaInstance {
+@JsonInclude(Include.NON_EMPTY)
+public class StoreSchemaDefinition {
 
-	StoreSchemaInstance(File directory, String schemaName) {
-		// TODO Auto-generated constructor stub
+	public Integer replication_factor;
+
+	public Integer distribution_factor;
+
+	public String[][] nodes;
+
+	public StoreSchemaDefinition() {
+		nodes = null;
+		replication_factor = null;
+		distribution_factor = null;
 	}
-
-	public void close() {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void delete() {
-		// TODO Auto-generated method stub
-
-	}
-
 }

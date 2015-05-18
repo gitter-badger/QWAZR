@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.store;
+package com.qwazr.store.data;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -29,8 +30,8 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.utils.URIBuilder;
 
+import com.qwazr.store.schema.StoreSchemaServiceInterface;
 import com.qwazr.utils.http.HttpResponseEntityException;
 import com.qwazr.utils.http.HttpUtils;
 import com.qwazr.utils.json.client.JsonClientAbstract;
@@ -61,31 +62,19 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 	@Override
 	public StoreFileResult getDirectory(String schemaName, String path,
 			Integer msTimeout) {
-		URI uri = null;
-		try {
-			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
-					"/", path);
-			if (msTimeout != null)
-				uriBuilder.setParameter("timeout", msTimeout.toString());
-			uri = uriBuilder.build();
-			Request request = Request.Get(uri);
-			return execute(request, null, msTimeOut, StoreFileResult.class, 200);
-		} catch (HttpResponseEntityException e) {
-			throw e.getWebApplicationException(" From ", uri);
-		} catch (URISyntaxException | IOException e) {
-			throw new WebApplicationException(e.getMessage(), e,
-					Status.INTERNAL_SERVER_ERROR);
-		}
+		UBuilder uBuilder = new UBuilder(prefixPath.path, schemaName, "/", path)
+				.setParameters(null, msTimeout);
+		Request request = Request.Get(uBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut,
+				StoreFileResult.class, 200);
 	}
 
 	@Override
 	public Response getFile(String schemaName, String path, Integer msTimeout) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
-					"/", path);
-			if (msTimeout != null)
-				uriBuilder.setParameter("timeout", msTimeout.toString());
-			Request request = Request.Get(uriBuilder.build());
+			UBuilder uBuilder = new UBuilder(prefixPath.path, schemaName, "/",
+					path).setParameters(null, msTimeout);
+			Request request = Request.Get(uBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
 			ResponseBuilder builder = Response.ok();
@@ -95,7 +84,7 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 			return builder.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
@@ -104,11 +93,9 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 	@Override
 	public Response headFile(String schemaName, String path, Integer msTimeout) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
-					"/", path);
-			if (msTimeout != null)
-				uriBuilder.setParameter("timeout", msTimeout.toString());
-			URI uri = uriBuilder.build();
+			UBuilder uBuilder = new UBuilder(prefixPath.path, schemaName, "/",
+					path).setParameters(null, msTimeout);
+			URI uri = uBuilder.build();
 			Request request = Request.Head(uri);
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
@@ -117,7 +104,7 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 			return builder.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
@@ -144,16 +131,11 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 			InputStream inputStream, Long lastModified, Integer msTimeout,
 			Integer target) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
-					"/", path);
-			if (lastModified != null)
-				uriBuilder.setParameter("last_modified",
-						lastModified.toString());
-			if (msTimeout != null)
-				uriBuilder.setParameter("timeout", msTimeout.toString());
-			if (target != null)
-				uriBuilder.setParameter("target", target.toString());
-			Request request = Request.Post(uriBuilder.build());
+			UBuilder uBuilder = new UBuilder(prefixPath.path, schemaName, "/",
+					path).setParameters(null, msTimeout);
+			uBuilder.setParameterObject("last_modified", lastModified);
+			uBuilder.setParameterObject("target", target);
+			Request request = Request.Post(uBuilder.build());
 			HttpResponse response = execute(request, inputStream, msTimeout);
 			HttpUtils.checkStatusCodes(response, 200);
 			ResponseBuilder builder = Response.ok("File created: " + path,
@@ -162,7 +144,7 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 			return builder.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
@@ -171,11 +153,9 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 	@Override
 	public Response deleteFile(String schemaName, String path, Integer msTimeout) {
 		try {
-			URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName,
-					"/", path);
-			if (msTimeout != null)
-				uriBuilder.setParameter("timeout", msTimeout.toString());
-			Request request = Request.Delete(uriBuilder.build());
+			UBuilder uBuilder = new UBuilder(prefixPath.path, schemaName, "/",
+					path).setParameters(null, msTimeout);
+			Request request = Request.Delete(uBuilder.build());
 			HttpResponse response = execute(request, null, msTimeOut);
 			HttpUtils.checkStatusCodes(response, 200);
 			ResponseBuilder builder = Response.ok(response.getStatusLine()
@@ -184,25 +164,18 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 			return builder.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	private URIBuilder getSchemaBaseUrl(String schemaName, Integer msTimeout)
-			throws URISyntaxException {
-		URIBuilder uriBuilder = getBaseUrl(prefixPath.path, schemaName);
-		if (msTimeout != null)
-			uriBuilder.setParameter("timeout", msTimeout.toString());
-		return uriBuilder;
-	}
-
 	@Override
 	public Response createSchema(String schemaName, Integer msTimeout) {
 		try {
-			URIBuilder uriBuilder = getSchemaBaseUrl(schemaName, msTimeout);
-			Request request = Request.Post(uriBuilder.build());
+			UBuilder uBuilder = new UBuilder(prefixPath.path, schemaName)
+					.setParameters(null, msTimeout);
+			Request request = Request.Post(uBuilder.build());
 			HttpResponse response = execute(request, null, msTimeout);
 			HttpUtils.checkStatusCodes(response, 200);
 			ResponseBuilder builder = Response.ok("Schema created: "
@@ -210,7 +183,7 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 			return builder.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
@@ -219,8 +192,9 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 	@Override
 	public Response deleteSchema(String schemaName, Integer msTimeout) {
 		try {
-			URIBuilder uriBuilder = getSchemaBaseUrl(schemaName, msTimeout);
-			Request request = Request.Delete(uriBuilder.build());
+			UBuilder uBuilder = new UBuilder(prefixPath.path, schemaName)
+					.setParameters(null, msTimeout);
+			Request request = Request.Delete(uBuilder.build());
 			HttpResponse response = execute(request, null, msTimeout);
 			HttpUtils.checkStatusCodes(response, 200);
 			ResponseBuilder builder = Response.ok("Schema deleted: "
@@ -228,10 +202,18 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 			return builder.build();
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
-		} catch (URISyntaxException | IOException e) {
+		} catch (IOException e) {
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
 	}
 
+	@Override
+	public Set<String> getSchemas(Integer msTimeout) {
+		UBuilder uBuilder = new UBuilder(prefixPath.path).setParameters(null,
+				msTimeout);
+		Request request = Request.Get(uBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut,
+				StoreSchemaServiceInterface.SetStringTypeRef, 200);
+	}
 }
