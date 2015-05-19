@@ -21,7 +21,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import com.qwazr.utils.StringUtils;
-import com.qwazr.utils.json.JsonException;
+import com.qwazr.utils.json.JsonExceptionReponse;
 
 public class ServerException extends Exception {
 
@@ -88,39 +88,48 @@ public class ServerException extends Exception {
 	}
 
 	private Response getJsonResponse() {
-		return new JsonException(statusCode, message).toResponse();
+		return new JsonExceptionReponse(statusCode, message).toResponse();
 	}
 
 	public WebApplicationException getTextException() {
-		return new WebApplicationException(getTextResponse());
+		return new WebApplicationException(this, getTextResponse());
 	}
 
 	public WebApplicationException getJsonException() {
-		return new WebApplicationException(getJsonResponse());
+		return new WebApplicationException(this, getJsonResponse());
 	}
 
 	public static ServerException getServerException(Exception e) {
 		if (e instanceof ServerException)
 			return (ServerException) e;
+		if (e instanceof WebApplicationException) {
+			Throwable cause = e.getCause();
+			if (cause != null && cause instanceof ServerException)
+				return (ServerException) e;
+		}
 		return new ServerException(e);
 	}
 
-	public static WebApplicationException checkCompatibleException(Exception e,
-			MediaType type) {
+	private static WebApplicationException checkCompatible(Exception e,
+			MediaType expectedType) {
 		if (!(e instanceof WebApplicationException))
 			return null;
 		WebApplicationException wae = (WebApplicationException) e;
-		if (type == null)
-			return wae;
-		Response r = wae.getResponse();
-		MediaType mt = r.getMediaType();
-		if (r != null && mt != null && type.isCompatible(mt))
-			return wae;
-		return null;
+		Response response = wae.getResponse();
+		if (response == null)
+			return null;
+		if (!response.hasEntity())
+			return null;
+		MediaType mediaType = response.getMediaType();
+		if (mediaType == null)
+			return null;
+		if (!expectedType.isCompatible(mediaType))
+			return null;
+		return wae;
 	}
 
 	public static WebApplicationException getTextException(Exception e) {
-		WebApplicationException wae = checkCompatibleException(e,
+		WebApplicationException wae = checkCompatible(e,
 				MediaType.TEXT_PLAIN_TYPE);
 		if (wae != null)
 			return wae;
@@ -128,7 +137,7 @@ public class ServerException extends Exception {
 	}
 
 	public static WebApplicationException getJsonException(Exception e) {
-		WebApplicationException wae = checkCompatibleException(e,
+		WebApplicationException wae = checkCompatible(e,
 				MediaType.APPLICATION_JSON_TYPE);
 		if (wae != null)
 			return wae;

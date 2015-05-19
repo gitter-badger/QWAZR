@@ -27,7 +27,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.qwazr.utils.ExceptionUtils;
 
 @JsonInclude(Include.NON_EMPTY)
-public class JsonException {
+public class JsonExceptionReponse {
 
 	public final String error;
 	public final String reason_phrase;
@@ -36,7 +36,7 @@ public class JsonException {
 	public final String exception;
 	public final List<String> stackTraces;
 
-	public JsonException(Status status, String message) {
+	public JsonExceptionReponse(Status status, String message) {
 		this.error = status == null ? null : status.name();
 		this.reason_phrase = status == null ? null : status.getReasonPhrase();
 		this.status_code = status == null ? null : status.getStatusCode();
@@ -45,7 +45,7 @@ public class JsonException {
 		this.stackTraces = null;
 	}
 
-	public JsonException(Status status, Exception e) {
+	public JsonExceptionReponse(Status status, Exception e) {
 		this.error = status == null ? null : status.name();
 		this.reason_phrase = status == null ? null : status.getReasonPhrase();
 		this.status_code = status == null ? null : status.getStatusCode();
@@ -56,7 +56,7 @@ public class JsonException {
 				.getStackTraces(cause);
 	}
 
-	public JsonException(Status status, String error, Exception e) {
+	public JsonExceptionReponse(Status status, String error, Exception e) {
 		this.error = error;
 		this.reason_phrase = status == null ? null : status.getReasonPhrase();
 		this.status_code = status == null ? null : status.getStatusCode();
@@ -67,7 +67,7 @@ public class JsonException {
 				.getStackTraces(cause);
 	}
 
-	public JsonException(int status, String message) {
+	public JsonExceptionReponse(int status, String message) {
 		this.error = null;
 		this.reason_phrase = null;
 		this.status_code = status;
