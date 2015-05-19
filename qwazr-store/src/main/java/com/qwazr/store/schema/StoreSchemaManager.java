@@ -136,7 +136,6 @@ public class StoreSchemaManager extends
 			if (schemaInstance != null) {
 				schemaInstance.close();
 				schemaInstanceMap.remove(schemaName);
-				schemaInstance.delete();
 			}
 			StoreSchemaDefinition schemaDefinition = super.delete(schemaName);
 			if (schemaDefinition == null)

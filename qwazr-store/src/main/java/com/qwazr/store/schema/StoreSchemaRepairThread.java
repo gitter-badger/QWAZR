@@ -1,8 +1,65 @@
+/**
+ * Copyright 2014-2015 Emmanuel Keller / QWAZR
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.qwazr.store.schema;
 
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class StoreSchemaRepairThread {
+public class StoreSchemaRepairThread extends Thread {
 
+	private final AtomicBoolean abort;
+	private final Date startTime;
+	private volatile Date endTime;
+	private String currentPath;
+	private final AtomicInteger checkedDirectories;
+	private final AtomicInteger checkedFiles;
+	private final AtomicInteger repairedFiles;
+
+	StoreSchemaRepairThread(String schemaName) {
+		super("Schema repair " + schemaName);
+		setDaemon(true);
+		startTime = new Date();
+		endTime = null;
+		abort = new AtomicBoolean();
+		checkedDirectories = new AtomicInteger();
+		checkedFiles = new AtomicInteger();
+		repairedFiles = new AtomicInteger();
+		currentPath = null;
+		start();
+	}
+
+	void abort() {
+		abort.set(true);
+	}
+
+	StoreSchemaRepairStatus getRepairStatus() {
+		return new StoreSchemaRepairStatus(startTime, getState(), abort.get(),
+				endTime, currentPath, checkedDirectories.get(),
+				checkedFiles.get(), repairedFiles.get());
+	}
+
+	@Override
+	public void run() {
+		try {
+
+		} finally {
+			endTime = new Date();
+		}
+	}
 	/**
 	 * Copy the missing files on the nodes
 	 * 

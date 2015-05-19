@@ -105,12 +105,33 @@ public class ServerException extends Exception {
 		return new ServerException(e);
 	}
 
+	public static WebApplicationException checkCompatibleException(Exception e,
+			MediaType type) {
+		if (!(e instanceof WebApplicationException))
+			return null;
+		WebApplicationException wae = (WebApplicationException) e;
+		if (type == null)
+			return wae;
+		Response r = wae.getResponse();
+		MediaType mt = r.getMediaType();
+		if (r != null && mt != null && type.isCompatible(mt))
+			return wae;
+		return null;
+	}
+
 	public static WebApplicationException getTextException(Exception e) {
+		WebApplicationException wae = checkCompatibleException(e,
+				MediaType.TEXT_PLAIN_TYPE);
+		if (wae != null)
+			return wae;
 		return getServerException(e).getTextException();
 	}
 
 	public static WebApplicationException getJsonException(Exception e) {
+		WebApplicationException wae = checkCompatibleException(e,
+				MediaType.APPLICATION_JSON_TYPE);
+		if (wae != null)
+			return wae;
 		return getServerException(e).getJsonException();
-
 	}
 }

@@ -15,37 +15,87 @@
  */
 package com.qwazr.store.schema;
 
+import java.io.Closeable;
 import java.io.File;
+import java.lang.Thread.State;
 
-public class StoreSchemaInstance {
+import javax.ws.rs.core.Response.Status;
+
+import com.qwazr.utils.LockUtils;
+import com.qwazr.utils.server.ServerException;
+
+public class StoreSchemaInstance implements Closeable {
+
+	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
+	private final String schemaName;
+	private StoreSchemaRepairThread repairThread;
 
 	StoreSchemaInstance(File directory, String schemaName) {
-		// TODO Auto-generated constructor stub
+		this.schemaName = schemaName;
+		repairThread = null;
 	}
 
+	@Override
 	public void close() {
-		// TODO Auto-generated method stub
-
+		rwl.r.lock();
+		try {
+			if (repairThread != null)
+				repairThread.abort();
+		} finally {
+			rwl.r.unlock();
+		}
 	}
 
-	public void delete() {
-		// TODO Auto-generated method stub
-
+	private void checkNotExistsOrAlive() throws ServerException {
+		if (repairThread == null)
+			return;
+		if (repairThread.getState() == State.TERMINATED)
+			return;
+		throw new ServerException(Status.CONFLICT,
+				"A repair process is already running.");
 	}
 
-	public StoreSchemaRepairStatus startRepair() {
-		// TODO Auto-generated method stub
-		return null;
+	StoreSchemaRepairStatus startRepair() throws ServerException {
+		rwl.r.lock();
+		try {
+			checkNotExistsOrAlive();
+		} finally {
+			rwl.r.unlock();
+		}
+		rwl.w.lock();
+		try {
+			checkNotExistsOrAlive();
+			repairThread = new StoreSchemaRepairThread(schemaName);
+			return repairThread.getRepairStatus();
+		} finally {
+			rwl.w.unlock();
+		}
 	}
 
-	public StoreSchemaRepairStatus getRepairStatus() {
-		// TODO Auto-generated method stub
-		return null;
+	private void checkRepairExistsOrNotFound() throws ServerException {
+		if (repairThread == null)
+			throw new ServerException(Status.NOT_FOUND,
+					"No repair process found for schema: " + schemaName);
 	}
 
-	public StoreSchemaRepairStatus stopRepair() {
-		// TODO Auto-generated method stub
-		return null;
+	StoreSchemaRepairStatus getRepairStatus() throws ServerException {
+		rwl.r.lock();
+		try {
+			checkRepairExistsOrNotFound();
+			return repairThread.getRepairStatus();
+		} finally {
+			rwl.r.unlock();
+		}
 	}
 
+	StoreSchemaRepairStatus stopRepair() throws ServerException {
+		rwl.r.lock();
+		try {
+			checkRepairExistsOrNotFound();
+			repairThread.abort();
+			return repairThread.getRepairStatus();
+		} finally {
+			rwl.r.unlock();
+		}
+	}
 }

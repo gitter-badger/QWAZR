@@ -15,6 +15,7 @@
  */
 package com.qwazr.store.schema;
 
+import java.lang.Thread.State;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,15 +25,36 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class StoreSchemaRepairStatus {
 
 	public final Date start_time;
+	public final Date end_time;
 	public final Long duration;
 	public final String current_path;
-	public final Integer item_checked;
+	public final Integer checked_directories;
+	public final Integer checked_files;
+	public final Integer repaired_files;
+	public final Boolean running;
+	public final Boolean terminated;
+	public final Boolean aborting;
 
 	public StoreSchemaRepairStatus() {
-		start_time = null;
-		duration = null;
-		current_path = null;
-		item_checked = null;
+		this(null, null, false, null, null, null, null, null);
 	}
 
+	StoreSchemaRepairStatus(Date startTime, State state, boolean aborting,
+			Date endTime, String currentPath, Integer checkedDirectories,
+			Integer checkedFiles, Integer repairedFiles) {
+		this.start_time = startTime;
+		this.end_time = endTime;
+		this.running = state != State.TERMINATED ? true : null;
+		this.terminated = state == State.TERMINATED ? true : null;
+		this.aborting = aborting ? true : null;
+		if (startTime != null && endTime != null)
+			this.duration = endTime.getTime() - startTime.getTime();
+		else
+			this.duration = startTime == null ? null : startTime.getTime()
+					- System.currentTimeMillis();
+		this.current_path = currentPath;
+		this.checked_directories = checkedDirectories;
+		this.checked_files = checkedFiles;
+		this.repaired_files = repairedFiles;
+	}
 }
