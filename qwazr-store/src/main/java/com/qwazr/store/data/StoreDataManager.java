@@ -163,7 +163,7 @@ public class StoreDataManager {
 	 * 
 	 * @param relativePath
 	 *            a relative path
-	 * @return a file relative to the ROOT_DIR
+	 * @return a file instance
 	 * @throws ServerException
 	 *             if the schema does not exists, or if there is a permission
 	 *             issue
@@ -176,6 +176,24 @@ public class StoreDataManager {
 			throw new ServerException(Status.NOT_FOUND, "File not found: "
 					+ relativePath);
 		return file;
+	}
+
+	/**
+	 * Get a File with a path including the schema name
+	 * 
+	 * @param schemaAndPath
+	 *            a full path schema_name/path
+	 * @return a file instance
+	 * @throws ServerException
+	 *             if the schema does not exists, or if there is a permission
+	 *             issue
+	 */
+	final public File getFile(String schemaAndPath) throws ServerException {
+		int idx = schemaAndPath.indexOf('/');
+		if (idx == 0)
+			return getFile(schemaAndPath, StringUtils.EMPTY);
+		return getFile(schemaAndPath.substring(0, idx),
+				schemaAndPath.substring(idx));
 	}
 
 	final File putFile(String schema, String relativePath,

@@ -18,7 +18,9 @@ package com.qwazr.store.schema;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
@@ -31,6 +33,7 @@ import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
+import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
 public class StoreSchemaMultiClient extends
 		JsonMultiClientAbstract<String, StoreSchemaSingleClient> implements
@@ -145,24 +148,69 @@ public class StoreSchemaMultiClient extends
 	}
 
 	@Override
-	public StoreSchemaRepairStatus getRepairStatus(String schemaName,
-			Boolean local, Integer msTimeout) {
-		// TODO Auto-generated method stub
-		return null;
+	public Map<String, StoreSchemaRepairStatus> getRepairStatus(
+			String schemaName, Boolean local, Integer msTimeout) {
+		try {
+
+			TreeMap<String, StoreSchemaRepairStatus> results = new TreeMap<String, StoreSchemaRepairStatus>();
+
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (StoreSchemaSingleClient client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+						Map<String, StoreSchemaRepairStatus> result = client
+								.getRepairStatus(schemaName, true, msTimeout);
+						synchronized (results) {
+							results.putAll(result);
+						}
+					}
+				});
+			}
+
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return results;
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
-	public StoreSchemaRepairStatus startRepairStatus(String schemaName,
+	public StoreSchemaRepairStatus startRepair(String schemaName,
 			Boolean local, Integer msTimeout) {
-		// TODO Auto-generated method stub
-		return null;
+		return iterator().next().startRepair(schemaName, true, msTimeout);
 	}
 
 	@Override
-	public StoreSchemaRepairStatus stopRepairStatus(String schemaName,
+	public Map<String, StoreSchemaRepairStatus> stopRepair(String schemaName,
 			Boolean local, Integer msTimeout) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+
+			TreeMap<String, StoreSchemaRepairStatus> results = new TreeMap<String, StoreSchemaRepairStatus>();
+
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (StoreSchemaSingleClient client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+						Map<String, StoreSchemaRepairStatus> result = client
+								.stopRepair(schemaName, true, msTimeout);
+						synchronized (results) {
+							results.putAll(result);
+						}
+					}
+				});
+			}
+
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return results;
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 }

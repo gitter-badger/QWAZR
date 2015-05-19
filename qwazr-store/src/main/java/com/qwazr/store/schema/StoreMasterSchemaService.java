@@ -17,11 +17,14 @@ package com.qwazr.store.schema;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response.Status;
 
+import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.store.data.StoreDataManager;
 import com.qwazr.store.data.StoreDataReplicationClient;
 import com.qwazr.utils.server.ServerException;
@@ -129,24 +132,57 @@ public class StoreMasterSchemaService implements StoreSchemaServiceInterface {
 	}
 
 	@Override
-	public StoreSchemaRepairStatus getRepairStatus(String schemaName,
-			Boolean local, Integer msTimeout) {
-		// TODO Auto-generated method stub
-		return null;
+	public Map<String, StoreSchemaRepairStatus> getRepairStatus(
+			String schemaName, Boolean local, Integer msTimeout) {
+		try {
+			StoreSchemaMultiClient nameClient = getSchemaClient(msTimeout,
+					local);
+			if (nameClient == null) {
+				TreeMap<String, StoreSchemaRepairStatus> map = new TreeMap<String, StoreSchemaRepairStatus>();
+				map.put(ClusterManager.INSTANCE.myAddress,
+						StoreSchemaManager.INSTANCE.getSchemaInstance(
+								schemaName).getRepairStatus());
+				return map;
+			}
+			return nameClient.getRepairStatus(schemaName, false, msTimeout);
+		} catch (ServerException | URISyntaxException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
-	public StoreSchemaRepairStatus startRepairStatus(String schemaName,
+	public StoreSchemaRepairStatus startRepair(String schemaName,
 			Boolean local, Integer msTimeout) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			StoreSchemaMultiClient nameClient = getSchemaClient(msTimeout,
+					local);
+			if (nameClient == null)
+				return StoreSchemaManager.INSTANCE
+						.getSchemaInstance(schemaName).startRepair();
+			else
+				return nameClient.startRepair(schemaName, false, msTimeout);
+		} catch (ServerException | URISyntaxException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 	@Override
-	public StoreSchemaRepairStatus stopRepairStatus(String schemaName,
+	public Map<String, StoreSchemaRepairStatus> stopRepair(String schemaName,
 			Boolean local, Integer msTimeout) {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			StoreSchemaMultiClient nameClient = getSchemaClient(msTimeout,
+					local);
+			if (nameClient == null) {
+				TreeMap<String, StoreSchemaRepairStatus> map = new TreeMap<String, StoreSchemaRepairStatus>();
+				map.put(ClusterManager.INSTANCE.myAddress,
+						StoreSchemaManager.INSTANCE.getSchemaInstance(
+								schemaName).stopRepair());
+				return map;
+			} else
+				return nameClient.stopRepair(schemaName, false, msTimeout);
+		} catch (ServerException | URISyntaxException e) {
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 }
