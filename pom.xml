@@ -37,24 +37,10 @@
 		<url>http://jenkins.opensearchserver.com/view/QWAZR/</url>
 	</ciManagement>
 
-<!-- 
-	<parent>
-		<groupId>org.sonatype.oss</groupId>
-		<artifactId>oss-parent</artifactId>
-		<version>7</version>
-	</parent>
-
-	<repositories>
-		<repository>
-			<id>oss-sonatype</id>
-			<name>oss-sonatype</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
--->
+	<!-- <parent> <groupId>org.sonatype.oss</groupId> <artifactId>oss-parent</artifactId> 
+		<version>7</version> </parent> <repositories> <repository> <id>oss-sonatype</id> 
+		<name>oss-sonatype</name> <url>https://oss.sonatype.org/content/repositories/snapshots/</url> 
+		<snapshots> <enabled>true</enabled> </snapshots> </repository> </repositories> -->
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -174,7 +160,6 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<dependencies>
 		<dependency>
 			<groupId>commons-io</groupId>
