@@ -130,6 +130,12 @@ public class ThreadUtils {
 			Collection<? extends CallableExceptionCatcher<T>> callables)
 			throws Exception {
 		executor.invokeAll(callables);
+		checkException(callables);
+	}
+
+	public static <T> void checkException(
+			Collection<? extends CallableExceptionCatcher<T>> callables)
+			throws Exception {
 		for (CallableExceptionCatcher<?> callable : callables)
 			callable.checkException();
 	}
