@@ -39,7 +39,7 @@ import com.qwazr.utils.json.client.JsonClientAbstract;
 public class StoreDataSingleClient extends JsonClientAbstract implements
 		StoreDataServiceInterface {
 
-	static enum PrefixPath {
+	public static enum PrefixPath {
 
 		name("/store/"), data("/store_local/");
 
@@ -53,8 +53,8 @@ public class StoreDataSingleClient extends JsonClientAbstract implements
 
 	private final PrefixPath prefixPath;
 
-	StoreDataSingleClient(String url, PrefixPath prefixPath, int msTimeOut)
-			throws URISyntaxException {
+	public StoreDataSingleClient(String url, PrefixPath prefixPath,
+			Integer msTimeOut) throws URISyntaxException {
 		super(url, msTimeOut);
 		this.prefixPath = prefixPath;
 	}

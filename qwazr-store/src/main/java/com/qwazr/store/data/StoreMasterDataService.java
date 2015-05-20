@@ -131,7 +131,7 @@ public class StoreMasterDataService implements StoreDataServiceInterface {
 			if (client == null)
 				return StoreDataManager.INSTANCE.getSchemas();
 			else
-				return client.getSchemas(true, msTimeout);
+				return client.getSchemas(false, msTimeout);
 		} catch (URISyntaxException e) {
 			throw ServerException.getJsonException(e);
 		}

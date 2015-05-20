@@ -158,7 +158,7 @@ public class StoreMasterSchemaService implements StoreSchemaServiceInterface {
 					local);
 			if (nameClient == null)
 				return StoreSchemaManager.INSTANCE
-						.getSchemaInstance(schemaName).startRepair();
+						.getSchemaInstance(schemaName).startRepair(msTimeout);
 			else
 				return nameClient.startRepair(schemaName, false, msTimeout);
 		} catch (ServerException | URISyntaxException e) {

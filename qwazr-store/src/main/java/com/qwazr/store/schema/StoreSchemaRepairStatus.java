@@ -34,14 +34,15 @@ public class StoreSchemaRepairStatus {
 	public final Boolean running;
 	public final Boolean terminated;
 	public final Boolean aborting;
+	public final String error;
 
 	public StoreSchemaRepairStatus() {
-		this(null, null, false, null, null, null, null, null);
+		this(null, null, false, null, null, null, null, null, null);
 	}
 
 	StoreSchemaRepairStatus(Date startTime, State state, boolean aborting,
 			Date endTime, String currentPath, Integer checkedDirectories,
-			Integer checkedFiles, Integer repairedFiles) {
+			Integer checkedFiles, Integer repairedFiles, Exception error) {
 		this.start_time = startTime;
 		this.end_time = endTime;
 		this.running = state != State.TERMINATED ? true : null;
@@ -56,5 +57,6 @@ public class StoreSchemaRepairStatus {
 		this.checked_directories = checkedDirectories;
 		this.checked_files = checkedFiles;
 		this.repaired_files = repairedFiles;
+		this.error = error == null ? null : error.getMessage();
 	}
 }
