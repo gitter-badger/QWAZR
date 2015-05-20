@@ -18,26 +18,40 @@ package com.qwazr.utils.http;
 import java.io.IOException;
 
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.entity.ContentType;
-
-import com.qwazr.utils.StringUtils;
 
 public class HttpResponseEntityException extends HttpResponseException {
 
 	private static final long serialVersionUID = 1958648159987063347L;
 
-	private final HttpEntity entity;
+	private final String contentType;
+	private final String contentMessage;
 
 	public HttpResponseEntityException(HttpResponse response, String message) {
-		super(getStatusCode(response.getStatusLine()), setMessage(message,
-				response.getEntity()));
-		entity = response.getEntity();
+		super(getStatusCode(response.getStatusLine()), message);
+		HttpEntity entity = response.getEntity();
+		String cm = null;
+		String ct = null;
+		if (entity != null) {
+			try {
+				cm = IOUtils.toString(entity.getContent());
+				Header header = entity.getContentType();
+				if (header != null)
+					ct = header.getValue();
+			} catch (IllegalStateException | IOException e) {
+			}
+		}
+		contentMessage = cm == null ? message : cm;
+		contentType = ct == null ? MediaType.TEXT_PLAIN : ct;
 	}
 
 	private static int getStatusCode(StatusLine statusLine) {
@@ -46,38 +60,13 @@ public class HttpResponseEntityException extends HttpResponseException {
 		return statusLine.getStatusCode();
 	}
 
-	private static String setMessage(String message, HttpEntity entity) {
-		StringBuilder sb = new StringBuilder();
-		if (message != null)
-			sb.append(message);
-		try {
-			if (entity != null) {
-				sb.append(' ');
-				sb.append(IOUtils.toString(entity.getContent()));
-			}
-			ContentType contentType = ContentType.get(entity);
-			if (contentType != null) {
-				sb.append(" - ");
-				sb.append(contentType.toString());
-			}
-		} catch (IllegalStateException | IOException e) {
-		}
-		return sb.toString();
-	}
-
-	public HttpEntity getEntity() {
-		return entity;
-	}
-
-	public WebApplicationException getWebApplicationException(
-			Object... additionalMessages) {
-		String message = getMessage();
-		if (additionalMessages != null)
-			message = StringUtils.fastConcat(message, additionalMessages);
+	public WebApplicationException getWebApplicationException() {
 		int code = getStatusCode();
-		if (code != 0)
-			return new WebApplicationException(message, code);
-		return new WebApplicationException(message, this);
+		if (code == 0)
+			return new WebApplicationException(this);
+		ResponseBuilder response = Response.status(code);
+		if (contentMessage != null)
+			response.type(contentType).entity(contentMessage);
+		return new WebApplicationException(this, response.build());
 	}
-
 }

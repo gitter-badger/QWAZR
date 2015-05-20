@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
@@ -56,17 +57,42 @@ public class StoreSchemaMultiClient extends
 
 	@Override
 	public Set<String> getSchemas(Boolean local, Integer msTimeout) {
+
 		try {
 
 			if (local != null && local)
 				return StoreSchemaManager.INSTANCE.getSchemas();
 
-			return iterator().next().getSchemas(true, msTimeout);
+			TreeSet<String> finalResult = new TreeSet<String>();
+
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (StoreSchemaSingleClient client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+						try {
+							Set<String> result = client.getSchemas(true,
+									msTimeout);
+							if (result != null)
+								synchronized (finalResult) {
+									finalResult.addAll(result);
+								}
+						} catch (WebApplicationException e) {
+							if (e.getResponse().getStatus() != 404)
+								throw e;
+						}
+					}
+				});
+			}
+
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return finalResult;
 
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
+
 	}
 
 	@Override
@@ -76,10 +102,18 @@ public class StoreSchemaMultiClient extends
 		try {
 
 			if (local != null && local)
-				throw new ServerException(Status.NOT_IMPLEMENTED);
+				return StoreSchemaManager.INSTANCE.getSchema(schemaName);
 
-			return iterator().next().getSchema(schemaName, true, msTimeout);
+			for (StoreSchemaSingleClient client : this) {
+				try {
+					return client.getSchema(schemaName, true, msTimeout);
+				} catch (WebApplicationException e) {
+					if (e.getResponse().getStatus() != 404)
+						throw e;
+				}
+			}
 
+			throw new ServerException("Schema not found: " + schemaName);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
@@ -159,10 +193,16 @@ public class StoreSchemaMultiClient extends
 				threads.add(new ProcedureExceptionCatcher() {
 					@Override
 					public void execute() throws Exception {
-						Map<String, StoreSchemaRepairStatus> result = client
-								.getRepairStatus(schemaName, true, msTimeout);
-						synchronized (results) {
-							results.putAll(result);
+						try {
+							Map<String, StoreSchemaRepairStatus> result = client
+									.getRepairStatus(schemaName, true,
+											msTimeout);
+							synchronized (results) {
+								results.putAll(result);
+							}
+						} catch (WebApplicationException e) {
+							if (e.getResponse().getStatus() != 404)
+								throw e;
 						}
 					}
 				});

@@ -15,12 +15,37 @@
  */
 package com.qwazr.store.schema;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.ws.rs.core.Response;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.qwazr.store.data.StoreDataManager;
+import com.qwazr.store.data.StoreDataReplicationClient;
+import com.qwazr.store.data.StoreDataSingleClient;
+import com.qwazr.store.data.StoreDataSingleClient.PrefixPath;
+import com.qwazr.store.data.StoreFileResult;
+import com.qwazr.store.data.StoreMasterDataService;
+import com.qwazr.utils.IOUtils;
+
 public class StoreSchemaRepairThread extends Thread {
 
+	private static final Logger logger = LoggerFactory
+			.getLogger(StoreSchemaRepairThread.class);
+
+	private final String schemaName;
+	private final Integer msTimeout;
 	private final AtomicBoolean abort;
 	private final Date startTime;
 	private volatile Date endTime;
@@ -28,17 +53,25 @@ public class StoreSchemaRepairThread extends Thread {
 	private final AtomicInteger checkedDirectories;
 	private final AtomicInteger checkedFiles;
 	private final AtomicInteger repairedFiles;
+	private final AtomicInteger errorFiles;
+	private volatile Exception error;
+	private final StoreMasterDataService masterDataService;
 
-	StoreSchemaRepairThread(String schemaName) {
+	StoreSchemaRepairThread(String schemaName, Integer msTimeout) {
 		super("Schema repair " + schemaName);
 		setDaemon(true);
+		this.schemaName = schemaName;
+		this.msTimeout = msTimeout;
 		startTime = new Date();
 		endTime = null;
 		abort = new AtomicBoolean();
+		error = null;
 		checkedDirectories = new AtomicInteger();
 		checkedFiles = new AtomicInteger();
 		repairedFiles = new AtomicInteger();
+		errorFiles = new AtomicInteger();
 		currentPath = null;
+		masterDataService = new StoreMasterDataService();
 		start();
 	}
 
@@ -49,141 +82,193 @@ public class StoreSchemaRepairThread extends Thread {
 	StoreSchemaRepairStatus getRepairStatus() {
 		return new StoreSchemaRepairStatus(startTime, getState(), abort.get(),
 				endTime, currentPath, checkedDirectories.get(),
-				checkedFiles.get(), repairedFiles.get());
+				checkedFiles.get(), repairedFiles.get(), error);
 	}
 
 	@Override
 	public void run() {
 		try {
-
+			logger.info("Repair starts - schema: " + schemaName);
+			StoreSchemaDefinition schemaDefinition = StoreSchemaManager.INSTANCE
+					.getNewSchemaClient(msTimeout).getSchema(schemaName, false,
+							msTimeout);
+			StoreDataReplicationClient dataClient = StoreDataManager.INSTANCE
+					.getNewDataClient(schemaDefinition.nodes, msTimeout);
+			checkDirectory(schemaDefinition.nodes, dataClient, "");
+		} catch (Exception e) {
+			error = e;
+			logger.error(
+					"Repair failed (" + schemaName + ") : " + e.getMessage(), e);
 		} finally {
 			endTime = new Date();
+			logger.info("Repair ends - schema: " + schemaName);
 		}
 	}
+
+	private void checkDirectory(String[][] dataNodes,
+			StoreDataReplicationClient dataClient, String path) {
+		if (abort.get())
+			return;
+		currentPath = path;
+		StoreFileResult dirResult = dataClient.getDirectory(schemaName,
+				currentPath, msTimeout);
+
+		// Check the files first
+		if (dirResult.files != null) {
+			for (Map.Entry<String, Map<String, StoreFileResult>> entry : dirResult.files
+					.entrySet())
+				checkFile(dataNodes, dataClient, path + "/" + entry.getKey(),
+						entry.getValue());
+			currentPath = path;
+		}
+
+		// Check the directories
+		if (dirResult.directories != null) {
+			for (Map.Entry<String, StoreFileResult> entry : dirResult.directories
+					.entrySet())
+				checkDirectory(dataNodes, dataClient,
+						path + "/" + entry.getKey());
+			currentPath = path;
+		}
+		checkedDirectories.incrementAndGet();
+	}
+
 	/**
-	 * Copy the missing files on the nodes
+	 * Compare the files between the hosts
 	 * 
-	 * @param client
-	 *            the current client
-	 * @param globalFiles
-	 *            a map with the files of all the cluster
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 * @param dataClient
+	 *            the data client
+	 * @param path
+	 *            the path of the current file
+	 * @param nodeMap
+	 *            a map of the file on the nodes
+	 */
+	private void checkFile(String[][] dataNodes,
+			StoreDataReplicationClient dataClient, String path,
+			Map<String, StoreFileResult> nodeMap) {
+		if (abort.get())
+			return;
+		this.currentPath = path;
+		boolean needRepair = false;
+
+		Map.Entry<String, StoreFileResult> leadNodeEntry = findLeadNode(nodeMap);
+		if (leadNodeEntry == null) {
+			logger.error("Unable to repair the file: No lead node for "
+					+ schemaName + "/" + path);
+			errorFiles.incrementAndGet();
+			return;
+		}
+
+		// Check that we have one instance on each replicated group
+		for (String[] replicatGroup : dataNodes) {
+			int count = 0;
+			for (String node : replicatGroup)
+				if (nodeMap.containsKey(node))
+					count++;
+			if (count == 0)
+				needRepair = true;
+		}
+
+		// Check that all item are identical
+		Iterator<StoreFileResult> iterator = nodeMap.values().iterator();
+		StoreFileResult fileResult = iterator.next();
+		while (iterator.hasNext()) {
+			if (!fileResult.repairCheckFileEquals(iterator.next())) {
+				needRepair = true;
+				break;
+			}
+		}
+
+		// Do we need to repair ?
+		if (needRepair) {
+			try {
+				repairFile(leadNodeEntry, path);
+				repairedFiles.incrementAndGet();
+			} catch (IOException | URISyntaxException e) {
+				logger.error("Unable to repair the file: No lead node for "
+						+ schemaName + "/" + path, e);
+				errorFiles.incrementAndGet();
+				return;
+			}
+		}
+
+		checkedFiles.incrementAndGet();
+	}
+
+	/**
+	 * Find the lead which contains the best version of the file
+	 * 
+	 * @return the address of the node
+	 */
+	static Map.Entry<String, StoreFileResult> findLeadNode(
+			Map<String, StoreFileResult> nodeMap) {
+		long last_modified = 0;
+		Map.Entry<String, StoreFileResult> leadNode = null;
+		for (Map.Entry<String, StoreFileResult> entry : nodeMap.entrySet()) {
+			StoreFileResult fileStatus = entry.getValue();
+			if (fileStatus.last_modified == null || fileStatus.size == null
+					|| fileStatus.size == 0)
+				continue;
+			if (leadNode == null
+					|| (fileStatus.last_modified.getTime() > last_modified)) {
+				last_modified = fileStatus.last_modified.getTime();
+				leadNode = entry;
+				continue;
+			}
+		}
+		return leadNode;
+	}
+
+	/**
+	 * Copy the missing files instance on the nodes
+	 * 
+	 * @param leadNodeEntry
+	 *            the entry of the node which contains the best version of the
+	 *            file
+	 * @param path
+	 *            the path of the file to repair
+	 * @throws URISyntaxException
+	 *             thrown if the node address is not valid
 	 * @throws IOException
-	 *             if any I/O exception occurs
+	 *             if the response is wrong
 	 */
-	// public void repairDirectory(ScriptMultiClient client,
-	// TreeMap<String, StoreFileResult> globalFiles) throws IOException,
-	// ServerException {
-	// if (globalFiles == null)
-	// return;
-	// int size = client.size() + 1;
-	// Set<String> repairSet = new HashSet<String>();
-	// for (Map.Entry<String, StoreFileResult> entry : globalFiles.entrySet()) {
-	//
-	// String scriptName = entry.getKey();
-	// StoreFileResult fileStatus = entry.getValue();
-	//
-	// // Check if this file should be synchronized with any node
-	// if (!fileStatus.isRepairRequired(size))
-	// continue;
-	//
-	// // Find the leading version of the script file
-	// Map.Entry<String, ScriptFileStatus> leadEntry = fileStatus
-	// .findLead();
-	// // Lead entry can be null if a file is empty (length == 0)
-	// if (leadEntry == null)
-	// continue;
-	// String leadNode = leadEntry.getKey();
-	// ScriptFileStatus leadFileStatus = leadEntry.getValue();
-	//
-	// // Find which node must be repaired
-	// repairSet.clear();
-	// repairSet.add(ClusterManager.INSTANCE.myAddress);
-	// client.fillClientUrls(repairSet);
-	// fileStatus.buildRepairSet(leadFileStatus, repairSet);
-	//
-	// // Read the script content
-	// String content;
-	// if (leadNode.equals(ClusterManager.INSTANCE.myAddress))
-	// content = getScript(scriptName);
-	// else
-	// content = client.getClientByUrl(leadNode).getScript(scriptName);
-	//
-	// // Write the script content to the node to repair
-	// for (String repair : repairSet) {
-	// if (repair.equals(ClusterManager.INSTANCE.myAddress))
-	// setScript(scriptName,
-	// leadFileStatus.last_modified.getTime(), content);
-	// else
-	// client.getClientByUrl(repair).setScript(scriptName,
-	// leadFileStatus.last_modified.getTime(), true,
-	// content);
-	// }
-	//
-	// }
-	// }
+	public void repairFile(Map.Entry<String, StoreFileResult> leadNodeEntry,
+			String path) throws URISyntaxException, IOException {
 
-	/*
-	 * Check if this item should be repaired
-	 * 
-	 * @param size the expected number of nodes
-	 * 
-	 * @return false if not repair is required
-	 */
-	// boolean isRepairRequired(int size) {
-	// if (size != nodes.size())
-	// return true;
-	// Iterator<ScriptFileStatus> iterator = nodes.values().iterator();
-	//
-	// ScriptFileStatus fileStatus = iterator.next();
-	// while (iterator.hasNext()) {
-	// if (!fileStatus.equals(iterator.next()))
-	// return true;
-	// }
-	// return false;
-	// }
-	//
-	// boolean equals(ScriptFileStatus fileStatus) {
-	// if (fileStatus.size == null || this.size == null)
-	// return false;
-	// if (fileStatus.last_modified == null || this.last_modified == null)
-	// return false;
-	// return size.equals(fileStatus.size)
-	// && last_modified.equals(last_modified);
-	// }
+		String leadNodeAddress = leadNodeEntry.getKey();
+		logger.info("Repair file - schema: " + schemaName + " - path: " + path
+				+ " - from: " + leadNodeAddress);
 
-	/**
-	 * @return the map entry which represents the last version of the file
-	 */
-	// static Map.Entry<String, ScriptFileStatus> findLead() {
-	// long last_modified = 0;
-	// Map.Entry<String, ScriptFileStatus> lead = null;
-	// for (Map.Entry<String, ScriptFileStatus> entry : nodes.entrySet()) {
-	// ScriptFileStatus fileStatus = entry.getValue();
-	// if (fileStatus.last_modified == null || fileStatus.size == null
-	// || fileStatus.size == 0)
-	// continue;
-	// if (lead == null
-	// || (fileStatus.last_modified.getTime() > last_modified)) {
-	// last_modified = fileStatus.last_modified.getTime();
-	// lead = entry;
-	// continue;
-	// }
-	// }
-	// return lead;
-	// }
+		// TODO A faster repair method would initiate a push from the lead to
+		// the missing nodes
 
-	/**
-	 * @param leadFileStatus
-	 *            the leading file
-	 * @param repairSet
-	 *            a set of nodes which do not have the last version
-	 */
-	// static void buildRepairSet(ScriptFileStatus leadFileStatus,
-	// Set<String> repairSet) {
-	// for (Map.Entry<String, ScriptFileStatus> entry : nodes.entrySet())
-	// if (leadFileStatus.equals(entry.getValue()))
-	// repairSet.remove(entry.getKey());
-	// }
+		// Retrieve the reference file as temp file
+		StoreDataSingleClient dataClient = new StoreDataSingleClient(
+				leadNodeAddress, PrefixPath.data, msTimeout);
+		Response response = dataClient.getFile(schemaName, path, msTimeout);
+		Object entity = response.getEntity();
+		if (entity == null)
+			throw new IOException("The response entity is empty");
+		if (!(entity instanceof InputStream))
+			throw new IOException(
+					"The response does not contains an inputstream: "
+							+ entity.getClass().getName());
+		InputStream entityStream = (InputStream) entity;
+
+		// Upload the file
+		File tempFile = null;
+		FileInputStream fis = null;
+		try {
+			tempFile = IOUtils.storeAsTempFile(entityStream);
+			fis = new FileInputStream(tempFile);
+			masterDataService.putFile(schemaName, path, fis,
+					leadNodeEntry.getValue().last_modified.getTime(),
+					msTimeout, null);
+		} finally {
+			IOUtils.closeQuietly(fis);
+			if (tempFile != null)
+				tempFile.delete();
+			IOUtils.closeQuietly(entityStream);
+		}
+	}
 }

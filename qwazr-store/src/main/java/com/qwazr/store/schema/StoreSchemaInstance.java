@@ -55,7 +55,8 @@ public class StoreSchemaInstance implements Closeable {
 				"A repair process is already running.");
 	}
 
-	StoreSchemaRepairStatus startRepair() throws ServerException {
+	StoreSchemaRepairStatus startRepair(Integer msTimeout)
+			throws ServerException {
 		rwl.r.lock();
 		try {
 			checkNotExistsOrAlive();
@@ -65,7 +66,7 @@ public class StoreSchemaInstance implements Closeable {
 		rwl.w.lock();
 		try {
 			checkNotExistsOrAlive();
-			repairThread = new StoreSchemaRepairThread(schemaName);
+			repairThread = new StoreSchemaRepairThread(schemaName, msTimeout);
 			return repairThread.getRepairStatus();
 		} finally {
 			rwl.w.unlock();

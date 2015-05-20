@@ -40,6 +40,14 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	private static final Logger logger = LoggerFactory
 			.getLogger(JsonClientAbstract.class);
 
+	private final static int DEFAULT_TIMEOUT;
+
+	static {
+		String s = System
+				.getProperty("com.qwazr.utils.json.client.default_timeout");
+		DEFAULT_TIMEOUT = s == null ? 60000 : Integer.parseInt(s);
+	}
+
 	public final String url;
 	protected final String scheme;
 	protected final String host;
@@ -48,7 +56,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	protected final int port;
 	protected final int msTimeOut;
 
-	protected JsonClientAbstract(String url, int msTimeOut)
+	protected JsonClientAbstract(String url, Integer msTimeOut)
 			throws URISyntaxException {
 		this.url = url;
 		URI u = new URI(url);
@@ -62,7 +70,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		this.fragment = u.getFragment();
 		this.path = u.getPath();
 		this.port = u.getPort() == -1 ? 80 : u.getPort();
-		this.msTimeOut = msTimeOut;
+		this.msTimeOut = msTimeOut == null ? DEFAULT_TIMEOUT : msTimeOut;
 	}
 
 	/**
