@@ -59,9 +59,9 @@ public class ScriptRunStatus {
 		this.start = startTime == null ? null : new Date(startTime);
 		this.end = endTime == null ? null : new Date(endTime);
 		this.bindings = bindings;
-		this._status = node + "/scripts/" + name + "/status/" + uuid;
-		this._std_out = node + "/scripts/" + name + "/status/" + uuid + "/out";
-		this._std_err = node + "/scripts/" + name + "/status/" + uuid + "/err";
+		this._status = node + "/scripts/status/" + uuid;
+		this._std_out = node + "/scripts/status/" + uuid + "/out";
+		this._std_err = node + "/scripts/status/" + uuid + "/err";
 		this.uuid = uuid.toString();
 		this.state = state;
 		this.error = exception == null ? null : exception.getMessage();
