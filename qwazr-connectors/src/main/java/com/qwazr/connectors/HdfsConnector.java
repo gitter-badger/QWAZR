@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -95,12 +96,11 @@ public class HdfsConnector extends AbstractConnector {
 			throw new IOException("No filesystem available");
 	}
 
-	public void write(String pathString, String content) throws IOException {
+	public void write(Path path, String content) throws IOException {
 		checkFileSystem();
 		if (content == null || content.length() == 0)
 			throw new IOException("No content");
-		logger.info("Writing text: " + pathString);
-		Path path = new Path(pathString);
+		logger.info("Writing text: " + path);
 		FSDataOutputStream out = fileSystem.create(path, true);
 		try {
 			out.writeUTF(content);
@@ -109,12 +109,15 @@ public class HdfsConnector extends AbstractConnector {
 		}
 	}
 
-	public void write(String pathString, InputStream in) throws IOException {
+	public void write(String pathString, String content) throws IOException {
+		write(new Path(pathString), content);
+	}
+
+	public void write(Path path, InputStream in) throws IOException {
 		checkFileSystem();
 		if (in == null)
 			throw new IOException("No input stream");
-		logger.info("Writing stream: " + pathString);
-		Path path = new Path(pathString);
+		logger.info("Writing stream: " + path);
 		FSDataOutputStream out = fileSystem.create(path, true);
 		try {
 			IOUtils.copy(in, out);
@@ -124,10 +127,14 @@ public class HdfsConnector extends AbstractConnector {
 		}
 	}
 
-	public String readUTF(String pathString) throws IOException {
+	public void write(String pathString, InputStream in) throws IOException {
+		write(new Path(pathString), in);
+	}
+
+	public String readUTF(Path path) throws IOException {
 		checkFileSystem();
-		logger.info("readUTF: " + pathString);
-		Path path = new Path(pathString);
+		if (logger.isInfoEnabled())
+			logger.info("readUTF: " + path);
 		FSDataInputStream in = fileSystem.open(path);
 		try {
 			return in.readUTF();
@@ -136,11 +143,15 @@ public class HdfsConnector extends AbstractConnector {
 		}
 	}
 
-	public File readAsFile(String pathString, File localFile)
-			throws IOException {
+	public String readUTF(String pathString) throws IllegalArgumentException,
+			IOException {
+		return readUTF(new Path(pathString));
+	}
+
+	public File readAsFile(Path path, File localFile) throws IOException {
 		checkFileSystem();
-		logger.info("readAsFile: " + pathString);
-		Path path = new Path(pathString);
+		if (logger.isInfoEnabled())
+			logger.info("readAsFile: " + path);
 		FSDataInputStream in = fileSystem.open(path);
 		try {
 			IOUtils.copy(in, localFile, true);
@@ -150,23 +161,66 @@ public class HdfsConnector extends AbstractConnector {
 		}
 	}
 
-	public File readAsTempFile(String pathString, String fileSuffix)
-			throws IOException {
+	public File readAsFile(String pathString, File localFile)
+			throws IllegalArgumentException, IOException {
+		return readAsFile(new Path(pathString), localFile);
+	}
+
+	public File readAsTempFile(Path path, String fileSuffix) throws IOException {
 		File localFile = File.createTempFile("qwazr-hdfs-connector",
 				fileSuffix == null ? StringUtils.EMPTY : fileSuffix);
-		return readAsFile(pathString, localFile);
+		return readAsFile(path, localFile);
+	}
+
+	public File readAsTempFile(String pathString, String fileSuffix)
+			throws IOException {
+		return readAsTempFile(new Path(pathString), fileSuffix);
+	}
+
+	public boolean exists(Path path) throws IOException {
+		checkFileSystem();
+		if (logger.isInfoEnabled())
+			logger.info("Check path exist: " + path.toString());
+		return fileSystem.exists(path);
 	}
 
 	public boolean exists(String pathString) throws IOException {
+		return exists(new Path(pathString));
+	}
+
+	public boolean mkdir(Path path) throws IOException {
 		checkFileSystem();
-		logger.info("Check path exist: " + pathString);
-		return fileSystem.exists(new Path(pathString));
+		if (logger.isInfoEnabled())
+			logger.info("Create dir: " + path.toString());
+		return fileSystem.mkdirs(path);
 	}
 
 	public boolean mkdir(String pathString) throws IOException {
-		checkFileSystem();
-		logger.info("Create dir: " + pathString);
 		return fileSystem.mkdirs(new Path(pathString));
+	}
+
+	public FileStatus[] listStatus(Path path) throws IOException {
+		checkFileSystem();
+		if (logger.isInfoEnabled())
+			logger.info("List dir: " + path.toString());
+		return fileSystem.listStatus(path);
+	}
+
+	public FileStatus[] listStatus(String pathString) throws IOException {
+		checkFileSystem();
+		return listStatus(new Path(pathString));
+	}
+
+	public boolean delete(Path path, boolean recursive) throws IOException {
+		checkFileSystem();
+		if (logger.isInfoEnabled())
+			logger.info("Delete path: " + path.toString());
+		return fileSystem.delete(path, recursive);
+	}
+
+	public boolean delete(String pathString, boolean recursive)
+			throws IOException {
+		return delete(new Path(pathString), recursive);
 	}
 
 }
