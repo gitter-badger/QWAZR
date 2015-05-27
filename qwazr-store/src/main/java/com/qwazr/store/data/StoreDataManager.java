@@ -190,8 +190,10 @@ public class StoreDataManager {
 	 */
 	final public File getFile(String schemaAndPath) throws ServerException {
 		int idx = schemaAndPath.indexOf('/');
-		if (idx == 0)
+		if (idx == -1)
 			return getFile(schemaAndPath, StringUtils.EMPTY);
+		if (idx == 0)
+			return getFile(schemaAndPath.substring(1));
 		return getFile(schemaAndPath.substring(0, idx),
 				schemaAndPath.substring(idx));
 	}
