@@ -45,7 +45,8 @@ public class StoreSchemaRepairStatus {
 			Integer checkedFiles, Integer repairedFiles, Exception error) {
 		this.start_time = startTime;
 		this.end_time = endTime;
-		this.running = state != State.TERMINATED ? true : null;
+		this.running = (state != null && state != State.TERMINATED) ? true
+				: null;
 		this.terminated = state == State.TERMINATED ? true : null;
 		this.aborting = aborting ? true : null;
 		if (startTime != null && endTime != null)
