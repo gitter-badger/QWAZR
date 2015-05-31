@@ -88,7 +88,8 @@ public class StoreSchemaRepairThread extends Thread {
 	@Override
 	public void run() {
 		try {
-			logger.info("Repair starts - schema: " + schemaName);
+			if (logger.isInfoEnabled())
+				logger.info("Repair starts - schema: " + schemaName);
 			StoreSchemaDefinition schemaDefinition = StoreSchemaManager.INSTANCE
 					.getNewSchemaClient(msTimeout).getSchema(schemaName, false,
 							msTimeout);
@@ -101,7 +102,8 @@ public class StoreSchemaRepairThread extends Thread {
 					"Repair failed (" + schemaName + ") : " + e.getMessage(), e);
 		} finally {
 			endTime = new Date();
-			logger.info("Repair ends - schema: " + schemaName);
+			if (logger.isInfoEnabled())
+				logger.info("Repair ends - schema: " + schemaName);
 		}
 	}
 
@@ -109,6 +111,8 @@ public class StoreSchemaRepairThread extends Thread {
 			StoreDataReplicationClient dataClient, String path) {
 		if (abort.get())
 			return;
+		if (logger.isInfoEnabled())
+			logger.info("Check directory: " + schemaName + ": " + path);
 		currentPath = path;
 		StoreFileResult dirResult = dataClient.getDirectory(schemaName,
 				currentPath, msTimeout);
