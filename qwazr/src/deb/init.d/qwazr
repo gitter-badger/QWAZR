@@ -24,7 +24,7 @@ fi
 
 OSS_SHARE=/usr/share/qwazr
 OSS_JAR=$OSS_SHARE/$OSS_NAME.jar
-JAVA_OPTS="$JAVA_OPTS -Dlog4j.configuration=file:$QWAZR_DATA/log4j.properties"
+JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8 -Dlog4j.configuration=file:$QWAZR_DATA/log4j.properties"
 OSS_OPTS="$JAVA_OPTS -jar $OSS_JAR -l $LISTEN_ADDR -a $PUBLIC_ADDR -wp $WEBAPP_PORT -sp $WEBSERVICE_PORT -d $QWAZR_DATA"
 OSS_LOG=/var/log/qwazr/server.out
 OSS_PID="/var/run/$OSS_NAME.pid"
