@@ -45,6 +45,7 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 	private volatile ScriptState state;
 	private volatile Long startTime;
 	private volatile Long endTime;
+	private volatile Long expirationTime;
 	private volatile Exception exception;
 
 	private final Map<String, ? extends Object> bindings;
@@ -58,6 +59,7 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 		state = ScriptState.ready;
 		startTime = null;
 		endTime = null;
+		expirationTime = null;
 		this.bindings = bindings;
 		this.scriptEngine = scriptEngine;
 		if (bindings != null)
@@ -100,6 +102,7 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 					e);
 		} finally {
 			endTime = System.currentTimeMillis();
+			expirationTime = endTime + 2 * 60 * 1000;
 			if (fileReader != null)
 				IOUtils.closeQuietly(fileReader);
 		}
@@ -131,7 +134,9 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 				bindings == null ? null : bindings.keySet(), exception);
 	}
 
-	boolean hasExpired() {
-		return endTime != null;
+	boolean hasExpired(long currentTime) {
+		if (expirationTime == null)
+			return false;
+		return expirationTime < currentTime;
 	}
 }

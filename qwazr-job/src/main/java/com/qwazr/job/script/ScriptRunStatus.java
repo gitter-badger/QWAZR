@@ -33,6 +33,7 @@ public class ScriptRunStatus {
 	public final String _std_out;
 	public final String _std_err;
 	public final String uuid;
+	public final String name;
 	public final ScriptState state;
 	public final Date start;
 	public final Date end;
@@ -45,6 +46,7 @@ public class ScriptRunStatus {
 		_std_out = null;
 		_std_err = null;
 		uuid = null;
+		name = null;
 		state = null;
 		start = null;
 		end = null;
@@ -63,6 +65,7 @@ public class ScriptRunStatus {
 		this._std_out = node + "/scripts/status/" + uuid + "/out";
 		this._std_err = node + "/scripts/status/" + uuid + "/err";
 		this.uuid = uuid.toString();
+		this.name = name;
 		this.state = state;
 		this.error = exception == null ? null : exception.getMessage();
 	}
