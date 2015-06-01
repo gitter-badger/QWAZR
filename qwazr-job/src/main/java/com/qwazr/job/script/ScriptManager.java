@@ -149,8 +149,9 @@ public class ScriptManager {
 		runsMapLock.w.lock();
 		try {
 			List<String> uuidsToDelete = new ArrayList<String>();
+			long currentTime = System.currentTimeMillis();
 			for (ScriptRunThread scriptRunThread : runsMap.values())
-				if (scriptRunThread.hasExpired())
+				if (scriptRunThread.hasExpired(currentTime))
 					uuidsToDelete.add(scriptRunThread.getUUID().toString());
 			for (String uuid : uuidsToDelete)
 				runsMap.remove(uuid);
