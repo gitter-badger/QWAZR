@@ -45,13 +45,13 @@ public class StoreDataDistributionClient extends
 			.getLogger(StoreDataDistributionClient.class);
 
 	protected StoreDataDistributionClient(ExecutorService executor,
-			String[] urls, int msTimeOut) throws URISyntaxException {
+			String[] urls, Integer msTimeOut) throws URISyntaxException {
 		super(executor, new StoreDataSingleClient[urls.length], urls,
 				msTimeOut, true);
 	}
 
 	@Override
-	protected StoreDataSingleClient newClient(String url, int msTimeOut)
+	protected StoreDataSingleClient newClient(String url, Integer msTimeOut)
 			throws URISyntaxException {
 		return new StoreDataSingleClient(url, PrefixPath.data, msTimeOut);
 	}

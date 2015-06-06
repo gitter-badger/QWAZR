@@ -48,7 +48,7 @@ public class GraphMultiClient extends
 	private static final Logger logger = LoggerFactory
 			.getLogger(GraphMultiClient.class);
 
-	GraphMultiClient(ExecutorService executor, String[] urls, int msTimeOut)
+	GraphMultiClient(ExecutorService executor, String[] urls, Integer msTimeOut)
 			throws URISyntaxException {
 		super(executor, new GraphSingleClient[urls.length], urls, msTimeOut);
 	}
@@ -231,7 +231,7 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	protected GraphSingleClient newClient(String url, int msTimeOut)
+	protected GraphSingleClient newClient(String url, Integer msTimeOut)
 			throws URISyntaxException {
 		return new GraphSingleClient(url, msTimeOut);
 	}

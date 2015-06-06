@@ -18,8 +18,12 @@ package com.qwazr.job.script;
 import java.io.File;
 import java.io.FileReader;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.SimpleScriptContext;
 
@@ -48,6 +52,8 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 	private volatile Long expirationTime;
 	private volatile Exception exception;
 
+	private final Set<String> semaphores;
+
 	private final Map<String, ? extends Object> bindings;
 	private final ScriptEngine scriptEngine;
 	private final File scriptFile;
@@ -60,8 +66,10 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 		startTime = null;
 		endTime = null;
 		expirationTime = null;
+		this.globalScope = new GlobalBindings();
 		this.bindings = bindings;
 		this.scriptEngine = scriptEngine;
+		this.semaphores = new HashSet<String>();
 		if (bindings != null)
 			engineScope.putAll(bindings);
 		if (connectors != null)
@@ -105,6 +113,8 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 			expirationTime = endTime + 2 * 60 * 1000;
 			if (fileReader != null)
 				IOUtils.closeQuietly(fileReader);
+			for (String semaphore : semaphores)
+				ScriptManager.INSTANCE.unregisterSemaphore(semaphore, uuid);
 		}
 	}
 
@@ -138,5 +148,40 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 		if (expirationTime == null)
 			return false;
 		return expirationTime < currentTime;
+	}
+
+	public class GlobalBindings extends HashMap<String, Object> implements
+			Bindings {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -7250097260119419346L;
+
+		private GlobalBindings() {
+			this.put("console", new ScriptConsole());
+			this.put("semaphore", new ScriptSemaphore());
+		}
+
+		public void sleep(int msTimeout) throws InterruptedException {
+			Thread.sleep(msTimeout);
+		}
+	}
+
+	public class ScriptSemaphore {
+
+		public void register(String semaphore_id) {
+			synchronized (semaphores) {
+				semaphores.add(semaphore_id);
+				ScriptManager.INSTANCE.registerSemaphore(semaphore_id, uuid);
+			}
+		}
+
+		public void unregister(String semaphore_id) {
+			synchronized (semaphores) {
+				ScriptManager.INSTANCE.unregisterSemaphore(semaphore_id, uuid);
+				semaphores.remove(semaphore_id);
+			}
+		}
 	}
 }

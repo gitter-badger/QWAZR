@@ -44,13 +44,13 @@ public class StoreSchemaMultiClient extends
 			.getLogger(StoreSchemaMultiClient.class);
 
 	protected StoreSchemaMultiClient(ExecutorService executor, String[] urls,
-			int msTimeOut) throws URISyntaxException {
+			Integer msTimeOut) throws URISyntaxException {
 		super(executor, new StoreSchemaSingleClient[urls.length], urls,
 				msTimeOut);
 	}
 
 	@Override
-	protected StoreSchemaSingleClient newClient(String url, int msTimeOut)
+	protected StoreSchemaSingleClient newClient(String url, Integer msTimeOut)
 			throws URISyntaxException {
 		return new StoreSchemaSingleClient(url, msTimeOut);
 	}

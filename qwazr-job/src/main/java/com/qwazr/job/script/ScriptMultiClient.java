@@ -16,9 +16,13 @@
 package com.qwazr.job.script;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
 import javax.ws.rs.WebApplicationException;
@@ -28,6 +32,9 @@ import org.slf4j.LoggerFactory;
 
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
+import com.qwazr.utils.server.ServerException;
+import com.qwazr.utils.threads.ThreadUtils;
+import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
 public class ScriptMultiClient extends
 		JsonMultiClientAbstract<String, ScriptSingleClient> implements
@@ -37,12 +44,12 @@ public class ScriptMultiClient extends
 			.getLogger(ScriptMultiClient.class);
 
 	public ScriptMultiClient(ExecutorService executor, String[] urls,
-			int msTimeOut) throws URISyntaxException {
-		super(executor, new ScriptSingleClient[urls.length], urls, msTimeOut);
+			Integer msTimeout) throws URISyntaxException {
+		super(executor, new ScriptSingleClient[urls.length], urls, msTimeout);
 	}
 
 	@Override
-	protected ScriptSingleClient newClient(String url, int msTimeOut)
+	protected ScriptSingleClient newClient(String url, Integer msTimeOut)
 			throws URISyntaxException {
 		return new ScriptSingleClient(url, msTimeOut);
 	}
@@ -91,14 +98,15 @@ public class ScriptMultiClient extends
 	}
 
 	@Override
-	public Map<String, ScriptRunStatus> getRunsStatus(Boolean local) {
+	public Map<String, ScriptRunStatus> getRunsStatus(Boolean local,
+			Integer msTimeout) {
 		if (local != null && local)
 			return getClientByUrl(ClusterManager.INSTANCE.myAddress)
-					.getRunsStatus(true);
+					.getRunsStatus(true, msTimeout);
 		TreeMap<String, ScriptRunStatus> results = new TreeMap<String, ScriptRunStatus>();
 		for (ScriptSingleClient client : this) {
 			try {
-				results.putAll(client.getRunsStatus(true));
+				results.putAll(client.getRunsStatus(true, msTimeout));
 			} catch (WebApplicationException e) {
 				if (e.getResponse().getStatus() != 404)
 					throw e;
@@ -141,6 +149,79 @@ public class ScriptMultiClient extends
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public Set<String> getSemaphores(Boolean local, Integer msTimeout) {
+
+		try {
+
+			final TreeSet<String> semaphores = new TreeSet<String>();
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (ScriptServiceInterface client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+						try {
+							synchronized (this) {
+								semaphores.addAll(client.getSemaphores(true,
+										msTimeout));
+							}
+						} catch (WebApplicationException e) {
+							switch (e.getResponse().getStatus()) {
+							case 404:
+								break;
+							default:
+								throw e;
+							}
+						}
+					}
+				});
+			}
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return semaphores;
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
+	}
+
+	@Override
+	public Set<String> getSemaphoreOwners(String semaphore_id, Boolean local,
+			Integer msTimeout) {
+
+		try {
+
+			final TreeSet<String> ownerSet = new TreeSet<String>();
+			List<ProcedureExceptionCatcher> threads = new ArrayList<>(size());
+			for (ScriptServiceInterface client : this) {
+				threads.add(new ProcedureExceptionCatcher() {
+					@Override
+					public void execute() throws Exception {
+						try {
+							synchronized (this) {
+								ownerSet.addAll(client.getSemaphoreOwners(
+										semaphore_id, true, msTimeout));
+							}
+						} catch (WebApplicationException e) {
+							switch (e.getResponse().getStatus()) {
+							case 404:
+								break;
+							default:
+								throw e;
+							}
+						}
+					}
+				});
+			}
+			ThreadUtils.invokeAndJoin(executor, threads);
+			return ownerSet;
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
 	}
 
 }

@@ -19,15 +19,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.Document;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.util.JSON;
+import com.mongodb.client.model.UpdateOptions;
 import com.qwazr.utils.StringUtils;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -96,31 +96,53 @@ public class MongoDbConnector extends AbstractConnector {
 	 * Returns a DB collection instance
 	 * 
 	 * @param db
-	 *            a Mongo DB object
+	 *            a MongoDatabase object
 	 * @param collectionName
 	 *            the name of the collection
-	 * @return a DBCollection object
+	 * @return a MongoCollection object
 	 * @throws IOException
 	 *             if any I/O error occurs
 	 */
-	public DBCollection getCollection(DB db, String collectionName)
-			throws IOException {
+	public MongoCollection<Document> getCollection(MongoDatabase db,
+			String collectionName) throws IOException {
 		if (StringUtils.isEmpty(collectionName))
 			throw new IOException("No collection name.");
 		return db.getCollection(collectionName);
 	}
 
 	/**
-	 * Build a DBObject from a JSON string
+	 * Build a BSON Document from a JSON string
 	 * 
-	 * @param criteria
+	 * @param json
 	 *            the JSON string
-	 * @return a DBObject or NULL if criteria is empty
+	 * @return a Document or NULL if json is empty
 	 */
-	public DBObject getDBObject(String criteria) {
-		if (StringUtils.isEmpty(criteria))
+	public Document getNewDocument(String json) {
+		if (StringUtils.isEmpty(json))
 			return null;
-		return (DBObject) JSON.parse(criteria);
+		return Document.parse(json);
+	}
+
+	public Document newDocument(String json) {
+		return getNewDocument(json);
+	}
+
+	/**
+	 * Create a new UpdateOptions object
+	 * 
+	 * @param upsert
+	 *            true if a new document should be inserted if there are no
+	 *            matches to the query filter
+	 * @return a new UpdateOptions object
+	 */
+	public UpdateOptions getNewUpdateOptions(boolean upsert) {
+		UpdateOptions updateOptions = new UpdateOptions();
+		updateOptions.upsert(upsert);
+		return updateOptions;
+	}
+
+	public UpdateOptions newUpdateOptions(boolean upsert) {
+		return getNewUpdateOptions(upsert);
 	}
 
 }
