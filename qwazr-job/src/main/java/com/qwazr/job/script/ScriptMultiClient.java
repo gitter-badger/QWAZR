@@ -187,6 +187,10 @@ public class ScriptMultiClient extends
 		}
 	}
 
+	public Set<String> getSemaphoreOwners(String semaphore_id) {
+		return getSemaphoreOwners(semaphore_id, null, null);
+	}
+
 	@Override
 	public Set<String> getSemaphoreOwners(String semaphore_id, Boolean local,
 			Integer msTimeout) {
