@@ -16,6 +16,7 @@
 package com.qwazr.job.script;
 
 import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -46,7 +47,8 @@ public interface ScriptServiceInterface {
 	@Path("/status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, ScriptRunStatus> getRunsStatus(
-			@QueryParam("local") Boolean local);
+			@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/status/{run_id}")
@@ -63,4 +65,17 @@ public interface ScriptServiceInterface {
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getRunErr(@PathParam("run_id") String run_id);
 
+	@GET
+	@Path("/semaphores")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Set<String> getSemaphores(@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
+
+	@GET
+	@Path("/semaphores/{semaphore_id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Set<String> getSemaphoreOwners(
+			@PathParam("semaphore_id") String semaphore_id,
+			@QueryParam("local") Boolean local,
+			@QueryParam("timeout") Integer msTimeout);
 }

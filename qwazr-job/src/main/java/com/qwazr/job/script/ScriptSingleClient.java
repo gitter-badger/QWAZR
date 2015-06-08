@@ -18,6 +18,7 @@ package com.qwazr.job.script;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.ws.rs.WebApplicationException;
@@ -38,8 +39,10 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 	private final static String SCRIPT_PREFIX_RUN = SCRIPT_PREFIX + "run/";
 	private final static String SCRIPT_PREFIX_STATUS = SCRIPT_PREFIX
 			+ "status/";
+	private final static String SCRIPT_PREFIX_SEMAPHORES = SCRIPT_PREFIX
+			+ "semaphores/";
 
-	ScriptSingleClient(String url, int msTimeOut) throws URISyntaxException {
+	ScriptSingleClient(String url, Integer msTimeOut) throws URISyntaxException {
 		super(url, msTimeOut);
 	}
 
@@ -74,9 +77,10 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 	};
 
 	@Override
-	public Map<String, ScriptRunStatus> getRunsStatus(Boolean local) {
+	public Map<String, ScriptRunStatus> getRunsStatus(Boolean local,
+			Integer msTimeout) {
 		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_STATUS).setParameters(
-				local, null);
+				local, msTimeout);
 		Request request = Request.Get(uriBuilder.build());
 		return commonServiceRequest(request, null, msTimeOut,
 				MapRunStatusTypeRef, 200);
@@ -112,5 +116,27 @@ public class ScriptSingleClient extends JsonClientAbstract implements
 			throw new WebApplicationException(e.getMessage(), e,
 					Status.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	public final static TypeReference<Set<String>> SetStringTypeRef = new TypeReference<Set<String>>() {
+	};
+
+	@Override
+	public Set<String> getSemaphores(Boolean local, Integer msTimeout) {
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_SEMAPHORES)
+				.setParameters(local, msTimeout);
+		Request request = Request.Get(uriBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut, SetStringTypeRef,
+				200);
+	}
+
+	@Override
+	public Set<String> getSemaphoreOwners(String semaphore_id, Boolean local,
+			Integer msTimeout) {
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_SEMAPHORES,
+				semaphore_id).setParameters(local, msTimeout);
+		Request request = Request.Get(uriBuilder.build());
+		return commonServiceRequest(request, null, msTimeOut, SetStringTypeRef,
+				200);
 	}
 }

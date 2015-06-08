@@ -55,8 +55,8 @@ public class StoreDataReplicationClient extends
 	}
 
 	@Override
-	protected StoreDataDistributionClient newClient(String[] urls, int msTimeOut)
-			throws URISyntaxException {
+	protected StoreDataDistributionClient newClient(String[] urls,
+			Integer msTimeOut) throws URISyntaxException {
 		return new StoreDataDistributionClient(executor, urls, msTimeOut);
 	}
 

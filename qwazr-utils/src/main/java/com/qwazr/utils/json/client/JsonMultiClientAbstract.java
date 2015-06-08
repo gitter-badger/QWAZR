@@ -58,7 +58,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	 *             thrown in case of wrong URI syntax
 	 */
 	protected JsonMultiClientAbstract(ExecutorService executor,
-			V[] clientArray, K[] clientKeys, int msTimeOut)
+			V[] clientArray, K[] clientKeys, Integer msTimeOut)
 			throws URISyntaxException {
 		this.executor = executor;
 		clientsArray = clientArray;
@@ -79,7 +79,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	 * @throws URISyntaxException
 	 *             if any error occurs
 	 */
-	protected abstract V newClient(K clientKey, int msTimeOut)
+	protected abstract V newClient(K clientKey, Integer msTimeOut)
 			throws URISyntaxException;
 
 	@Override

@@ -16,6 +16,8 @@
 package com.qwazr;
 
 import java.net.URISyntaxException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
@@ -30,12 +32,16 @@ import com.qwazr.job.script.ScriptMultiClient;
 
 public class ServicesProvider extends AbstractConnector {
 
+	private ExecutorService executorService = null;
+
 	@Override
 	public void load(String contextId) {
+		executorService = Executors.newFixedThreadPool(8);
 	}
 
 	@Override
 	public void unload(String contextId) {
+		executorService.shutdown();
 	}
 
 	public ClusterMultiClient getCluster() {
@@ -45,15 +51,25 @@ public class ServicesProvider extends AbstractConnector {
 	}
 
 	public WebCrawlerMultiClient getNewWebCrawler() throws URISyntaxException {
+		return getNewWebCrawler(null);
+	}
+
+	public WebCrawlerMultiClient getNewWebCrawler(Integer msTimeout)
+			throws URISyntaxException {
 		return new WebCrawlerMultiClient(ClusterManager.INSTANCE
 				.getClusterClient().getActiveNodes(
-						WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), 60000);
+						WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), msTimeout);
 	}
 
 	public ScriptMultiClient getNewScriptClient() throws URISyntaxException {
-		return new ScriptMultiClient(null, ClusterManager.INSTANCE
+		return getNewScriptClient(null);
+	}
+
+	public ScriptMultiClient getNewScriptClient(Integer msTimeout)
+			throws URISyntaxException {
+		return new ScriptMultiClient(executorService, ClusterManager.INSTANCE
 				.getClusterClient().getActiveNodes(
-						JobServer.SERVICE_NAME_SCRIPT), 60000);
+						JobServer.SERVICE_NAME_SCRIPT), msTimeout);
 	}
 
 	public ExtractorServiceInterface getNewExtractorClient() {

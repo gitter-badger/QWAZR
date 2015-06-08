@@ -165,7 +165,7 @@ public class SchedulerManager {
 	ScriptRunStatus executeScheduler(SchedulerDefinition scheduler)
 			throws IOException, ServerException, URISyntaxException {
 		logger.info("execute " + scheduler.script_path);
-		return ScriptManager.INSTANCE.getNewClient().runScriptVariables(
+		return ScriptManager.INSTANCE.getNewClient(null).runScriptVariables(
 				scheduler.script_path, scheduler.variables);
 	}
 
