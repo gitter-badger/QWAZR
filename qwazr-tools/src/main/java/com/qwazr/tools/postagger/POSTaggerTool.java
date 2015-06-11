@@ -15,6 +15,7 @@
  **/
 package com.qwazr.tools.postagger;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +34,11 @@ public class POSTaggerTool extends AbstractTool {
 	public String lang;
 
 	@Override
-	public void load(String contextId) {
+	public void load(File dataDir) {
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 	}
 
 	private Language getLanguage(String languageName) {

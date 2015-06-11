@@ -15,6 +15,8 @@
  **/
 package com.qwazr.connectors;
 
+import java.io.File;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +44,7 @@ public class DatabaseConnector extends AbstractConnector {
 	private JDBCConnection connectionManager = null;
 
 	@Override
-	public void load(String contextId) {
+	public void load(File data_directory) {
 		try {
 			connectionManager = new JDBCConnection();
 			if (!StringUtils.isEmpty(driver))
@@ -61,7 +63,7 @@ public class DatabaseConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 	}
 
 	public ConnectionManager getConnectionManager() {

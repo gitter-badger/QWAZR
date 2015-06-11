@@ -32,20 +32,15 @@ public class ToolsManager {
 
 	public static volatile ToolsManager INSTANCE = null;
 
-	public static void load(File directory, String contextId)
-			throws IOException {
+	public static void load(File directory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new ToolsManager(directory, contextId);
+		INSTANCE = new ToolsManager(directory);
 	}
-
-	private final String contextId;
 
 	private final Map<String, AbstractTool> tools;
 
-	private ToolsManager(File rootDirectory, String contextId)
-			throws IOException {
-		this.contextId = contextId;
+	private ToolsManager(File rootDirectory) throws IOException {
 		tools = new ConcurrentHashMap<String, AbstractTool>();
 		File toolsFile = new File(rootDirectory, "tools.json");
 		if (!toolsFile.exists())
@@ -60,7 +55,7 @@ public class ToolsManager {
 			return;
 		for (AbstractTool tool : configuration.tools) {
 			logger.info("Loading tool: " + tool.name);
-			tool.load(contextId);
+			tool.load(rootDirectory);
 			add(tool);
 		}
 	}
@@ -74,7 +69,7 @@ public class ToolsManager {
 			return;
 		for (AbstractTool tool : tools.values()) {
 			try {
-				tool.unload(contextId);
+				tool.unload();
 			} catch (Exception e) {
 				// This should never happen
 				System.err.println(e);

@@ -45,6 +45,9 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	@JsonIgnore
 	protected Configuration cfg = null;
 
+	@JsonIgnore
+	protected File parentDir = null;
+
 	private final static String DEFAULT_CHARSET = "UTF-8";
 	private final static String DEFAULT_CONTENT_TYPE = "text/html";
 
@@ -55,7 +58,8 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	}
 
 	@Override
-	public void load(String contextId) {
+	public void load(File parentDir) {
+		this.parentDir = parentDir;
 		cfg = new Configuration(Configuration.VERSION_2_3_22);
 		cfg.setTemplateLoader(this);
 		cfg.setOutputEncoding(output_encoding == null ? DEFAULT_CHARSET
@@ -68,13 +72,13 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 		cfg.clearTemplateCache();
 	}
 
 	@Override
 	public Object findTemplateSource(String path) throws IOException {
-		File file = new File(path);
+		File file = new File(parentDir, path);
 		return file.exists() && file.isFile() ? file : null;
 	}
 

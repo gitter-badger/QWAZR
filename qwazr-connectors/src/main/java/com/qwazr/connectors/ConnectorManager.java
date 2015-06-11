@@ -34,18 +34,13 @@ public class ConnectorManager {
 
 	public static volatile ConnectorManager INSTANCE = null;
 
-	public static void load(File directory, String contextId)
-			throws IOException {
+	public static void load(File directory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new ConnectorManager(directory, contextId);
+		INSTANCE = new ConnectorManager(directory);
 	}
 
-	private final String contextId;
-
-	private ConnectorManager(File rootDirectory, String contextId)
-			throws IOException {
-		this.contextId = contextId;
+	private ConnectorManager(File rootDirectory) throws IOException {
 		connectors = new ConcurrentHashMap<String, AbstractConnector>();
 		File connectorFile = new File(rootDirectory, "connectors.json");
 		if (!connectorFile.exists())
@@ -60,7 +55,7 @@ public class ConnectorManager {
 			return;
 		for (AbstractConnector connector : configuration.connectors) {
 			logger.info("Loading connector: " + connector.name);
-			connector.load(contextId);
+			connector.load(rootDirectory);
 			add(connector);
 		}
 	}
@@ -74,10 +69,9 @@ public class ConnectorManager {
 			return;
 		for (AbstractConnector connector : connectors.values()) {
 			try {
-				connector.unload(contextId);
+				connector.unload();
 			} catch (Exception e) {
-				// This should never happen
-				System.err.println(e);
+				logger.error(e.getMessage(), e);
 			}
 		}
 		// Paranoid free

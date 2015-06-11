@@ -137,8 +137,8 @@ public class Qwazr extends AbstractServer {
 
 		ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
 
-		ConnectorManager.load(currentDataDir, null);
-		ToolsManager.load(currentDataDir, null);
+		ConnectorManager.load(currentDataDir);
+		ToolsManager.load(currentDataDir);
 
 		if (ServiceEnum.extractor.isActive(serverConfiguration)) {
 			ExtractorServer.loadParserManager();

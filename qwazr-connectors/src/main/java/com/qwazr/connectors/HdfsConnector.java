@@ -51,7 +51,7 @@ public class HdfsConnector extends AbstractConnector {
 	private Configuration configuration;
 
 	@Override
-	public void load(String contextId) {
+	public void load(File data_directory) {
 		configuration = new Configuration();
 
 		try {
@@ -79,7 +79,7 @@ public class HdfsConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 		if (fileSystem != null) {
 			try {
 				logger.info("Closing HDFS");
