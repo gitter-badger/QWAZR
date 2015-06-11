@@ -17,42 +17,46 @@ package com.qwazr.webapps.transaction;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 
 import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.io.IOUtils;
 
-import com.qwazr.webapps.transaction.FilePathResolver.FilePath;
-
 public class StaticManager {
 
 	static volatile StaticManager INSTANCE = null;
 
-	public static void load() throws IOException {
+	public static void load(File dataDir) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new StaticManager();
+		INSTANCE = new StaticManager(dataDir);
 	}
+
+	private final File dataDir;
 
 	private final MimetypesFileTypeMap mimeTypeMap;
 
-	private StaticManager() {
+	private StaticManager(File dataDir) {
+		this.dataDir = dataDir;
 		mimeTypeMap = new MimetypesFileTypeMap();
 	}
 
-	File findStatic(FilePath filePath) {
-		if (filePath == null)
+	File findStatic(ApplicationContext context, String requestPath)
+			throws URISyntaxException, IOException {
+		// First we try to find the root directory using configuration mapping
+		String staticPath = context.findStatic(requestPath);
+		if (staticPath == null)
 			return null;
-		File file = filePath.buildFile("static");
-		if (file == null)
-			return null;
-		if (!file.exists())
-			return null;
-		if (!file.isFile())
-			return null;
-		return file;
+		File staticFile = new File(dataDir, staticPath);
+		if (!staticFile.exists())
+			throw new FileNotFoundException("File not found");
+		if (!staticFile.isFile())
+			throw new FileNotFoundException("File not found");
+		return staticFile;
 	}
 
 	void handle(WebappResponse response, File staticFile) throws IOException {
@@ -61,6 +65,9 @@ public class StaticManager {
 			response.setContentType(type);
 		response.setContentLengthLong(staticFile.length());
 		response.setDateHeader("Last-Modified", staticFile.lastModified());
+		response.setHeader("Cache-Control", "max-age=86400");
+		response.setDateHeader("Expires",
+				System.currentTimeMillis() + 86400 * 1000);
 		InputStream inputStream = new FileInputStream(staticFile);
 		try {
 			IOUtils.copy(inputStream, response.getOutputStream());
@@ -68,5 +75,4 @@ public class StaticManager {
 			IOUtils.closeQuietly(inputStream);
 		}
 	}
-
 }

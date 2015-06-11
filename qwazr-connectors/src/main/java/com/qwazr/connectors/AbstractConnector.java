@@ -15,6 +15,8 @@
  **/
 package com.qwazr.connectors;
 
+import java.io.File;
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -28,7 +30,7 @@ public abstract class AbstractConnector {
 
 	public final String name = null;
 
-	public abstract void load(String contextId);
+	public abstract void load(File parentDir);
 
-	public abstract void unload(String contextId);
+	public abstract void unload();
 }

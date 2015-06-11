@@ -15,6 +15,7 @@
  **/
 package com.qwazr.connectors;
 
+import java.io.File;
 import java.net.URISyntaxException;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -50,7 +51,7 @@ public class OpenSearchServerConnector extends AbstractConnector {
 	private JsonClient1 jsonClient;
 
 	@Override
-	public void load(String contextId) {
+	public void load(File data_directory) {
 		try {
 			jsonClient = new JsonClient1(url, login, api_key,
 					time_out == null ? 60000 : time_out);
@@ -61,7 +62,7 @@ public class OpenSearchServerConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 	}
 
 	public AnalyzerApi1 getNewAnalyzerApi1() {

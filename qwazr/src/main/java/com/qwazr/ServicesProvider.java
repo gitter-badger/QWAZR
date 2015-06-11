@@ -15,6 +15,7 @@
  **/
 package com.qwazr;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,12 +36,12 @@ public class ServicesProvider extends AbstractConnector {
 	private ExecutorService executorService = null;
 
 	@Override
-	public void load(String contextId) {
+	public void load(File data_directory) {
 		executorService = Executors.newFixedThreadPool(8);
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 		executorService.shutdown();
 	}
 

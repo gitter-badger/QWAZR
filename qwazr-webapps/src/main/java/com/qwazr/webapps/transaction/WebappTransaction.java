@@ -29,29 +29,34 @@ import javax.ws.rs.core.Response.Status;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwazr.webapps.exception.WebappHtmlException;
-import com.qwazr.webapps.transaction.FilePathResolver.FilePath;
 import com.qwazr.webapps.transaction.body.HttpBodyInterface;
 
 public class WebappTransaction {
 
+	private final FilePath filePath;
+
 	private final ApplicationContext context;
 	private final WebappHttpRequest request;
-	private final FilePath filePath;
 	private final WebappResponse response;
 
 	public WebappTransaction(HttpServletRequest request,
 			HttpServletResponse response, HttpBodyInterface body)
 			throws JsonParseException, JsonMappingException, IOException {
-		this.filePath = FilePathResolver.INSTANCE.find(request.getPathInfo());
-		if (filePath == null)
-			throw new FileNotFoundException();
-		this.response = new WebappResponse(response, filePath);
-		this.context = ApplicationContextManager.INSTANCE.applyConf(filePath,
-				this);
-		if (context == null)
-			throw new FileNotFoundException("No application found");
-		this.request = new WebappHttpRequestImpl(context, filePath, request,
-				body);
+		this.response = new WebappResponse(response);
+		FilePath fp = new FilePath(request.getPathInfo(), false);
+		// First we try to find a sub context
+		ApplicationContext ctx = WebappManager.INSTANCE.findApplicationContext(
+				fp, this);
+		if (ctx == null) {
+			// The we test the ROOT context
+			fp = new FilePath(request.getPathInfo(), true);
+			ctx = WebappManager.INSTANCE.findApplicationContext(fp, this);
+			if (ctx == null)
+				throw new FileNotFoundException("No application found");
+		}
+		this.filePath = fp;
+		this.context = ctx;
+		this.request = new WebappHttpRequestImpl(context, request, body);
 		this.response.variable("request", this.request);
 		this.response.variable("response", this.response);
 		this.response.variable("session", this.request.getSession());
@@ -65,17 +70,22 @@ public class WebappTransaction {
 		return response;
 	}
 
+	FilePath getFilePath() {
+		return filePath;
+	}
+
 	public void execute() throws IOException, URISyntaxException,
 			ScriptException, PrivilegedActionException {
+		String pathInfo = request.getPathInfo();
 		StaticManager staticManager = StaticManager.INSTANCE;
-		File staticFile = staticManager.findStatic(filePath);
+		File staticFile = staticManager.findStatic(context, pathInfo);
 		if (staticFile != null) {
 			staticManager.handle(response, staticFile);
 			return;
 		}
 		ControllerManager controllerManager = ControllerManager.INSTANCE;
 		File controllerFile = controllerManager.findController(context,
-				request, filePath);
+				pathInfo);
 		if (controllerFile != null) {
 			controllerManager.handle(response, controllerFile);
 			return;

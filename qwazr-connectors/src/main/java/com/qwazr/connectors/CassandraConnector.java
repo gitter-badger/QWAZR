@@ -15,13 +15,13 @@
  **/
 package com.qwazr.connectors;
 
+import java.io.File;
 import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
 
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -43,7 +43,7 @@ public class CassandraConnector extends AbstractConnector {
 	public final String default_password = System
 			.getProperty("cassandra.default_password");
 
-	public final KeySpaceLocator keyspaceLocator = null;
+	// public final KeySpaceLocator keyspaceLocator = null;
 	public final List<String> hosts = null;
 
 	@JsonIgnoreProperties(ignoreUnknown = true)
@@ -70,35 +70,38 @@ public class CassandraConnector extends AbstractConnector {
 	private String keyspace = null;
 
 	@Override
-	public void load(String contextId) {
-		if (keyspaceLocator != null) {
-			String login = keyspaceLocator.login == null ? keyspaceLocator.keyspace
-					: keyspaceLocator.login;
-			String password = keyspaceLocator.password == null ? keyspaceLocator.login
-					: keyspaceLocator.password;
-			synchronized (keyspaceLocator) {
-				if (publicCluster == null)
-					publicCluster = new CassandraCluster(login, password,
-							hosts, timeout_connect_ms, timeout_read_ms,
-							timeout_pool_ms, pool_connections);
-			}
-			CassandraSession session = publicCluster
-					.getSession(keyspaceLocator.keyspace);
-			Row row = session.execute(keyspaceLocator.cql, contextId).one();
-			if (row == null)
-				return;
-			int size = row.getColumnDefinitions().size();
-			if (size > 0)
-				keyspace = row.getString(0);
-			if (size > 1)
-				login = row.getString(1);
-			if (size > 2)
-				password = row.getString(2);
-			cluster = new CassandraCluster(login,
-					password == null ? default_password : password, hosts,
-					timeout_connect_ms, timeout_read_ms, timeout_pool_ms,
-					pool_connections);
-		} else if (credentials != null) {
+	public void load(File dataDir) {
+		// if (keyspaceLocator != null) {
+		// String login = keyspaceLocator.login == null ?
+		// keyspaceLocator.keyspace
+		// : keyspaceLocator.login;
+		// String password = keyspaceLocator.password == null ?
+		// keyspaceLocator.login
+		// : keyspaceLocator.password;
+		// synchronized (keyspaceLocator) {
+		// if (publicCluster == null)
+		// publicCluster = new CassandraCluster(login, password,
+		// hosts, timeout_connect_ms, timeout_read_ms,
+		// timeout_pool_ms, pool_connections);
+		// }
+		// CassandraSession session = publicCluster
+		// .getSession(keyspaceLocator.keyspace);
+		// Row row = session.execute(keyspaceLocator.cql, contextId).one();
+		// if (row == null)
+		// return;
+		// int size = row.getColumnDefinitions().size();
+		// if (size > 0)
+		// keyspace = row.getString(0);
+		// if (size > 1)
+		// login = row.getString(1);
+		// if (size > 2)
+		// password = row.getString(2);
+		// cluster = new CassandraCluster(login,
+		// password == null ? default_password : password, hosts,
+		// timeout_connect_ms, timeout_read_ms, timeout_pool_ms,
+		// pool_connections);
+		// }
+		if (credentials != null) {
 			String login = credentials.login;
 			String password = credentials.password == null ? credentials.login
 					: credentials.password;
@@ -113,7 +116,7 @@ public class CassandraConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 		if (cluster != null) {
 			IOUtils.closeQuietly(cluster);
 			cluster = null;

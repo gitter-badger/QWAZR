@@ -15,6 +15,7 @@
  **/
 package com.qwazr.connectors;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,7 @@ public class MongoDbConnector extends AbstractConnector {
 	public Integer port;
 
 	@Override
-	public void load(String contextId) {
+	public void load(File data_directory) {
 		ServerAddress serverAddress = null;
 		if (!StringUtils.isEmpty(hostname)) {
 			if (port == null)
@@ -70,7 +71,7 @@ public class MongoDbConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 		if (mongoClient != null) {
 			mongoClient.close();
 			mongoClient = null;

@@ -28,7 +28,7 @@ public class ConnectorsTestContext {
 			throws JsonParseException, JsonMappingException, IOException {
 		if (ConnectorManager.INSTANCE != null)
 			return ConnectorManager.INSTANCE;
-		ConnectorManager.load(new File("src/test/resources"), null);
+		ConnectorManager.load(new File("src/test/resources"));
 		return ConnectorManager.INSTANCE;
 	}
 

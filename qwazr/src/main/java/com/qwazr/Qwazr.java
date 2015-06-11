@@ -68,8 +68,6 @@ public class Qwazr extends AbstractServer {
 		serverDefinition.defaultDataDirName = "qwazr";
 	}
 
-	private final static String WEBAPPS_CONTEXT_PATH = "/";
-
 	private final static String SERVER_YAML_NAME = "server.yaml";
 	private static ServerConfiguration serverConfiguration = null;
 
@@ -139,8 +137,8 @@ public class Qwazr extends AbstractServer {
 
 		ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
 
-		ConnectorManager.load(currentDataDir, null);
-		ToolsManager.load(currentDataDir, null);
+		ConnectorManager.load(currentDataDir);
+		ToolsManager.load(currentDataDir);
 
 		if (ServiceEnum.extractor.isActive(serverConfiguration)) {
 			ExtractorServer.loadParserManager();
@@ -148,7 +146,7 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
-			WebappServer.load(WEBAPPS_CONTEXT_PATH, null, 1, currentDataDir);
+			WebappServer.load(currentDataDir);
 			services.add(ServiceEnum.webapps.name());
 		}
 
@@ -188,7 +186,7 @@ public class Qwazr extends AbstractServer {
 	@Override
 	public ServletApplication getServletApplication() {
 		if (ServiceEnum.webapps.isActive(serverConfiguration))
-			return new WebappApplication(WEBAPPS_CONTEXT_PATH);
+			return new WebappApplication();
 		return null;
 	}
 

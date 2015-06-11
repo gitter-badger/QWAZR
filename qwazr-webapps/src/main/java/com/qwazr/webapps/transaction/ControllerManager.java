@@ -38,65 +38,39 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import com.qwazr.utils.ScriptUtils;
-import com.qwazr.webapps.exception.WebappRedirectException;
-import com.qwazr.webapps.transaction.FilePathResolver.FilePath;
 
 public class ControllerManager {
 
 	public static volatile ControllerManager INSTANCE = null;
 
-	public static void load() throws IOException {
+	public static void load(File dataDir) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new ControllerManager();
+		INSTANCE = new ControllerManager(dataDir);
 	}
+
+	final private File dataDir;
 
 	final private ScriptEngine scriptEngine;
 
-	private ControllerManager() {
+	private ControllerManager(File dataDir) {
+		this.dataDir = dataDir;
 		ScriptEngineManager manager = new ScriptEngineManager();
 		scriptEngine = manager.getEngineByName("nashorn");
 	}
 
-	private File checkController(File file) throws FileNotFoundException {
-		if (!file.exists())
-			throw new FileNotFoundException("Controller not found");
-		if (!file.isFile())
-			throw new FileNotFoundException("Controller not found");
-		return file;
-	}
-
-	File findController(ApplicationContext context, WebappHttpRequest request,
-			FilePath filePath) throws URISyntaxException, IOException {
-
+	File findController(ApplicationContext context, String requestPath)
+			throws URISyntaxException, IOException {
 		// First we try to find the controller using configuration mapping
-		String controllerPath = context.findController(filePath);
-		if (controllerPath != null)
-			return checkController(filePath.buildFile("controller",
-					controllerPath));
-
-		// Then we check the related file.
-		File file = filePath.buildFile("controller");
-		if (file == null)
+		String ctrlrPath = context.findController(requestPath);
+		if (ctrlrPath == null)
 			return null;
-
-		// Check if it is a directory
-		if (file.exists() && file.isDirectory()) {
-			if (filePath.requestPath != null
-					&& filePath.requestPath.length() > 0
-					&& !filePath.requestPath.endsWith("/"))
-				throw new WebappRedirectException(request.getRequestURI() + '/');
-			return checkController(new File(file, "index.js"));
-		}
-
-		// Check if we have a controller file
-		file = new File(file.getParent(), file.getName() + ".js");
-		if (file.exists())
-			return checkController(file);
-
-		// Nothing found, returning null give the control the next handler
-		// (static)
-		return null;
+		File ctrlrFile = new File(dataDir, ctrlrPath);
+		if (!ctrlrFile.exists())
+			throw new FileNotFoundException("Controller not found");
+		if (!ctrlrFile.isFile())
+			throw new FileNotFoundException("Controller not found");
+		return ctrlrFile;
 	}
 
 	public static class RestrictedAccessControlContext {
@@ -141,6 +115,7 @@ public class ControllerManager {
 	void handle(WebappResponse response, File controllerFile)
 			throws IOException, ScriptException, PrivilegedActionException {
 		Bindings bindings = scriptEngine.createBindings();
+		response.setHeader("Cache-Control", "max-age=0, no-cache, no-store");
 		Map<String, Object> variables = response.getVariables();
 		if (variables != null)
 			for (Map.Entry<String, Object> entry : variables.entrySet())

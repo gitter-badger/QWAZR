@@ -104,8 +104,8 @@ public class JobServer extends AbstractServer {
 	public void load() throws IOException {
 		File currentDataDir = getCurrentDataDir();
 		ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
-		ConnectorManager.load(currentDataDir, null);
-		ToolsManager.load(currentDataDir, null);
+		ConnectorManager.load(currentDataDir);
+		ToolsManager.load(currentDataDir);
 		loadScript(currentDataDir);
 		loadScheduler(currentDataDir, maxThreads);
 	}

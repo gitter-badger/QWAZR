@@ -58,7 +58,7 @@ public class MarkdownTool extends AbstractTool {
 	private PegDownProcessor pegDownProcessor = null;
 
 	@Override
-	public void load(String contextId) {
+	public void load(File dataDir) {
 		int extensionsValue = 0;
 		if (extensions != null)
 			for (ExtensionEnum extensionEnum : extensions)
@@ -67,7 +67,7 @@ public class MarkdownTool extends AbstractTool {
 	}
 
 	@Override
-	public void unload(String contextId) {
+	public void unload() {
 	}
 
 	public String toHtml(String input) {
