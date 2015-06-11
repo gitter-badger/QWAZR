@@ -97,7 +97,7 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	public void closeTemplateSource(Object templateSource) throws IOException {
 	}
 
-	public void template(String templatePath, Map<?, ?> dataModel,
+	public void template(String templatePath, Map<String, Object> dataModel,
 			HttpServletResponse response) throws TemplateException, IOException {
 		if (response.getContentType() == null)
 			response.setContentType(default_content_type == null ? DEFAULT_CONTENT_TYPE
@@ -107,7 +107,7 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 		template.process(dataModel, response.getWriter());
 	}
 
-	public String template(String templatePath, Map<?, ?> dataModel)
+	public String template(String templatePath, Map<String, Object> dataModel)
 			throws TemplateException, IOException {
 		Template template = cfg.getTemplate(templatePath);
 		StringWriter stringWriter = new StringWriter();
