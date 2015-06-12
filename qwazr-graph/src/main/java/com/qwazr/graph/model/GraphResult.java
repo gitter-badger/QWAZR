@@ -13,32 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph.model;
+package com.qwazr.graph.model;
 
-import javax.xml.bind.annotation.XmlTransient;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.qwarz.graph.GraphInstance.NodeScore;
 
 @JsonInclude(Include.NON_EMPTY)
-public class GraphNodeResult extends GraphNode {
+public class GraphResult extends GraphDefinition {
 
-	public double score;
-	public String node_id;
+	final public Long node_count;
 
-	public GraphNodeResult() {
-		score = 0;
-		node_id = null;
+	public GraphResult() {
+		this(null);
 	}
 
-	@XmlTransient
-	@JsonIgnore
-	public GraphNodeResult set(NodeScore nodeScore) {
-		score = nodeScore.score;
-		node_id = nodeScore.node_id;
-		return this;
+	public GraphResult(Long size) {
+		this.node_count = size;
+	}
+
+	public GraphResult(GraphDefinition graphDef, long size) {
+		super(graphDef);
+		this.node_count = size;
 	}
 
 }

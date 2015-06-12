@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph.model;
+package com.qwazr.graph.model;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;

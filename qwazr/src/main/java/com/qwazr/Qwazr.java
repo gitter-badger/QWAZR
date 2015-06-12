@@ -29,8 +29,6 @@ import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwarz.graph.GraphServer;
-import com.qwarz.graph.GraphServiceImpl;
 import com.qwazr.ServerConfiguration.ServiceEnum;
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
@@ -40,6 +38,8 @@ import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.service.WebCrawlerServiceImpl;
 import com.qwazr.extractor.ExtractorServer;
 import com.qwazr.extractor.ExtractorServiceImpl;
+import com.qwazr.graph.GraphServer;
+import com.qwazr.graph.GraphServiceImpl;
 import com.qwazr.job.JobServer;
 import com.qwazr.job.scheduler.SchedulerServiceImpl;
 import com.qwazr.job.script.ScriptServiceImpl;

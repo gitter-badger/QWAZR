@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwarz.graph;
+package com.qwazr.graph;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -36,20 +36,20 @@ import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwarz.database.CollectorInterface.LongCounter;
-import com.qwarz.database.FieldInterface;
-import com.qwarz.database.FieldInterface.FieldDefinition;
-import com.qwarz.database.Query;
-import com.qwarz.database.Query.OrGroup;
-import com.qwarz.database.Query.QueryHook;
-import com.qwarz.database.Query.TermQuery;
-import com.qwarz.database.Table;
-import com.qwarz.database.UniqueKey.UniqueStringKey;
-import com.qwarz.graph.model.GraphDefinition;
-import com.qwarz.graph.model.GraphDefinition.PropertyTypeEnum;
-import com.qwarz.graph.model.GraphNode;
-import com.qwarz.graph.model.GraphNodeResult;
-import com.qwarz.graph.model.GraphRequest;
+import com.qwazr.database.FieldInterface;
+import com.qwazr.database.Query;
+import com.qwazr.database.Table;
+import com.qwazr.database.CollectorInterface.LongCounter;
+import com.qwazr.database.FieldInterface.FieldDefinition;
+import com.qwazr.database.Query.OrGroup;
+import com.qwazr.database.Query.QueryHook;
+import com.qwazr.database.Query.TermQuery;
+import com.qwazr.database.UniqueKey.UniqueStringKey;
+import com.qwazr.graph.model.GraphDefinition;
+import com.qwazr.graph.model.GraphNode;
+import com.qwazr.graph.model.GraphNodeResult;
+import com.qwazr.graph.model.GraphRequest;
+import com.qwazr.graph.model.GraphDefinition.PropertyTypeEnum;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
