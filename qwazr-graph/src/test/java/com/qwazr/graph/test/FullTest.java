@@ -42,10 +42,10 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.google.common.io.Files;
-import com.qwarz.graph.GraphServer;
-import com.qwarz.graph.model.GraphDefinition;
-import com.qwarz.graph.model.GraphDefinition.PropertyTypeEnum;
-import com.qwarz.graph.model.GraphNode;
+import com.qwazr.graph.GraphServer;
+import com.qwazr.graph.model.GraphDefinition;
+import com.qwazr.graph.model.GraphNode;
+import com.qwazr.graph.model.GraphDefinition.PropertyTypeEnum;
 import com.qwazr.utils.json.JsonMapper;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)

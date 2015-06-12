@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph;
+package com.qwazr.graph;
 
 import java.io.InputStream;
 import java.util.LinkedHashMap;
@@ -31,11 +31,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-import com.qwarz.graph.model.GraphDefinition;
-import com.qwarz.graph.model.GraphNode;
-import com.qwarz.graph.model.GraphNodeResult;
-import com.qwarz.graph.model.GraphRequest;
-import com.qwarz.graph.model.GraphResult;
+import com.qwazr.graph.model.GraphDefinition;
+import com.qwazr.graph.model.GraphNode;
+import com.qwazr.graph.model.GraphNodeResult;
+import com.qwazr.graph.model.GraphRequest;
+import com.qwazr.graph.model.GraphResult;
 import com.qwazr.utils.server.RestApplication;
 
 @Path("/graph")

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph;
+package com.qwazr.graph;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,10 +26,10 @@ import java.util.concurrent.Executors;
 
 import javax.ws.rs.core.Response.Status;
 
-import com.qwarz.database.Table;
-import com.qwarz.graph.model.GraphDefinition;
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.database.Table;
+import com.qwazr.graph.model.GraphDefinition;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;
 import com.qwazr.utils.server.ServerException;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwarz.graph;
+package com.qwazr.graph;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,11 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.qwarz.graph.model.GraphDefinition;
-import com.qwarz.graph.model.GraphNode;
-import com.qwarz.graph.model.GraphNodeResult;
-import com.qwarz.graph.model.GraphRequest;
-import com.qwarz.graph.model.GraphResult;
+import com.qwazr.graph.model.GraphDefinition;
+import com.qwazr.graph.model.GraphNode;
+import com.qwazr.graph.model.GraphNodeResult;
+import com.qwazr.graph.model.GraphRequest;
+import com.qwazr.graph.model.GraphResult;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.ServerException;
 
