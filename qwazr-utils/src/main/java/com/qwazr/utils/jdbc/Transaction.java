@@ -1,7 +1,4 @@
 /**   
- * License Agreement for OpenSearchServer Pojodbc
- *
- * Copyright 2008-2013 Emmanuel Keller / Jaeksoft
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.pojodbc;
+package com.qwazr.utils.jdbc;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 
-import com.qwazr.utils.pojodbc.connection.ConnectionManager;
+import com.qwazr.utils.jdbc.connection.ConnectionManager;
 
 /**
  * <p>

@@ -16,15 +16,18 @@
 package com.qwazr.connectors;
 
 import java.io.File;
+import java.sql.SQLException;
 
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.StringUtils;
-import com.qwazr.utils.pojodbc.connection.ConnectionManager;
-import com.qwazr.utils.pojodbc.connection.JDBCConnection;
+import com.qwazr.utils.jdbc.connection.ConnectionManager;
+import com.qwazr.utils.jdbc.connection.DataSourceConnection;
+import com.qwazr.utils.jdbc.connection.JDBCConnection;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DatabaseConnector extends AbstractConnector {
@@ -40,21 +43,60 @@ public class DatabaseConnector extends AbstractConnector {
 
 	public final String password = null;
 
+	public final ConnectionPool pool = null;
+
+	public static class ConnectionPool {
+
+		public final Integer initial_size = null;
+
+		public final Integer max_total = null;
+
+		public final Integer max_idle = null;
+
+		public final Integer min_idle = null;
+
+		public final Long max_wait_millis = null;
+	}
+
 	@JsonIgnore
-	private JDBCConnection connectionManager = null;
+	private ConnectionManager connectionManager = null;
+	private BasicDataSource basicDataSource = null;
 
 	@Override
 	public void load(File data_directory) {
 		try {
-			connectionManager = new JDBCConnection();
-			if (!StringUtils.isEmpty(driver))
-				connectionManager.setDriver(driver);
-			if (!StringUtils.isEmpty(url))
-				connectionManager.setUrl(url);
-			if (!StringUtils.isEmpty(username))
-				connectionManager.setUsername(username);
-			if (!StringUtils.isEmpty(password))
-				connectionManager.setPassword(password);
+			if (pool == null) {
+				JDBCConnection cnx = new JDBCConnection();
+				if (!StringUtils.isEmpty(driver))
+					cnx.setDriver(driver);
+				if (!StringUtils.isEmpty(url))
+					cnx.setUrl(url);
+				if (!StringUtils.isEmpty(username))
+					cnx.setUsername(username);
+				if (!StringUtils.isEmpty(password))
+					cnx.setPassword(password);
+				connectionManager = cnx;
+			} else {
+				BasicDataSource ds = new BasicDataSource();
+				if (driver != null)
+					ds.setDriverClassName(driver);
+				if (url != null)
+					ds.setUrl(url);
+				if (username != null)
+					ds.setUsername(username);
+				if (password != null)
+					ds.setPassword(password);
+				if (pool.initial_size != null)
+					ds.setInitialSize(pool.initial_size);
+				if (pool.max_idle != null)
+					ds.setMaxIdle(pool.max_idle);
+				if (pool.max_total != null)
+					ds.setMaxTotal(pool.max_total);
+				if (pool.max_wait_millis != null)
+					ds.setMaxWaitMillis(pool.max_wait_millis);
+				connectionManager = new DataSourceConnection(ds);
+
+			}
 		} catch (InstantiationException | IllegalAccessException
 				| ClassNotFoundException e) {
 			logger.error(e.getMessage(), e);
@@ -64,10 +106,42 @@ public class DatabaseConnector extends AbstractConnector {
 
 	@Override
 	public void unload() {
+		if (basicDataSource != null) {
+			try {
+				if (!basicDataSource.isClosed())
+					basicDataSource.close();
+			} catch (SQLException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
 	}
 
 	public ConnectionManager getConnectionManager() {
 		return connectionManager;
+	}
+
+	/**
+	 * The current number of active connections that have been allocated from
+	 * this connection pool.
+	 *
+	 * @return the current number of active connections
+	 */
+	public Integer getPoolNumActive() {
+		if (basicDataSource == null)
+			return null;
+		return basicDataSource.getNumActive();
+	}
+
+	/**
+	 * The current number of idle connections that are waiting to be allocated
+	 * from this connection pool.
+	 *
+	 * @return the current number of idle connections
+	 */
+	public Integer getPoomNumIdle() {
+		if (basicDataSource == null)
+			return null;
+		return basicDataSource.getNumIdle();
 	}
 
 }

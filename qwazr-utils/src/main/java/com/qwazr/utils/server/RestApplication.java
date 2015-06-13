@@ -26,7 +26,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.qwazr.utils.json.JacksonConfig;
 
 /**
- * Generic OpenSearchServer RestApplication
+ * Generic RestApplication
  */
 public abstract class RestApplication extends Application {
 

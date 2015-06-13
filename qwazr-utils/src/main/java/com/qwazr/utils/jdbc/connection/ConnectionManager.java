@@ -1,6 +1,4 @@
 /**   
- * License Agreement for OpenSearchServer Pojodbc
- *
  * Copyright 2008-2013 Emmanuel Keller / Jaeksoft
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
  *
@@ -16,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.pojodbc.connection;
+package com.qwazr.utils.jdbc.connection;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -25,7 +23,7 @@ import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.qwazr.utils.pojodbc.Transaction;
+import com.qwazr.utils.jdbc.Transaction;
 
 /**
  * The abstract class for all ConnectionManager.
