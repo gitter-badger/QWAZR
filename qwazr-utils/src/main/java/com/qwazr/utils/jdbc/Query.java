@@ -1,7 +1,4 @@
 /**   
- * License Agreement for OpenSearchServer Pojodbc
- *
- * Copyright 2008-2013 Emmanuel Keller / Jaeksoft
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.pojodbc;
+package com.qwazr.utils.jdbc;
 
 import java.beans.BeanInfo;
 import java.beans.Beans;
@@ -33,7 +30,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.qwazr.utils.pojodbc.connection.ConnectionManager;
+import com.qwazr.utils.jdbc.connection.ConnectionManager;
 
 /**
  * Represents an SQL query. In JDBC view, a query contains at least a

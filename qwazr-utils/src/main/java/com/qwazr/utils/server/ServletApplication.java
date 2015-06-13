@@ -23,7 +23,7 @@ import io.undertow.servlet.api.ServletInfo;
 import java.util.List;
 
 /**
- * Generic OpenSearchServer ServletApplication
+ * Generic ServletApplication
  */
 public abstract class ServletApplication {
 

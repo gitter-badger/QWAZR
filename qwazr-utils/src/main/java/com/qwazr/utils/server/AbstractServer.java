@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Generic OpenSearchServer REST server
+ * Generic REST server
  */
 public abstract class AbstractServer {
 

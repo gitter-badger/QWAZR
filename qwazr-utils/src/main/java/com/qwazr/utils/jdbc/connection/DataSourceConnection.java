@@ -1,7 +1,4 @@
 /**   
- * License Agreement for OpenSearchServer Pojodbc
- *
- * Copyright 2008-2013 Emmanuel Keller / Jaeksoft
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.pojodbc.connection;
+package com.qwazr.utils.jdbc.connection;
 
 import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
-import com.qwazr.utils.pojodbc.Transaction;
+import com.qwazr.utils.jdbc.Transaction;
 
 /**
  * A connection manager getting database connection from a javax.sql.DataSource.
@@ -41,7 +38,7 @@ import com.qwazr.utils.pojodbc.Transaction;
  */
 public class DataSourceConnection extends ConnectionManager {
 
-	private DataSource dataSource;
+	final private DataSource dataSource;
 
 	/**
 	 * @param dataSource
