@@ -206,9 +206,9 @@ public class Query {
 		return rows;
 	}
 
-	private List<Row> createRowList() throws SQLException {
+	private List<Row> createRowList(int limit) throws SQLException {
 		moveToFirstResult();
-		List<Row> rows = createRowList(resultSet, maxResults);
+		List<Row> rows = createRowList(resultSet, limit);
 		return rows;
 	}
 
@@ -266,7 +266,19 @@ public class Query {
 	 */
 	public List<Row> getResultList() throws SQLException {
 		checkResultSet();
-		return createRowList();
+		return createRowList(maxResults);
+	}
+
+	/**
+	 * @return the first result, or null if there were no result
+	 * @throws SQLException if any JDBC error occurs
+	 */
+	public Row getFirstResult() throws SQLException {
+		checkResultSet();
+		List<Row> rows = createRowList(1);
+		if (rows == null || rows.isEmpty())
+			return null;
+		return rows.get(0);
 	}
 
 	/**
