@@ -47,7 +47,7 @@ start)
             echo "$OSS_NAME is already running ..."
         else
             echo "Starting $OSS_NAME ..."
-            PID=`su -c "/usr/bin/java $OSS_OPTS" $OSS_USER >> $OSS_LOG 2>&1 & echo $!`
+            PID=`su - -c "/usr/bin/java $OSS_OPTS" $OSS_USER >> $OSS_LOG 2>&1 & echo $!`
             if [ -z $PID ]; then
                echo "$OSS_NAME starting failed"
             else
