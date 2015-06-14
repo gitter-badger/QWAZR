@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,17 +15,12 @@
  */
 package com.qwazr.utils;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.nio.charset.Charset;
-import java.util.Collection;
-
 import javax.imageio.stream.ImageInputStream;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class IOUtils extends org.apache.commons.io.IOUtils {
 
@@ -62,7 +57,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	}
 
 	public static final int copy(InputStream inputStream, File tempFile,
-			boolean bCloseInputStream) throws IOException {
+								 boolean bCloseInputStream) throws IOException {
 		FileOutputStream fos = new FileOutputStream(tempFile);
 		try {
 			return copy(inputStream, fos);
@@ -74,7 +69,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	}
 
 	public static final StringBuilder copy(InputStream inputStream,
-			StringBuilder sb, String charsetName, boolean bCloseInputStream)
+										   StringBuilder sb, String charsetName, boolean bCloseInputStream)
 			throws IOException {
 		if (inputStream == null)
 			return sb;
@@ -115,6 +110,31 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		} finally {
 			if (fos != null)
 				IOUtils.closeQuietly(fos);
+		}
+	}
+
+	public interface CloseableContext {
+
+		void add(Closeable closeable);
+	}
+
+	public static class CloseableList implements CloseableContext, Closeable {
+
+		private final List<Closeable> closeables;
+
+		public CloseableList() {
+			closeables = new ArrayList<Closeable>();
+		}
+
+		@Override
+		public void add(Closeable closeable) {
+			closeables.add(closeable);
+		}
+
+		@Override
+		public void close() {
+			IOUtils.close(closeables);
+			closeables.clear();
 		}
 	}
 
