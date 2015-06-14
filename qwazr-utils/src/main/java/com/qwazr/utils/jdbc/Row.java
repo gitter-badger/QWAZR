@@ -20,7 +20,7 @@ import java.sql.SQLException;
 import java.util.Map;
 
 /**
- * Represents a row from a ResultSet. A convienient way to retrieve data from
+ * Represents a row from a ResultSet. A convenient way to retrieve data from
  * ResultSet if you don't want to use POJO. *
  */
 public class Row {
@@ -36,19 +36,18 @@ public class Row {
 
 	Row(Map<String, Integer> columnMap, int columnCount, ResultSet rs) throws SQLException {
 		this(columnMap, columnCount);
-		for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
-			columns[columnIndex] = rs.getObject(columnIndex + 1);
-	}
-
-	public void set(int column, Object value) {
-		columns[column] = value;
+		for (Map.Entry<String, Integer> entry : columnMap.entrySet()) {
+			int columnIndex = entry.getValue();
+			Object object = rs.getObject(columnIndex + 1);
+			columns[columnIndex] = object;
+		}
 	}
 
 	/**
 	 * @param columnNumber the number of the column
 	 * @return the value for the give column
 	 */
-	public Object get(int columnNumber) {
+	final public Object get(int columnNumber) {
 		Object col = columns[columnNumber];
 		if (col == null)
 			return null;
@@ -59,7 +58,7 @@ public class Row {
 	 * @param label the label of the column
 	 * @return the value for the given column label
 	 */
-	public Object get(String label) {
+	final public Object get(String label) {
 		Integer colNumber = columnMap.get(label);
 		if (colNumber == null)
 			return null;
@@ -67,4 +66,6 @@ public class Row {
 			return null;
 		return columns[colNumber];
 	}
+
+
 }
