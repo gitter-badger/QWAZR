@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,22 +15,6 @@
  **/
 package com.qwazr.job.script;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.SimpleScriptContext;
-
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -38,6 +22,20 @@ import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.connectors.ConnectorManager.ConnectorMap;
 import com.qwazr.job.script.ScriptRunStatus.ScriptState;
 import com.qwazr.tools.ToolsManager.ToolMap;
+import com.qwazr.utils.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.SimpleScriptContext;
+import java.io.File;
+import java.io.FileReader;
+import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @JsonInclude(Include.NON_EMPTY)
 public class ScriptRunThread extends SimpleScriptContext implements Runnable {
@@ -53,14 +51,15 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 	private volatile Exception exception;
 
 	private final Set<String> semaphores;
+	private final IOUtils.CloseableList closeables;
 
 	private final Map<String, ? extends Object> bindings;
 	private final ScriptEngine scriptEngine;
 	private final File scriptFile;
 
 	ScriptRunThread(ScriptEngine scriptEngine, File scriptFile,
-			Map<String, ? extends Object> bindings, ConnectorMap connectors,
-			ToolMap tools) {
+					Map<String, ? extends Object> bindings, ConnectorMap connectors,
+					ToolMap tools) {
 		uuid = UUIDs.timeBased().toString();
 		state = ScriptState.ready;
 		startTime = null;
@@ -70,12 +69,14 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 		this.bindings = bindings;
 		this.scriptEngine = scriptEngine;
 		this.semaphores = new HashSet<String>();
+		this.closeables = new IOUtils.CloseableList();
 		if (bindings != null)
 			engineScope.putAll(bindings);
 		if (connectors != null)
 			engineScope.put("connectors", connectors);
 		if (tools != null)
 			engineScope.put("tools", tools);
+		engineScope.put("closeable", tools);
 		this.scriptFile = scriptFile;
 		this.setWriter(new StringWriter());
 		this.setErrorWriter(new StringWriter());
@@ -115,6 +116,7 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 				IOUtils.closeQuietly(fileReader);
 			for (String semaphore : semaphores)
 				ScriptManager.INSTANCE.unregisterSemaphore(semaphore, uuid);
+			closeables.close();
 		}
 	}
 
@@ -154,7 +156,7 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 			Bindings {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -7250097260119419346L;
 

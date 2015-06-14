@@ -1,11 +1,11 @@
-/**   
+/**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.qwazr.utils.jdbc;
+
+import com.qwazr.utils.jdbc.connection.ConnectionManager;
 
 import java.beans.BeanInfo;
 import java.beans.Beans;
@@ -30,8 +32,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.qwazr.utils.jdbc.connection.ConnectionManager;
-
 /**
  * Represents an SQL query. In JDBC view, a query contains at least a
  * PreparedStatement. It can also contains a ResultSet. Statement and ResultSet
@@ -43,7 +43,7 @@ import com.qwazr.utils.jdbc.connection.ConnectionManager;
  * <p>
  * The example show how to use it.
  * </p>
- * 
+ *
  * <pre>
  * Transaction transaction = null;
  * try {
@@ -55,20 +55,18 @@ import com.qwazr.utils.jdbc.connection.ConnectionManager;
  *   query.getStatement().setString(1, &quot;open&quot;);
  *   query.setFirstResult(0);
  *   query.setMaxResults(10);
- *   
+ *
  *   // Get the result
  *   List&lt;MyPojo&gt; myPojoList = query.getResultList(MyPojo.class));
- *   
+ *
  *   // do everything you need
- *   
+ *
  * } finally {
  *   // Release the transaction
  *   if (transaction != null)
  *     transaction.close();
  * }
  * </pre>
- * 
- * 
  */
 public class Query {
 
@@ -89,16 +87,14 @@ public class Query {
 	}
 
 	/**
-	 * @param firstResult
-	 *            the position of the first result
+	 * @param firstResult the position of the first result
 	 */
 	public void setFirstResult(int firstResult) {
 		this.firstResult = firstResult;
 	}
 
 	/**
-	 * @param maxResults
-	 *            the maximum number of rows returned
+	 * @param maxResults the maximum number of rows returned
 	 */
 	public void setMaxResults(int maxResults) {
 		this.maxResults = maxResults;
@@ -136,7 +132,7 @@ public class Query {
 						+ " method "
 						+ method.getName()
 						+ (colObject == null ? "" : " object class is "
-								+ colObject.getClass().getName()), e);
+						+ colObject.getClass().getName()), e);
 			}
 		}
 	}
@@ -186,14 +182,14 @@ public class Query {
 		if (firstResult == 0)
 			return;
 		switch (statement.getResultSetType()) {
-		case ResultSet.TYPE_FORWARD_ONLY:
-			int i = firstResult;
-			while (i-- > 0)
-				resultSet.next();
-			break;
-		default:
-			resultSet.absolute(firstResult);
-			break;
+			case ResultSet.TYPE_FORWARD_ONLY:
+				int i = firstResult;
+				while (i-- > 0)
+					resultSet.next();
+				break;
+			default:
+				resultSet.absolute(firstResult);
+				break;
 		}
 	}
 
@@ -201,9 +197,12 @@ public class Query {
 			throws SQLException {
 		ResultSetMetaData rs = resultSet.getMetaData();
 		int columnCount = rs.getColumnCount();
+		HashMap<String, Integer> columnMap = new HashMap<String, Integer>();
+		for (int i = 0; i < columnCount; i++)
+			columnMap.put(rs.getColumnLabel(i + 1), i);
 		ArrayList<Row> rows = new ArrayList<Row>();
 		while (resultSet.next() && limit-- != 0)
-			rows.add(new Row(columnCount, resultSet));
+			rows.add(new Row(columnMap, columnCount, resultSet));
 		return rows;
 	}
 
@@ -215,7 +214,7 @@ public class Query {
 
 	/**
 	 * Get the PreparedStatement used by that Query
-	 * 
+	 *
 	 * @return a PreparedStatement
 	 */
 	public PreparedStatement getStatement() {
@@ -244,14 +243,11 @@ public class Query {
 	/**
 	 * Returns the list of POJO. The list is cached. Every subsequent call
 	 * returns the same list.
-	 * 
-	 * @param beanClass
-	 *            The class name of POJO returned in the list
-	 * @param <T>
-	 *            the type of the returned object
+	 *
+	 * @param beanClass The class name of POJO returned in the list
+	 * @param <T>       the type of the returned object
 	 * @return a list of POJO
-	 * @throws SQLException
-	 *             if any JDBC error occurs
+	 * @throws SQLException if any JDBC error occurs
 	 */
 	public <T> List<T> getResultList(Class<T> beanClass) throws Exception {
 		@SuppressWarnings("unchecked")
@@ -266,8 +262,7 @@ public class Query {
 
 	/**
 	 * @return a list of Row object.
-	 * @throws SQLException
-	 *             if any JDBC error occurs
+	 * @throws SQLException if any JDBC error occurs
 	 */
 	public List<Row> getResultList() throws SQLException {
 		checkResultSet();
@@ -277,10 +272,9 @@ public class Query {
 	/**
 	 * Do a PreparedStatement.executeUpdate(). A convenient way to execute an
 	 * INSERT/UPDATE/DELETE SQL statement.
-	 * 
+	 *
 	 * @return a row count
-	 * @throws SQLException
-	 *             if any JDBC error occurs
+	 * @throws SQLException if any JDBC error occurs
 	 */
 	public int update() throws SQLException {
 		return statement.executeUpdate();
@@ -288,10 +282,9 @@ public class Query {
 
 	/**
 	 * Returns the generated keys after an insert statement
-	 * 
+	 *
 	 * @return the list of generated keys
-	 * @throws SQLException
-	 *             if any JDBC error occurs
+	 * @throws SQLException if any JDBC error occurs
 	 */
 	public List<Row> getGeneratedKeys() throws SQLException {
 		return createRowList(statement.getGeneratedKeys(), -1);
@@ -299,10 +292,9 @@ public class Query {
 
 	/**
 	 * FirstResult and MaxResults parameters are ignored.
-	 * 
+	 *
 	 * @return the number of row found for a select
-	 * @throws SQLException
-	 *             if any JDBC error occurs
+	 * @throws SQLException if any JDBC error occurs
 	 */
 	public int getResultCount() throws SQLException {
 		checkResultSet();
@@ -312,10 +304,9 @@ public class Query {
 
 	/**
 	 * Get the ResultSet used by that Query.
-	 * 
+	 *
 	 * @return the JDBC ResultSet
-	 * @throws SQLException
-	 *             if any JDBC error occurs
+	 * @throws SQLException if any JDBC error occurs
 	 */
 	public ResultSet getResultSet() throws SQLException {
 		checkResultSet();

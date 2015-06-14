@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,19 +15,20 @@
  **/
 package com.qwazr.connectors;
 
-import java.io.File;
-import java.sql.SQLException;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.qwazr.utils.IOUtils.CloseableContext;
+import com.qwazr.utils.StringUtils;
+import com.qwazr.utils.jdbc.Transaction;
+import com.qwazr.utils.jdbc.connection.ConnectionManager;
+import com.qwazr.utils.jdbc.connection.DataSourceConnection;
+import com.qwazr.utils.jdbc.connection.JDBCConnection;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.qwazr.utils.StringUtils;
-import com.qwazr.utils.jdbc.connection.ConnectionManager;
-import com.qwazr.utils.jdbc.connection.DataSourceConnection;
-import com.qwazr.utils.jdbc.connection.JDBCConnection;
+import java.io.File;
+import java.sql.SQLException;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DatabaseConnector extends AbstractConnector {
@@ -116,8 +117,22 @@ public class DatabaseConnector extends AbstractConnector {
 		}
 	}
 
-	public ConnectionManager getConnectionManager() {
-		return connectionManager;
+	public Transaction getConnection(CloseableContext context) throws SQLException {
+		Transaction transaction = connectionManager.getNewTransaction();
+		context.add(transaction);
+		return transaction;
+	}
+
+	public Transaction getConnection(CloseableContext context, boolean autoCommit) throws SQLException {
+		Transaction transaction = connectionManager.getNewTransaction(autoCommit);
+		context.add(transaction);
+		return transaction;
+	}
+
+	public Transaction getConnection(CloseableContext context, boolean autoCommit, int transactionIsolation) throws SQLException {
+		Transaction transaction = connectionManager.getNewTransaction(autoCommit, transactionIsolation);
+		context.add(transaction);
+		return transaction;
 	}
 
 	/**
@@ -138,7 +153,7 @@ public class DatabaseConnector extends AbstractConnector {
 	 *
 	 * @return the current number of idle connections
 	 */
-	public Integer getPoomNumIdle() {
+	public Integer getPoolNumIdle() {
 		if (basicDataSource == null)
 			return null;
 		return basicDataSource.getNumIdle();
