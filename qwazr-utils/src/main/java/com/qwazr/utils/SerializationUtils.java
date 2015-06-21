@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,33 +15,49 @@
  */
 package com.qwazr.utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.Serializable;
+import java.io.*;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.io.IOUtils;
 
 public class SerializationUtils extends
 		org.apache.commons.lang3.SerializationUtils {
 
-	public static <T> T deserialize(File file) throws FileNotFoundException {
-		FileInputStream inputStream = new FileInputStream(file);
+	/**
+	 * Read an object from a file using a buffered stream and GZIP compression
+	 *
+	 * @param file the destination file
+	 * @param <T>  the type of the object
+	 * @return the deserialized object
+	 * @throws IOException
+	 */
+	public static <T> T deserialize(File file) throws IOException {
+		FileInputStream is = new FileInputStream(file);
+		BufferedInputStream bis = new BufferedInputStream(is);
+		GZIPInputStream zis = new GZIPInputStream(bis);
 		try {
-			return SerializationUtils.deserialize(inputStream);
+			return SerializationUtils.deserialize(zis);
 		} finally {
-			IOUtils.closeQuietly(inputStream);
+			IOUtils.close(zis, bis, is);
 		}
 	}
 
+	/**
+	 * Write an object to a file using a buffered stream and GZIP compression.
+	 *
+	 * @param obj  the object to write
+	 * @param file the destination file
+	 * @throws IOException
+	 */
 	public static void serialize(Serializable obj, File file)
-			throws FileNotFoundException {
-		FileOutputStream outputStream = new FileOutputStream(file);
+			throws IOException {
+		FileOutputStream os = new FileOutputStream(file);
+		BufferedOutputStream bos = new BufferedOutputStream(os);
+		GZIPOutputStream zos = new GZIPOutputStream(bos);
 		try {
-			SerializationUtils.serialize(obj, outputStream);
+			SerializationUtils.serialize(obj, zos);
 		} finally {
-			IOUtils.closeQuietly(outputStream);
+			IOUtils.close(zos, bos, os);
 		}
 	}
 
