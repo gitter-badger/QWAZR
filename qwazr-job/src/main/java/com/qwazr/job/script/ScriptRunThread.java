@@ -76,7 +76,7 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 			engineScope.put("connectors", connectors);
 		if (tools != null)
 			engineScope.put("tools", tools);
-		engineScope.put("closeable", tools);
+		engineScope.put("closeable", closeables);
 		this.scriptFile = scriptFile;
 		this.setWriter(new StringWriter());
 		this.setErrorWriter(new StringWriter());
