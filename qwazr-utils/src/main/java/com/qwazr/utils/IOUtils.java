@@ -31,6 +31,13 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 			closeQuietly(closeable);
 	}
 
+	public static final void close(List<AutoCloseable> autoCloseables) {
+		if (autoCloseables == null)
+			return;
+		for (AutoCloseable autoCloseable : autoCloseables)
+			closeQuietly(autoCloseable);
+	}
+
 	public static final void close(ImageInputStream... closeables) {
 		if (closeables == null)
 			return;
@@ -44,6 +51,16 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		try {
 			closeable.close();
 		} catch (IOException e) {
+			// We said Quietly
+		}
+	}
+
+	public static final void closeQuietly(AutoCloseable autoCloseable) {
+		if (autoCloseable == null)
+			return;
+		try {
+			autoCloseable.close();
+		} catch (Exception e) {
 			// We said Quietly
 		}
 	}
@@ -116,14 +133,18 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	public interface CloseableContext {
 
 		void add(Closeable closeable);
+
+		void add(AutoCloseable autoCloseable);
 	}
 
 	public static class CloseableList implements CloseableContext, Closeable {
 
 		private final List<Closeable> closeables;
+		private final List<AutoCloseable> autoCloseables;
 
 		public CloseableList() {
 			closeables = new ArrayList<Closeable>();
+			autoCloseables = new ArrayList<AutoCloseable>();
 		}
 
 		@Override
@@ -132,9 +153,16 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 
 		@Override
+		public void add(AutoCloseable autoCloseable) {
+			autoCloseables.add(autoCloseable);
+		}
+
+		@Override
 		public void close() {
 			IOUtils.close(closeables);
 			closeables.clear();
+			IOUtils.close(autoCloseables);
+			autoCloseables.clear();
 		}
 	}
 
