@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,19 +15,15 @@
  */
 package com.qwazr.utils;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIUtils;
+import org.apache.http.client.utils.URLEncodedUtils;
+
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
 
 public class LinkUtils {
 
@@ -47,7 +43,7 @@ public class LinkUtils {
 		StringBuilder sbStart = new StringBuilder(frags[0]);
 		StringBuilder sbEnd = new StringBuilder(frags[frags.length - 1]);
 		int length = sbStart.length() + sbEnd.length();
-		for (;;) {
+		for (; ; ) {
 			boolean bHandled = false;
 			if (startPos != -1 && startPos < endPos) {
 				if (frags[startPos].length() + length < maxSize) {
@@ -139,4 +135,13 @@ public class LinkUtils {
 		return map;
 	}
 
+	public final static URI resolveQuietly(URI uri, String href) {
+		if (uri == null || href == null)
+			return null;
+		try {
+			return URIUtils.resolve(uri, href);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
 }
