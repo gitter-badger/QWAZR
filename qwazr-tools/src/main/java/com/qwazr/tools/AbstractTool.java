@@ -15,16 +15,16 @@
  **/
 package com.qwazr.tools;
 
-import java.io.File;
-
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.qwazr.tools.postagger.POSTaggerTool;
 
+import java.io.File;
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 @JsonSubTypes({ @Type(value = MarkdownTool.class),
-		@Type(value = POSTaggerTool.class) })
+		@Type(value = POSTaggerTool.class), @Type(value = FreeMarkerTool.class) })
 public abstract class AbstractTool {
 
 	public final String name = null;
