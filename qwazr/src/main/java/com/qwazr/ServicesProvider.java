@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +14,6 @@
  * limitations under the License.
  **/
 package com.qwazr;
-
-import java.io.File;
-import java.net.URISyntaxException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
@@ -30,6 +25,11 @@ import com.qwazr.extractor.ExtractorServiceInterface;
 import com.qwazr.extractor.ParserManager;
 import com.qwazr.job.JobServer;
 import com.qwazr.job.script.ScriptMultiClient;
+
+import java.io.File;
+import java.net.URISyntaxException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ServicesProvider extends AbstractConnector {
 
@@ -51,17 +51,39 @@ public class ServicesProvider extends AbstractConnector {
 		return ClusterManager.INSTANCE.getClusterClient();
 	}
 
-	public WebCrawlerMultiClient getNewWebCrawler() throws URISyntaxException {
-		return getNewWebCrawler(null);
+	/**
+	 * Create a new WebCrawler client instance.
+	 * This API queries the cluster to get the current active node for the WebCrawler service.
+	 *
+	 * @return a new WebCrawlerMultiClient instance
+	 * @throws URISyntaxException
+	 */
+	public WebCrawlerMultiClient getNewWebCrawlerClient() throws URISyntaxException {
+		return getNewWebCrawlerClient(null);
 	}
 
-	public WebCrawlerMultiClient getNewWebCrawler(Integer msTimeout)
+	/**
+	 * Create a new WebCrawler client instance.
+	 * This API queries the cluster to get the current active node for the WebCrawler service.
+	 *
+	 * @param msTimeout the default timeout used by the client
+	 * @return a new WebCrawlerMultiClient instance
+	 * @throws URISyntaxException
+	 */
+	public WebCrawlerMultiClient getNewWebCrawlerClient(Integer msTimeout)
 			throws URISyntaxException {
 		return new WebCrawlerMultiClient(ClusterManager.INSTANCE
 				.getClusterClient().getActiveNodes(
 						WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), msTimeout);
 	}
 
+	/**
+	 * Create a new Script client instance.
+	 * This API queries the cluster to get the current active node for the Script service.
+	 *
+	 * @return
+	 * @throws URISyntaxException
+	 */
 	public ScriptMultiClient getNewScriptClient() throws URISyntaxException {
 		return getNewScriptClient(null);
 	}
