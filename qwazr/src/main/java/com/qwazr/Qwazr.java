@@ -15,20 +15,6 @@
  **/
 package com.qwazr;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.servlet.ServletException;
-import javax.ws.rs.ApplicationPath;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.qwazr.ServerConfiguration.ServiceEnum;
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
@@ -36,6 +22,8 @@ import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.service.WebCrawlerServiceImpl;
+import com.qwazr.database.TableServer;
+import com.qwazr.database.TableServiceImpl;
 import com.qwazr.extractor.ExtractorServer;
 import com.qwazr.extractor.ExtractorServiceImpl;
 import com.qwazr.graph.GraphServer;
@@ -55,6 +43,18 @@ import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServletApplication;
 import com.qwazr.webapps.WebappServer;
 import com.qwazr.webapps.WebappServer.WebappApplication;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletException;
+import javax.ws.rs.ApplicationPath;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Qwazr extends AbstractServer {
 
@@ -97,6 +97,8 @@ public class Qwazr extends AbstractServer {
 				classes.add(IndexServiceImpl.class);
 			if (ServiceEnum.graph.isActive(serverConfiguration))
 				classes.add(GraphServiceImpl.class);
+			if (ServiceEnum.table.isActive(serverConfiguration))
+				classes.add(TableServiceImpl.class);
 			if (ServiceEnum.store.isActive(serverConfiguration)) {
 				classes.add(StoreNodeDataService.class);
 				if (ClusterManager.INSTANCE.isMaster()) {
@@ -175,6 +177,11 @@ public class Qwazr extends AbstractServer {
 		if (ServiceEnum.graph.isActive(serverConfiguration)) {
 			GraphServer.load(currentDataDir);
 			services.add(ServiceEnum.graph.name());
+		}
+
+		if (ServiceEnum.table.isActive(serverConfiguration)) {
+			TableServer.load(currentDataDir);
+			services.add(ServiceEnum.table.name());
 		}
 
 		if (ServiceEnum.store.isActive(serverConfiguration)) {

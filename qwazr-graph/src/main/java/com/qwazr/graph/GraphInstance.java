@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,45 +15,34 @@
  **/
 package com.qwazr.graph;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.ws.rs.core.Response.Status;
-
+import com.qwazr.database.CollectorInterface.LongCounter;
+import com.qwazr.database.ColumnInterface;
+import com.qwazr.database.Query;
+import com.qwazr.database.Query.OrGroup;
+import com.qwazr.database.Query.QueryHook;
+import com.qwazr.database.Query.TermQuery;
+import com.qwazr.database.Table;
+import com.qwazr.database.UniqueKey.UniqueStringKey;
+import com.qwazr.database.model.ColumnDefinition;
+import com.qwazr.graph.model.GraphDefinition;
+import com.qwazr.graph.model.GraphDefinition.PropertyTypeEnum;
+import com.qwazr.graph.model.GraphNode;
+import com.qwazr.graph.model.GraphNodeResult;
+import com.qwazr.graph.model.GraphRequest;
+import com.qwazr.utils.StringUtils;
+import com.qwazr.utils.server.ServerException;
+import com.qwazr.utils.threads.ThreadUtils;
+import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 import org.apache.commons.collections4.trie.PatriciaTrie;
 import org.roaringbitmap.RoaringBitmap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.qwazr.database.FieldInterface;
-import com.qwazr.database.Query;
-import com.qwazr.database.Table;
-import com.qwazr.database.CollectorInterface.LongCounter;
-import com.qwazr.database.FieldInterface.FieldDefinition;
-import com.qwazr.database.Query.OrGroup;
-import com.qwazr.database.Query.QueryHook;
-import com.qwazr.database.Query.TermQuery;
-import com.qwazr.database.UniqueKey.UniqueStringKey;
-import com.qwazr.graph.model.GraphDefinition;
-import com.qwazr.graph.model.GraphNode;
-import com.qwazr.graph.model.GraphNodeResult;
-import com.qwazr.graph.model.GraphRequest;
-import com.qwazr.graph.model.GraphDefinition.PropertyTypeEnum;
-import com.qwazr.utils.StringUtils;
-import com.qwazr.utils.server.ServerException;
-import com.qwazr.utils.threads.ThreadUtils;
-import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
+import javax.ws.rs.core.Response.Status;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GraphInstance {
 
@@ -82,19 +71,17 @@ public class GraphInstance {
 
 	/**
 	 * The required fields are create or deleted.
-	 * 
-	 * @throws IOException
-	 *             if any I/O error occurs
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 *
+	 * @throws IOException     if any I/O error occurs
+	 * @throws ServerException if any server exception occurs
 	 */
 	void checkFields() throws ServerException, IOException {
 
-		Set<String> fieldLeft = new HashSet<String>();
-		table.collectExistingFields(fieldLeft);
+		Set<String> columnLeft = new HashSet<String>();
+		table.collectExistingColumns(columnLeft);
 		AtomicBoolean needCommit = new AtomicBoolean(false);
 
-		List<FieldDefinition> fieldDefinitions = new ArrayList<FieldDefinition>();
+		Map<String, ColumnDefinition> columnDefinitions = new LinkedHashMap<String, ColumnDefinition>();
 
 		// Build the property fields
 		if (graphDef.node_properties != null) {
@@ -102,21 +89,21 @@ public class GraphInstance {
 					.entrySet()) {
 				String fieldName = getPropertyField(entry.getKey());
 				switch (entry.getValue()) {
-				case indexed:
-					fieldDefinitions.add(new FieldDefinition(fieldName,
-							FieldDefinition.Type.STRING,
-							FieldDefinition.Mode.INDEXED));
-					break;
-				case stored:
-					fieldDefinitions.add(new FieldDefinition(fieldName,
-							FieldDefinition.Type.STRING,
-							FieldDefinition.Mode.STORED));
-					break;
-				case boost:
-					fieldDefinitions.add(new FieldDefinition(fieldName,
-							FieldDefinition.Type.DOUBLE,
-							FieldDefinition.Mode.INDEXED));
-					break;
+					case indexed:
+						columnDefinitions.put(fieldName, new ColumnDefinition(
+								ColumnDefinition.Type.STRING,
+								ColumnDefinition.Mode.INDEXED));
+						break;
+					case stored:
+						columnDefinitions.put(fieldName, new ColumnDefinition(
+								ColumnDefinition.Type.STRING,
+								ColumnDefinition.Mode.STORED));
+						break;
+					case boost:
+						columnDefinitions.put(fieldName, new ColumnDefinition(
+								ColumnDefinition.Type.DOUBLE,
+								ColumnDefinition.Mode.INDEXED));
+						break;
 				}
 			}
 		}
@@ -125,22 +112,22 @@ public class GraphInstance {
 		if (graphDef.edge_types != null) {
 			for (String type : graphDef.edge_types) {
 				String fieldName = getEdgeField(type);
-				fieldDefinitions.add(new FieldDefinition(fieldName,
-						FieldDefinition.Type.STRING,
-						FieldDefinition.Mode.INDEXED));
+				columnDefinitions.put(fieldName, new ColumnDefinition(
+						ColumnDefinition.Type.STRING,
+						ColumnDefinition.Mode.INDEXED));
 			}
 		}
 
 		try {
-			table.setFields(fieldDefinitions, fieldLeft, needCommit);
+			table.setColumns(columnDefinitions, columnLeft, needCommit);
 		} catch (Exception e) {
 			throw ServerException.getServerException(e);
 		}
 
-		if (fieldLeft.size() > 0) {
+		if (columnLeft.size() > 0) {
 			needCommit.set(true);
-			for (String fieldName : fieldLeft)
-				table.removeField(fieldName);
+			for (String columnName : columnLeft)
+				table.removeColumn(columnName);
 		}
 
 		if (needCommit.get())
@@ -149,7 +136,7 @@ public class GraphInstance {
 	}
 
 	private static void createUpdateNoCommit(Table table,
-			GraphDefinition graphDef, String node_id, GraphNode node)
+											 GraphDefinition graphDef, String node_id, GraphNode node)
 			throws ServerException, IOException {
 
 		Integer id = table.getPrimaryKeyIndex().getIdOrNew(node_id, null);
@@ -165,8 +152,8 @@ public class GraphInstance {
 					throw new ServerException(Status.BAD_REQUEST,
 							"Unknown property name: " + field);
 				@SuppressWarnings("unchecked")
-				FieldInterface<Object> fieldInterface = (FieldInterface<Object>) table
-						.getField(getPropertyField(field));
+				ColumnInterface<Object> fieldInterface = (ColumnInterface<Object>) table
+						.getColumn(getPropertyField(field));
 				fieldInterface.setValue(id, entry.getValue());
 			}
 		}
@@ -184,8 +171,8 @@ public class GraphInstance {
 				if (entry.getValue() == null)
 					continue;
 				@SuppressWarnings("unchecked")
-				FieldInterface<Object> fieldInterface = (FieldInterface<Object>) table
-						.getField(getEdgeField(type));
+				ColumnInterface<Object> fieldInterface = (ColumnInterface<Object>) table
+						.getColumn(getEdgeField(type));
 				fieldInterface.setValues(id, entry.getValue());
 			}
 		}
@@ -194,20 +181,14 @@ public class GraphInstance {
 	/**
 	 * Create a new node. If the node does not exists, it is created. If the
 	 * node exist, it is updated.
-	 * 
-	 * @param node_id
-	 *            the ID of the node
-	 * @param node
-	 *            the content of the node
-	 * @param upsert
-	 *            set to true to add the values, false (or null) to replace the
-	 *            node
-	 * @throws URISyntaxException
-	 *             if the server parameters are wrong
-	 * @throws IOException
-	 *             if any I/O error occurs
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 *
+	 * @param node_id the ID of the node
+	 * @param node    the content of the node
+	 * @param upsert  set to true to add the values, false (or null) to replace the
+	 *                node
+	 * @throws URISyntaxException if the server parameters are wrong
+	 * @throws IOException        if any I/O error occurs
+	 * @throws ServerException    if any server exception occurs
 	 */
 	void createUpdateNode(String node_id, GraphNode node, Boolean upsert)
 			throws ServerException, IOException {
@@ -232,18 +213,13 @@ public class GraphInstance {
 	/**
 	 * Create a list of node. If a node does not exists, it is created.
 	 * Otherwise it is updated.
-	 * 
-	 * @param nodes
-	 *            a map of nodes
-	 * @param upsert
-	 *            set to true to add the values, false (or null) to replace the
-	 *            node
-	 * @throws URISyntaxException
-	 *             if the server parameters are wrong
-	 * @throws IOException
-	 *             if any I/O error occurs
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 *
+	 * @param nodes  a map of nodes
+	 * @param upsert set to true to add the values, false (or null) to replace the
+	 *               node
+	 * @throws URISyntaxException if the server parameters are wrong
+	 * @throws IOException        if any I/O error occurs
+	 * @throws ServerException    if any server exception occurs
 	 */
 	void createUpdateNodes(Map<String, GraphNode> nodes, Boolean upsert)
 			throws IOException, URISyntaxException, ServerException {
@@ -304,16 +280,12 @@ public class GraphInstance {
 	/**
 	 * Retrieve a node. If the node does not exists, an IOException is thrown
 	 * thrown.
-	 * 
-	 * @param node_id
-	 *            the id of the node
+	 *
+	 * @param node_id the id of the node
 	 * @return a node instance
-	 * @throws URISyntaxException
-	 *             if the server parameters are wrong
-	 * @throws IOException
-	 *             if any I/O error occurs
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 * @throws URISyntaxException if the server parameters are wrong
+	 * @throws IOException        if any I/O error occurs
+	 * @throws ServerException    if any server exception occurs
 	 */
 	GraphNode getNode(String node_id) throws ServerException, IOException {
 
@@ -332,16 +304,12 @@ public class GraphInstance {
 
 	/**
 	 * Retrieve a list of nodes.
-	 * 
-	 * @param node_ids
-	 *            a collection of node id
+	 *
+	 * @param node_ids a collection of node id
 	 * @return a map with the nodes
-	 * @throws URISyntaxException
-	 *             if the server parameters are wrong
-	 * @throws IOException
-	 *             if any I/O error occurs
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 * @throws URISyntaxException if the server parameters are wrong
+	 * @throws IOException        if any I/O error occurs
+	 * @throws ServerException    if any server exception occurs
 	 */
 	Map<String, GraphNode> getNodes(Collection<String> node_ids)
 			throws IOException, URISyntaxException, ServerException {
@@ -365,18 +333,13 @@ public class GraphInstance {
 
 	/**
 	 * Add a new edge if it does not already exist
-	 * 
-	 * @param node_id
-	 *            the id of initial node
-	 * @param type
-	 *            the type of the edge
-	 * @param to_node_id
-	 *            the id of the targeted node
+	 *
+	 * @param node_id    the id of initial node
+	 * @param type       the type of the edge
+	 * @param to_node_id the id of the targeted node
 	 * @return the updated node
-	 * @throws IOException
-	 *             if any I/O error occurs
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 * @throws IOException     if any I/O error occurs
+	 * @throws ServerException if any server exception occurs
 	 */
 	GraphNode createEdge(String node_id, String type, String to_node_id)
 			throws IOException, ServerException {
@@ -418,15 +381,11 @@ public class GraphInstance {
 
 	/**
 	 * Delete a node.
-	 * 
-	 * @param node_id
-	 *            the ID of the node to delete
-	 * @throws URISyntaxException
-	 *             if the server parameters are wrong
-	 * @throws IOException
-	 *             if any I/O error occurs
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 *
+	 * @param node_id the ID of the node to delete
+	 * @throws URISyntaxException if the server parameters are wrong
+	 * @throws IOException        if any I/O error occurs
+	 * @throws ServerException    if any server exception occurs
 	 */
 	void deleteNode(String node_id) throws ServerException, IOException {
 		if (!table.deleteDocument(node_id))
@@ -436,16 +395,12 @@ public class GraphInstance {
 
 	/**
 	 * Execute a Graph request
-	 * 
-	 * @param request
-	 *            the Graph request definition
+	 *
+	 * @param request the Graph request definition
 	 * @return a collection with the results
-	 * @throws URISyntaxException
-	 *             if the server parameters are wrong
-	 * @throws IOException
-	 *             if any I/O error occurs
-	 * @throws ServerException
-	 *             if any server exception occurs
+	 * @throws URISyntaxException if the server parameters are wrong
+	 * @throws IOException        if any I/O error occurs
+	 * @throws ServerException    if any server exception occurs
 	 */
 	public List<GraphNodeResult> request(GraphRequest request)
 			throws IOException, URISyntaxException, ServerException {
@@ -504,14 +459,14 @@ public class GraphInstance {
 			filterBitset = null;
 
 		// Get the boost fields
-		FieldInterface<?>[] boostFields = null;
+		ColumnInterface<?>[] boostFields = null;
 		if (request.node_property_boost != null
 				&& !request.node_property_boost.isEmpty()) {
-			boostFields = new FieldInterface<?>[request.node_property_boost
+			boostFields = new ColumnInterface<?>[request.node_property_boost
 					.size()];
 			int i = 0;
 			for (String boostField : request.node_property_boost)
-				boostFields[i++] = table.getField(getPropertyField(boostField));
+				boostFields[i++] = table.getColumn(getPropertyField(boostField));
 		}
 
 		// Compute the score using facets (multithreaded)
@@ -573,11 +528,11 @@ public class GraphInstance {
 		private final Double weight;
 		private final RoaringBitmap filterBitset;
 		private final UniqueStringKey primaryKeys;
-		private final FieldInterface<?>[] boostFields;
+		private final ColumnInterface<?>[] boostFields;
 
 		public ScoreThread(Map<String, LongCounter> facets,
-				Map<String, NodeScore> nodeScoreMap, Double weight,
-				RoaringBitmap filterBitset, FieldInterface<?>[] boostFields) {
+						   Map<String, NodeScore> nodeScoreMap, Double weight,
+						   RoaringBitmap filterBitset, ColumnInterface<?>[] boostFields) {
 			this.facets = facets;
 			this.nodeScoreMap = nodeScoreMap;
 			this.weight = weight;
@@ -615,7 +570,7 @@ public class GraphInstance {
 					if (docId == null)
 						docId = primaryKeys.getExistingId(term);
 					if (docId != null) {
-						for (FieldInterface<?> boostField : boostFields) {
+						for (ColumnInterface<?> boostField : boostFields) {
 							Double fieldBoost = (Double) boostField
 									.getValue(docId);
 							if (fieldBoost != null)
