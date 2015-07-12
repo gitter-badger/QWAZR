@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,15 @@
  */
 package com.qwazr.graph;
 
+import com.qwazr.cluster.client.ClusterMultiClient;
+import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.database.Table;
+import com.qwazr.graph.model.GraphDefinition;
+import com.qwazr.utils.LockUtils;
+import com.qwazr.utils.json.DirectoryJsonManager;
+import com.qwazr.utils.server.ServerException;
+
+import javax.ws.rs.core.Response.Status;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -23,16 +32,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import javax.ws.rs.core.Response.Status;
-
-import com.qwazr.cluster.client.ClusterMultiClient;
-import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.database.Table;
-import com.qwazr.graph.model.GraphDefinition;
-import com.qwazr.utils.LockUtils;
-import com.qwazr.utils.json.DirectoryJsonManager;
-import com.qwazr.utils.server.ServerException;
 
 public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 
@@ -69,11 +68,11 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	}
 
 	private GraphInstance addNewInstance(String graphName,
-			GraphDefinition graphDef) throws IOException, ServerException {
+										 GraphDefinition graphDef) throws IOException, ServerException {
 		File dbDirectory = new File(directory, graphName);
 		if (!dbDirectory.exists())
 			dbDirectory.mkdir();
-		Table table = Table.getInstance(dbDirectory);
+		Table table = Table.getInstance(dbDirectory, true);
 		GraphInstance graphInstance = new GraphInstance(graphName, table,
 				graphDef);
 		graphInstance.checkFields();

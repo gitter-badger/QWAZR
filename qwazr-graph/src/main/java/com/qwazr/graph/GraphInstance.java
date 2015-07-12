@@ -17,6 +17,7 @@ package com.qwazr.graph;
 
 import com.qwazr.database.CollectorInterface.LongCounter;
 import com.qwazr.database.ColumnInterface;
+import com.qwazr.database.DatabaseException;
 import com.qwazr.database.Query;
 import com.qwazr.database.Query.OrGroup;
 import com.qwazr.database.Query.QueryHook;
@@ -42,7 +43,6 @@ import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GraphInstance {
 
@@ -76,10 +76,6 @@ public class GraphInstance {
 	 * @throws ServerException if any server exception occurs
 	 */
 	void checkFields() throws ServerException, IOException {
-
-		Set<String> columnLeft = new HashSet<String>();
-		table.collectExistingColumns(columnLeft);
-		AtomicBoolean needCommit = new AtomicBoolean(false);
 
 		Map<String, ColumnDefinition> columnDefinitions = new LinkedHashMap<String, ColumnDefinition>();
 
@@ -119,24 +115,15 @@ public class GraphInstance {
 		}
 
 		try {
-			table.setColumns(columnDefinitions, columnLeft, needCommit);
+			table.setColumns(columnDefinitions);
 		} catch (Exception e) {
 			throw ServerException.getServerException(e);
 		}
 
-		if (columnLeft.size() > 0) {
-			needCommit.set(true);
-			for (String columnName : columnLeft)
-				table.removeColumn(columnName);
-		}
-
-		if (needCommit.get())
-			table.commit();
-
 	}
 
-	private static void createUpdateNoCommit(Table table,
-											 GraphDefinition graphDef, String node_id, GraphNode node)
+	private static void createUpdate(Table table,
+									 GraphDefinition graphDef, String node_id, GraphNode node)
 			throws ServerException, IOException {
 
 		Integer id = table.getPrimaryKeyIndex().getIdOrNew(node_id, null);
@@ -191,7 +178,7 @@ public class GraphInstance {
 	 * @throws ServerException    if any server exception occurs
 	 */
 	void createUpdateNode(String node_id, GraphNode node, Boolean upsert)
-			throws ServerException, IOException {
+			throws ServerException, IOException, DatabaseException {
 
 		if (node == null)
 			return;
@@ -206,8 +193,7 @@ public class GraphInstance {
 			}
 		}
 
-		createUpdateNoCommit(table, graphDef, node_id, node);
-		table.commit();
+		createUpdate(table, graphDef, node_id, node);
 	}
 
 	/**
@@ -242,9 +228,8 @@ public class GraphInstance {
 		}
 
 		for (Map.Entry<String, GraphNode> entry : nodes.entrySet())
-			createUpdateNoCommit(table, graphDef, entry.getKey(),
+			createUpdate(table, graphDef, entry.getKey(),
 					entry.getValue());
-		table.commit();
 
 	}
 
@@ -257,22 +242,38 @@ public class GraphInstance {
 				returnedFields.add(getEdgeField(type));
 	}
 
-	private void populateGraphNode(Map<String, List<?>> document, GraphNode node) {
+	private void populateGraphNode(Map<String, Object> document, GraphNode node) {
 		if (document == null)
 			return;
-		for (Map.Entry<String, List<?>> entry : document.entrySet()) {
+		for (Map.Entry<String, Object> entry : document.entrySet()) {
 			String field = entry.getKey();
-			List<?> values = entry.getValue();
-			if (values == null || values.isEmpty())
+			Object value = entry.getValue();
+			if (value == null)
 				continue;
-			else if (field.startsWith(FIELD_PREFIX_PROPERTY)) {
+
+			if (value instanceof List<?>) {
+				List<?> values = (List<?>) value;
+				if (values.isEmpty())
+					continue;
+				if (field.startsWith(FIELD_PREFIX_PROPERTY)) {
+					node.addProperty(
+							field.substring(FIELD_PREFIX_PROPERTY.length()),
+							values.get(0));
+				} else if (field.startsWith(FIELD_PREFIX_EDGE)) {
+					for (Object val : values)
+						node.addEdge(field.substring(FIELD_PREFIX_EDGE.length()),
+								val);
+				}
+			}
+
+			if (field.startsWith(FIELD_PREFIX_PROPERTY))
 				node.addProperty(
 						field.substring(FIELD_PREFIX_PROPERTY.length()),
-						values.get(0));
-			} else if (field.startsWith(FIELD_PREFIX_EDGE)) {
-				for (Object value : values)
-					node.addEdge(field.substring(FIELD_PREFIX_EDGE.length()),
-							value);
+						value);
+			else if (field.startsWith(FIELD_PREFIX_EDGE)) {
+				node.addEdge(field.substring(FIELD_PREFIX_EDGE.length()),
+						value);
+
 			}
 		}
 	}
@@ -287,12 +288,12 @@ public class GraphInstance {
 	 * @throws IOException        if any I/O error occurs
 	 * @throws ServerException    if any server exception occurs
 	 */
-	GraphNode getNode(String node_id) throws ServerException, IOException {
+	GraphNode getNode(String node_id) throws ServerException, IOException, DatabaseException {
 
-		Collection<String> returnedFields = new ArrayList<String>();
+		Set<String> returnedFields = new LinkedHashSet<String>();
 		populateReturnedFields(returnedFields);
 
-		Map<String, List<?>> document = table.getDocument(node_id,
+		Map<String, Object> document = table.getRow(node_id,
 				returnedFields);
 		if (document == null)
 			throw new ServerException(Status.NOT_FOUND, "Node not found: "
@@ -311,19 +312,19 @@ public class GraphInstance {
 	 * @throws IOException        if any I/O error occurs
 	 * @throws ServerException    if any server exception occurs
 	 */
-	Map<String, GraphNode> getNodes(Collection<String> node_ids)
+	Map<String, GraphNode> getNodes(Set<String> node_ids)
 			throws IOException, URISyntaxException, ServerException {
 
-		Collection<String> returnedFields = new ArrayList<String>();
+		Set<String> returnedFields = new LinkedHashSet<String>();
 		populateReturnedFields(returnedFields);
 
-		List<Map<String, List<?>>> documents = table.getDocuments(node_ids,
+		List<LinkedHashMap<String, Object>> documents = table.getRows(node_ids,
 				returnedFields);
 		if (documents == null || documents.isEmpty())
 			return null;
 		Iterator<String> iteratorId = node_ids.iterator();
 		Map<String, GraphNode> graphNodes = new LinkedHashMap<String, GraphNode>();
-		for (Map<String, List<?>> document : documents) {
+		for (Map<String, Object> document : documents) {
 			GraphNode node = new GraphNode();
 			populateGraphNode(document, node);
 			graphNodes.put(iteratorId.next(), node);
@@ -342,7 +343,7 @@ public class GraphInstance {
 	 * @throws ServerException if any server exception occurs
 	 */
 	GraphNode createEdge(String node_id, String type, String to_node_id)
-			throws IOException, ServerException {
+			throws IOException, ServerException, DatabaseException {
 
 		// Check if the type exists
 		if (graphDef.edge_types == null || graphDef.edge_types.isEmpty())
@@ -365,7 +366,7 @@ public class GraphInstance {
 	}
 
 	public GraphNode deleteEdge(String node_id, String type, String to_node_id)
-			throws IOException, URISyntaxException, ServerException {
+			throws IOException, URISyntaxException, ServerException, DatabaseException {
 
 		// Retrieve the node from the index
 		GraphNode node = getNode(node_id);
@@ -388,7 +389,7 @@ public class GraphInstance {
 	 * @throws ServerException    if any server exception occurs
 	 */
 	void deleteNode(String node_id) throws ServerException, IOException {
-		if (!table.deleteDocument(node_id))
+		if (!table.deleteRow(node_id))
 			throw new ServerException(Status.NOT_FOUND, "Node not found: "
 					+ node_id);
 	}

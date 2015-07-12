@@ -13,29 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.database.model;
+package com.qwazr.utils;
 
-public class ColumnDefinition {
+public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 
-
-	public static enum Type {
-		STRING, DOUBLE;
-	}
-
-	public static enum Mode {
-		INDEXED, STORED;
-	}
-
-	public final Type type;
-	public final Mode mode;
-
-	public ColumnDefinition() {
-		this(null, null);
-	}
-
-	public ColumnDefinition(Type type, Mode mode) {
-		this.type = type;
-		this.mode = mode;
+	public static boolean startsWith(byte[] array, byte[] prefix) {
+		if (array == null)
+			return false;
+		if (prefix == null)
+			return false;
+		if (prefix.length > array.length)
+			return false;
+		for (int i = 0; i < prefix.length; i++)
+			if (array[i] != prefix[i])
+				return false;
+		return true;
 	}
 
 }
