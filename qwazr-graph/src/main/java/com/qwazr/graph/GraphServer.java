@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,30 +15,30 @@
  */
 package com.qwazr.graph;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Set;
-
-import javax.servlet.ServletException;
-import javax.ws.rs.ApplicationPath;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.ParseException;
-
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
+import com.qwazr.database.DatabaseException;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.server.ServletApplication;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.ParseException;
+
+import javax.servlet.ServletException;
+import javax.ws.rs.ApplicationPath;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.Set;
 
 public class GraphServer extends AbstractServer {
 
 	public final static String SERVICE_NAME_GRAPH = "graph";
 
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
+
 	static {
 		serverDefinition.defaultWebApplicationTcpPort = 9093;
 		serverDefinition.mainJarPath = "qwazr-graph.jar";
@@ -81,7 +81,7 @@ public class GraphServer extends AbstractServer {
 			if (!graphDir.exists())
 				graphDir.mkdir();
 			GraphManager.load(graphDir);
-		} catch (URISyntaxException | ServerException e) {
+		} catch (URISyntaxException | ServerException | DatabaseException e) {
 			throw new IOException(e);
 		}
 	}

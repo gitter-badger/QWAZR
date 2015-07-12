@@ -17,6 +17,7 @@ package com.qwazr.graph;
 
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.database.DatabaseException;
 import com.qwazr.database.Table;
 import com.qwazr.graph.model.GraphDefinition;
 import com.qwazr.utils.LockUtils;
@@ -46,7 +47,7 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	private final Map<String, GraphInstance> graphMap;
 
 	public static void load(File directory) throws IOException,
-			URISyntaxException, ServerException {
+			URISyntaxException, ServerException, DatabaseException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		INSTANCE = new GraphManager(directory);
@@ -67,8 +68,8 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 		});
 	}
 
-	private GraphInstance addNewInstance(String graphName,
-										 GraphDefinition graphDef) throws IOException, ServerException {
+	private GraphInstance addNewInstance(String graphName, GraphDefinition graphDef)
+			throws IOException, ServerException, DatabaseException {
 		File dbDirectory = new File(directory, graphName);
 		if (!dbDirectory.exists())
 			dbDirectory.mkdir();
@@ -105,7 +106,7 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	}
 
 	public void createUpdateGraph(String graphName, GraphDefinition graphDef)
-			throws IOException, ServerException {
+			throws IOException, ServerException, DatabaseException {
 		rwl.w.lock();
 		try {
 			super.set(graphName, graphDef);
