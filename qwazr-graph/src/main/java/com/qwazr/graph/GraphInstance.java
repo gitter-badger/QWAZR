@@ -112,6 +112,7 @@ public class GraphInstance {
 
 		try {
 			table.setColumns(columnDefinitions);
+			table.commit();
 		} catch (Exception e) {
 			throw ServerException.getServerException(e);
 		}
@@ -190,6 +191,7 @@ public class GraphInstance {
 		}
 
 		createUpdate(table, graphDef, node_id, node);
+		table.commit();
 	}
 
 	/**
@@ -226,6 +228,7 @@ public class GraphInstance {
 		for (Map.Entry<String, GraphNode> entry : nodes.entrySet())
 			createUpdate(table, graphDef, entry.getKey(),
 					entry.getValue());
+		table.commit();
 
 	}
 
@@ -388,6 +391,7 @@ public class GraphInstance {
 		if (!table.deleteRow(node_id))
 			throw new ServerException(Status.NOT_FOUND, "Node not found: "
 					+ node_id);
+		table.commit();
 	}
 
 	/**
