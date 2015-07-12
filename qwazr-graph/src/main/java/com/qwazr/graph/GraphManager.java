@@ -17,8 +17,8 @@ package com.qwazr.graph;
 
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.database.DatabaseException;
-import com.qwazr.database.Table;
+import com.qwazr.database.store.DatabaseException;
+import com.qwazr.database.store.Table;
 import com.qwazr.graph.model.GraphDefinition;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;

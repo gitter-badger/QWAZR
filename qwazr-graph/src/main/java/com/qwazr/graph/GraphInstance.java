@@ -15,16 +15,12 @@
  **/
 package com.qwazr.graph;
 
-import com.qwazr.database.CollectorInterface.LongCounter;
-import com.qwazr.database.ColumnInterface;
-import com.qwazr.database.DatabaseException;
-import com.qwazr.database.Query;
-import com.qwazr.database.Query.OrGroup;
-import com.qwazr.database.Query.QueryHook;
-import com.qwazr.database.Query.TermQuery;
-import com.qwazr.database.Table;
-import com.qwazr.database.UniqueKey.UniqueStringKey;
 import com.qwazr.database.model.ColumnDefinition;
+import com.qwazr.database.store.CollectorInterface.LongCounter;
+import com.qwazr.database.store.*;
+import com.qwazr.database.store.Query.OrGroup;
+import com.qwazr.database.store.Query.QueryHook;
+import com.qwazr.database.store.Query.TermQuery;
 import com.qwazr.graph.model.GraphDefinition;
 import com.qwazr.graph.model.GraphDefinition.PropertyTypeEnum;
 import com.qwazr.graph.model.GraphNode;
@@ -528,7 +524,7 @@ public class GraphInstance {
 		private final Map<String, NodeScore> nodeScoreMap;
 		private final Double weight;
 		private final RoaringBitmap filterBitset;
-		private final UniqueStringKey primaryKeys;
+		private final UniqueKey<String> primaryKeys;
 		private final ColumnInterface<?>[] boostFields;
 
 		public ScoreThread(Map<String, LongCounter> facets,

@@ -16,7 +16,7 @@
 package com.qwazr.graph;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.qwazr.database.DatabaseException;
+import com.qwazr.database.store.DatabaseException;
 import com.qwazr.graph.model.*;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.ServerException;
