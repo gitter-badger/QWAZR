@@ -12,10 +12,30 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
-package com.qwazr.database.storeDb;
+ */
+package com.qwazr.database.model;
 
-public interface LongSequence {
+public class ColumnDefinition {
 
-	Long incrementAndGet();
+
+	public static enum Type {
+		STRING, DOUBLE, LONG, INTEGER;
+	}
+
+	public static enum Mode {
+		INDEXED, STORED;
+	}
+
+	public final Type type;
+	public final Mode mode;
+
+	public ColumnDefinition() {
+		this(null, null);
+	}
+
+	public ColumnDefinition(Type type, Mode mode) {
+		this.type = type;
+		this.mode = mode;
+	}
+
 }

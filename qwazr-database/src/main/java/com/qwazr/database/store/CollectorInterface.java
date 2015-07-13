@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.database;
+package com.qwazr.database.store;
+
+import org.roaringbitmap.RoaringBitmap;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-
-import org.roaringbitmap.RoaringBitmap;
 
 public interface CollectorInterface {
 
@@ -35,8 +35,7 @@ public interface CollectorInterface {
 
 	DocumentsCollector documents(Collection<Integer> documentIds);
 
-	FacetsCollector facets(Map<Integer, byte[]> termVectorMap,
-			Map<Integer, LongCounter> termCounter);
+	FacetsCollector facets(IndexedColumn indexedColumn, Map<Integer, LongCounter> termCounter);
 
 	ScoresCollector scores();
 
@@ -55,9 +54,8 @@ public interface CollectorInterface {
 		}
 
 		@Override
-		final public FacetsCollector facets(Map<Integer, byte[]> termVectorMap,
-				Map<Integer, LongCounter> termCounter) {
-			return new FacetsCollector(this, termVectorMap, termCounter);
+		final public FacetsCollector facets(IndexedColumn indexedColumn, Map<Integer, LongCounter> termCounter) {
+			return new FacetsCollector(this, indexedColumn, termCounter);
 		}
 
 		@Override
@@ -102,8 +100,7 @@ public interface CollectorInterface {
 
 		private final Collection<Integer> documentIds;
 
-		private DocumentsCollector(CollectorInterface parent,
-				Collection<Integer> documentIds) {
+		private DocumentsCollector(CollectorInterface parent, Collection<Integer> documentIds) {
 			super(parent);
 			this.documentIds = documentIds;
 		}
@@ -121,22 +118,20 @@ public interface CollectorInterface {
 
 	static class FacetsCollector extends CollectorAbstract {
 
-		private Map<Integer, byte[]> termVectorMap;
+		private final IndexedColumn indexedColumn;
 		private final Map<Integer, LongCounter> termCounter;
 
-		private FacetsCollector(CollectorInterface parent,
-				Map<Integer, byte[]> termVectorMap,
-				Map<Integer, LongCounter> termCounter) {
+		private FacetsCollector(CollectorInterface parent, IndexedColumn indexedColumn,
+								Map<Integer, LongCounter> termCounter) {
 			super(parent);
-			this.termVectorMap = termVectorMap;
+			this.indexedColumn = indexedColumn;
 			this.termCounter = termCounter;
 		}
 
 		@Override
 		final public void collect(int docId) throws IOException {
 			parent.collect(docId);
-			int[] termIdArray = IndexedField.getIntArrayOrNull(termVectorMap
-					.get(docId));
+			int[] termIdArray = indexedColumn.getTermIds(docId);
 			if (termIdArray == null)
 				return;
 			for (int termId : termIdArray) {

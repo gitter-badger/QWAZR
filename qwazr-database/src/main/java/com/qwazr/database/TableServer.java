@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.graph;
+package com.qwazr.database;
 
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
-import com.qwazr.database.store.DatabaseException;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServerException;
@@ -33,19 +32,19 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Set;
 
-public class GraphServer extends AbstractServer {
+public class TableServer extends AbstractServer {
 
-	public final static String SERVICE_NAME_GRAPH = "graph";
+	public final static String SERVICE_NAME_TABLE = "table";
 
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 
 	static {
 		serverDefinition.defaultWebApplicationTcpPort = 9093;
-		serverDefinition.mainJarPath = "qwazr-graph.jar";
-		serverDefinition.defaultDataDirName = "qwazr";
+		serverDefinition.mainJarPath = "qwazr-database.jar";
+		serverDefinition.defaultDataDirName = "database";
 	}
 
-	private GraphServer() {
+	private TableServer() {
 		super(serverDefinition);
 	}
 
@@ -55,8 +54,7 @@ public class GraphServer extends AbstractServer {
 		@Override
 		public Set<Class<?>> getClasses() {
 			Set<Class<?>> classes = super.getClasses();
-			classes.add(ClusterServiceImpl.class);
-			classes.add(GraphServiceImpl.class);
+			classes.add(TableServiceImpl.class);
 			return classes;
 		}
 	}
@@ -77,11 +75,11 @@ public class GraphServer extends AbstractServer {
 
 	public static void load(File dataDir) throws IOException {
 		try {
-			File graphDir = new File(dataDir, SERVICE_NAME_GRAPH);
-			if (!graphDir.exists())
-				graphDir.mkdir();
-			GraphManager.load(graphDir);
-		} catch (URISyntaxException | ServerException | DatabaseException e) {
+			File tableDir = new File(dataDir, SERVICE_NAME_TABLE);
+			if (!tableDir.exists())
+				tableDir.mkdir();
+			TableManager.load(tableDir);
+		} catch (URISyntaxException | ServerException e) {
 			throw new IOException(e);
 		}
 	}
@@ -95,8 +93,8 @@ public class GraphServer extends AbstractServer {
 
 	public static void main(String[] args) throws IOException, ParseException,
 			ServletException {
-		new GraphServer().start(args);
-		ClusterManager.INSTANCE.registerMe(SERVICE_NAME_GRAPH);
+		new TableServer().start(args);
+		ClusterManager.INSTANCE.registerMe(SERVICE_NAME_TABLE);
 	}
 
 }

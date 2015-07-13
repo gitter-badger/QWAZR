@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,16 @@
  */
 package com.qwazr.graph;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.qwazr.database.store.DatabaseException;
+import com.qwazr.graph.model.*;
+import com.qwazr.utils.json.JsonMapper;
+import com.qwazr.utils.server.ServerException;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.core.Response.Status;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,21 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.ws.rs.core.Response.Status;
-
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.qwazr.graph.model.GraphDefinition;
-import com.qwazr.graph.model.GraphNode;
-import com.qwazr.graph.model.GraphNodeResult;
-import com.qwazr.graph.model.GraphRequest;
-import com.qwazr.graph.model.GraphResult;
-import com.qwazr.utils.json.JsonMapper;
-import com.qwazr.utils.server.ServerException;
-
 public class GraphServiceImpl implements GraphServiceInterface {
 
 	private static final Logger logger = LoggerFactory
@@ -47,7 +42,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	/**
 	 * Return the right client.
-	 * 
+	 *
 	 * @param msTimeOut
 	 *            a time out used for remote connection
 	 * @param local
@@ -82,7 +77,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	@Override
 	public GraphDefinition createUpdateGraph(String graphName,
-			GraphDefinition graphDef, Integer msTimeOut, Boolean local) {
+											 GraphDefinition graphDef, Integer msTimeOut, Boolean local) {
 		try {
 			GraphMultiClient client = getMultiClient(msTimeOut, local);
 			if (client == null) {
@@ -107,7 +102,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	@Override
 	public GraphResult getGraph(String graphName, Integer msTimeOut,
-			Boolean local) {
+								Boolean local) {
 		try {
 			GraphMultiClient client = getMultiClient(msTimeOut, local);
 			if (client == null) {
@@ -132,7 +127,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	@Override
 	public GraphDefinition deleteGraph(String graphName, Integer msTimeOut,
-			Boolean local) {
+									   Boolean local) {
 		try {
 			GraphMultiClient client = getMultiClient(msTimeOut, local);
 			if (client == null)
@@ -147,7 +142,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	@Override
 	public GraphNode createUpdateNode(String graphName, String node_id,
-			GraphNode node, Boolean upsert) {
+									  GraphNode node, Boolean upsert) {
 		try {
 			GraphManager.INSTANCE.getGraphInstance(graphName).createUpdateNode(
 					node_id, node, upsert);
@@ -160,7 +155,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	@Override
 	public Set<String> createUpdateNodes(String graphName,
-			LinkedHashMap<String, GraphNode> nodes, Boolean upsert) {
+										 LinkedHashMap<String, GraphNode> nodes, Boolean upsert) {
 		try {
 			GraphManager.INSTANCE.getGraphInstance(graphName)
 					.createUpdateNodes(nodes, upsert);
@@ -171,12 +166,13 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		}
 	}
 
-	public final static TypeReference<Map<String, GraphNode>> MapStringGraphNodeTypeRef = new TypeReference<Map<String, GraphNode>>() {
-	};
+	public final static TypeReference<Map<String, GraphNode>> MapStringGraphNodeTypeRef =
+			new TypeReference<Map<String, GraphNode>>() {
+			};
 
 	@Override
 	public Long createUpdateNodes(String graphName, Boolean upsert,
-			InputStream inputStream) {
+								  InputStream inputStream) {
 		try {
 			GraphInstance graphInstance = GraphManager.INSTANCE
 					.getGraphInstance(graphName);
@@ -210,8 +206,8 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	private GraphNode getNodeOrNotFound(GraphInstance graphInstance,
-			String node_id) throws ServerException, IOException,
-			URISyntaxException {
+										String node_id) throws ServerException, IOException,
+			URISyntaxException, DatabaseException {
 		GraphNode node = graphInstance.getNode(node_id);
 		if (node != null)
 			return node;
@@ -247,7 +243,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	@Override
 	public GraphNode createEdge(String graphName, String node_id,
-			String edge_type, String to_node_id) {
+								String edge_type, String to_node_id) {
 		try {
 			GraphInstance graphInstance = GraphManager.INSTANCE
 					.getGraphInstance(graphName);
@@ -260,7 +256,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	@Override
 	public GraphNode deleteEdge(String graphName, String node_id,
-			String edge_type, String to_node_id) {
+								String edge_type, String to_node_id) {
 		try {
 			GraphInstance graphInstance = GraphManager.INSTANCE
 					.getGraphInstance(graphName);
@@ -273,7 +269,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	@Override
 	public List<GraphNodeResult> requestNodes(String graphName,
-			GraphRequest request) {
+											  GraphRequest request) {
 		try {
 			GraphInstance graphInstance = GraphManager.INSTANCE
 					.getGraphInstance(graphName);

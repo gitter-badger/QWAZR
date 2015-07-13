@@ -15,17 +15,16 @@
  **/
 package com.qwazr;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Set;
-
-import org.apache.commons.io.IOUtils;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.apache.commons.io.IOUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Set;
 
 public class ServerConfiguration {
 
@@ -45,7 +44,9 @@ public class ServerConfiguration {
 
 		graph,
 
-		store;
+		store,
+
+		table;
 
 		/**
 		 * @param serverConfiguration

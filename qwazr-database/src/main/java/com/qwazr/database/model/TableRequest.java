@@ -12,14 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
-package com.qwazr.database.storeDb;
+ */
+package com.qwazr.database.model;
 
-public interface StoreMap<K, V> {
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-	V get(K key);
+@JsonInclude(Include.NON_EMPTY)
+public class TableRequest {
 
-	void put(K key, V value);
 
-	void remove(K key);
 }

@@ -15,6 +15,7 @@ services:
 - graph
 - search
 - store
+- table
 
 #
 # The maximum number of threads used by the scheduler service

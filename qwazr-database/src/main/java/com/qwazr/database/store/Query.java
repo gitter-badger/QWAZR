@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.database;
+package com.qwazr.database.store;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.qwazr.utils.threads.ThreadUtils;
+import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
+import org.roaringbitmap.RoaringBitmap;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-
-import org.roaringbitmap.RoaringBitmap;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.qwazr.utils.threads.ThreadUtils;
-import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
 
 public abstract class Query {
 
@@ -65,7 +65,7 @@ public abstract class Query {
 	}
 
 	abstract RoaringBitmap execute(final Table table,
-			final ExecutorService executor) throws Exception;
+								   final ExecutorService executor) throws Exception;
 
 	public static class TermQuery<T> extends Query {
 
@@ -80,8 +80,8 @@ public abstract class Query {
 
 		@Override
 		final RoaringBitmap execute(final Table table,
-				final ExecutorService executor) {
-			RoaringBitmap bitset = table.getIndexedField(field).getDocBitSet(
+									final ExecutorService executor) throws IOException {
+			RoaringBitmap bitset = table.getIndexedColumn(field).getDocBitSet(
 					value);
 			if (bitset == null)
 				bitset = new RoaringBitmap();
@@ -143,7 +143,7 @@ public abstract class Query {
 
 		@Override
 		final RoaringBitmap execute(final Table table,
-				final ExecutorService executor) throws Exception {
+									final ExecutorService executor) throws Exception {
 			List<ProcedureExceptionCatcher> threads = new ArrayList<ProcedureExceptionCatcher>(
 					queries.size());
 			final RoaringBitmap finalBitmap = new RoaringBitmap();
@@ -178,7 +178,7 @@ public abstract class Query {
 
 		@Override
 		final RoaringBitmap execute(final Table table,
-				final ExecutorService executor) throws Exception {
+									final ExecutorService executor) throws Exception {
 			List<ProcedureExceptionCatcher> threads = new ArrayList<ProcedureExceptionCatcher>(
 					queries.size());
 			final RoaringBitmap finalBitmap = new RoaringBitmap();
@@ -208,7 +208,7 @@ public abstract class Query {
 	public static class QueryException extends RuntimeException {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -5566235355622756480L;
 
