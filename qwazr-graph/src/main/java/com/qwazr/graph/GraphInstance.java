@@ -119,9 +119,8 @@ public class GraphInstance {
 
 	}
 
-	private static void createUpdate(Table table,
-									 GraphDefinition graphDef, String node_id, GraphNode node)
-			throws ServerException, IOException {
+	private static void createUpdate(Table table, GraphDefinition graphDef, String node_id, GraphNode node)
+			throws ServerException, IOException, DatabaseException {
 
 		Integer id = table.getPrimaryKeyIndex().getIdOrNew(node_id, null);
 
@@ -206,7 +205,7 @@ public class GraphInstance {
 	 * @throws ServerException    if any server exception occurs
 	 */
 	void createUpdateNodes(Map<String, GraphNode> nodes, Boolean upsert)
-			throws IOException, URISyntaxException, ServerException {
+			throws IOException, URISyntaxException, ServerException, DatabaseException {
 
 		if (nodes == null || nodes.isEmpty())
 			return;
@@ -226,8 +225,7 @@ public class GraphInstance {
 		}
 
 		for (Map.Entry<String, GraphNode> entry : nodes.entrySet())
-			createUpdate(table, graphDef, entry.getKey(),
-					entry.getValue());
+			createUpdate(table, graphDef, entry.getKey(), entry.getValue());
 		table.commit();
 
 	}
@@ -312,13 +310,13 @@ public class GraphInstance {
 	 * @throws ServerException    if any server exception occurs
 	 */
 	Map<String, GraphNode> getNodes(Set<String> node_ids)
-			throws IOException, URISyntaxException, ServerException {
+			throws IOException, URISyntaxException, ServerException, DatabaseException {
 
 		Set<String> returnedFields = new LinkedHashSet<String>();
 		populateReturnedFields(returnedFields);
 
-		List<LinkedHashMap<String, Object>> documents = table.getRows(node_ids,
-				returnedFields);
+		List<LinkedHashMap<String, Object>> documents = new ArrayList<LinkedHashMap<String, Object>>();
+		table.getRows(node_ids, returnedFields, documents);
 		if (documents == null || documents.isEmpty())
 			return null;
 		Iterator<String> iteratorId = node_ids.iterator();
@@ -404,7 +402,7 @@ public class GraphInstance {
 	 * @throws ServerException    if any server exception occurs
 	 */
 	public List<GraphNodeResult> request(GraphRequest request)
-			throws IOException, URISyntaxException, ServerException {
+			throws IOException, URISyntaxException, ServerException, DatabaseException {
 
 		List<GraphNodeResult> resultList = new ArrayList<GraphNodeResult>(
 				request.getRowsOrDefault());
