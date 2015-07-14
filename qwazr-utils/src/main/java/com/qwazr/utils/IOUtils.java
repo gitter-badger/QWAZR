@@ -166,4 +166,20 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
+	/**
+	 * Extract the content of a file to a string
+	 *
+	 * @param file the file
+	 * @return the content of the file as a string
+	 * @throws IOException
+	 */
+	public static String readFileAsString(File file) throws IOException {
+		FileReader reader = new FileReader(file);
+		try {
+			return toString(reader);
+		} finally {
+			closeQuietly(reader);
+		}
+	}
+
 }
