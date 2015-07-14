@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,17 +15,20 @@
  */
 package com.qwazr.utils;
 
+import org.apache.commons.codec.binary.Base64;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-import org.apache.commons.codec.binary.Base64;
-
 public class StringUtils extends org.apache.commons.lang3.StringUtils {
 
 	public static final String replaceConsecutiveSpaces(String source,
-			String replace) {
+														String replace) {
 		if (isEmpty(source))
 			return source;
 		StringBuilder target = new StringBuilder();
@@ -49,10 +52,10 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	}
 
 	public static Pattern wildcardPattern(String s) {
-		final CharSequence[] esc = { "\\", ".", "(", ")", "[", "]", "+", "?",
-				"*" };
-		final CharSequence[] replace = { "/", "\\.", "\\(", "\\)", "\\[",
-				"\\]", "\\+", "\\?", ".*" };
+		final CharSequence[] esc = {"\\", ".", "(", ")", "[", "]", "+", "?",
+				"*"};
+		final CharSequence[] replace = {"/", "\\.", "\\(", "\\)", "\\[",
+				"\\]", "\\+", "\\?", ".*"};
 		s = s.trim();
 		int i = 0;
 		for (CharSequence ch : esc)
@@ -61,12 +64,9 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	}
 
 	/**
-	 * 
-	 * @param text
-	 *            the text to encode
+	 * @param text the text to encode
 	 * @return a base64 encoded string
-	 * @throws UnsupportedEncodingException
-	 *             if the encoding is not supported
+	 * @throws UnsupportedEncodingException if the encoding is not supported
 	 */
 	public final static String base64encode(String text)
 			throws UnsupportedEncodingException {
@@ -76,9 +76,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	}
 
 	/**
-	 * 
-	 * @param base64String
-	 *            the base64 string to decode
+	 * @param base64String the base64 string to decode
 	 * @return a decoded string
 	 */
 	public final static String base64decode(String base64String) {
@@ -167,7 +165,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	}
 
 	public static void appendCollection(StringBuilder sb,
-			Collection<?> collection) {
+										Collection<?> collection) {
 		for (Object object : collection)
 			appendObject(sb, object);
 	}
@@ -200,11 +198,39 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return cs == null ? null : cs.toString();
 	}
 
-	public final static String LINE_SEPARATOR = System
-			.getProperty("line.separator");
 
-	public final static String[] splitLines(String str) {
-		return split(str, LINE_SEPARATOR);
+	/**
+	 * Retrieve the lines found in the passed text
+	 *
+	 * @param text              a text
+	 * @param collectEmptyLines true if the empty lines should be collected
+	 * @param lineCollector     the collection filled with the found lines
+	 * @return the number of lines found
+	 * @throws IOException
+	 */
+	public final static int linesCollector(String text, boolean collectEmptyLines, Collection<String> lineCollector)
+			throws IOException {
+		if (text == null)
+			return 0;
+		int i = 0;
+		StringReader sr = new StringReader(text);
+		try {
+			BufferedReader br = new BufferedReader(sr);
+			try {
+				String line;
+				while ((line = br.readLine()) != null) {
+					if (!collectEmptyLines && line.length() == 0)
+						continue;
+					lineCollector.add(line);
+					i++;
+				}
+			} finally {
+				IOUtils.closeQuietly(br);
+			}
+		} finally {
+			IOUtils.closeQuietly(sr);
+		}
+		return i;
 	}
 
 }
