@@ -23,6 +23,7 @@ import com.qwazr.graph.model.GraphDefinition;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;
 import com.qwazr.utils.server.ServerException;
+import org.apache.commons.io.FileUtils;
 
 import javax.ws.rs.core.Response.Status;
 import java.io.File;
@@ -123,9 +124,15 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 		rwl.w.lock();
 		try {
 			GraphDefinition graphDef = super.delete(graphName);
-			Table.deleteTable(new File(directory, graphName));
+			File dbDirectory = new File(directory, graphName);
+			Table table = Table.getInstance(dbDirectory, false);
+			if (table != null)
+				table.close();
+			FileUtils.deleteDirectory(dbDirectory);
 			graphMap.remove(graphName);
 			return graphDef;
+		} catch (DatabaseException e) {
+			throw new ServerException(e);
 		} finally {
 			rwl.w.unlock();
 		}
