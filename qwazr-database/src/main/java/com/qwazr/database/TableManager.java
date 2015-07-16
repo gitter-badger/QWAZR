@@ -24,13 +24,13 @@ import com.qwazr.database.store.Query;
 import com.qwazr.database.store.Table;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.server.ServerException;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.roaringbitmap.RoaringBitmap;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -116,12 +116,16 @@ public class TableManager {
 	}
 
 	public void delete(String tableName) throws ServerException,
-			IOException {
+			IOException, DatabaseException {
 		rwl.w.lock();
 		try {
-			Table.deleteTable(new File(directory, tableName));
-		} catch (FileNotFoundException e) {
-			throw new ServerException(Response.Status.NOT_FOUND, e.getMessage());
+			File dbDirectory = new File(directory, tableName);
+			Table table = Table.getInstance(dbDirectory, false);
+			if (table != null)
+				table.close();
+			if (!dbDirectory.exists())
+				throw new ServerException(Response.Status.NOT_FOUND, "Table not found: " + tableName);
+			FileUtils.deleteDirectory(dbDirectory);
 		} finally {
 			rwl.w.unlock();
 		}
@@ -138,13 +142,12 @@ public class TableManager {
 		}
 	}
 
-	public void upsertRows(String tableName, List<Map<String, Object>> rows)
+	public int upsertRows(String tableName, List<Map<String, Object>> rows)
 			throws IOException, ServerException, DatabaseException {
 		rwl.r.lock();
 		try {
 			Table table = getTable(tableName, false);
-			for (Map<String, Object> row : rows)
-				table.upsertRow(null, row);
+			return table.upsertRows(rows);
 		} finally {
 			rwl.r.unlock();
 		}
