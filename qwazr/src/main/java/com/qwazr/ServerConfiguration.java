@@ -75,14 +75,14 @@ public class ServerConfiguration {
 			}
 		}
 		String s = System.getenv("QWAZR_SCHEDULER_MAX_THREADS");
-		scheduler_max_threads = StringUtils.isEmpty(s) ? 1000 : Integer.parseInt(s);
+		scheduler_max_threads = StringUtils.isEmpty(s) ? 100 : Integer.parseInt(s);
 	}
 
 	/**
 	 * @return the number of allowed threads. The default value is 1000.
 	 */
 	int getSchedulerMaxThreads() {
-		return scheduler_max_threads == null ? 1000 : scheduler_max_threads;
+		return scheduler_max_threads == null ? 100 : scheduler_max_threads;
 	}
 
 }
