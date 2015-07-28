@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,27 +15,26 @@
  */
 package com.qwazr.store.data;
 
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.util.Set;
-
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.qwazr.store.schema.StoreSchemaDefinition;
 import com.qwazr.store.schema.StoreSchemaManager;
 import com.qwazr.store.schema.StoreSchemaMultiClient;
 import com.qwazr.utils.HashUtils;
 import com.qwazr.utils.server.ServerException;
+import org.apache.commons.lang3.StringUtils;
+
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.util.Set;
 
 @Path("/store")
 public class StoreMasterDataService implements StoreDataServiceInterface {
 
 	final static StoreDataReplicationClient getDataClient(String[][] nodes,
-			Integer msTimeOut) throws URISyntaxException, ServerException {
+														  Integer msTimeOut)
+			throws URISyntaxException, ServerException {
 		StoreDataReplicationClient dataClient = StoreDataManager.INSTANCE
 				.getNewDataClient(nodes, msTimeOut);
 		if (dataClient == null)
@@ -57,7 +56,7 @@ public class StoreMasterDataService implements StoreDataServiceInterface {
 
 	@Override
 	public StoreFileResult getDirectory(String schemaName, String path,
-			Integer msTimeout) {
+										Integer msTimeout) {
 		try {
 			return getDataClient(
 					StoreSchemaManager.INSTANCE.getSchema(schemaName).nodes,
@@ -80,7 +79,7 @@ public class StoreMasterDataService implements StoreDataServiceInterface {
 
 	@Override
 	final public StoreFileResult getDirectory(String schemaName,
-			Integer msTimeout) {
+											  Integer msTimeout) {
 		return getDirectory(schemaName, StringUtils.EMPTY, msTimeout);
 	}
 
@@ -96,13 +95,13 @@ public class StoreMasterDataService implements StoreDataServiceInterface {
 
 	@Override
 	public Response putFile(String schemaName, String path,
-			InputStream inputStream, Long lastModified, Integer msTimeout,
-			Integer target) {
+							InputStream inputStream, Long lastModified, Integer msTimeout,
+							Integer target) {
 		try {
 			StoreSchemaDefinition schemaDef = StoreSchemaManager.INSTANCE
 					.getSchema(schemaName);
 			if (target == null)
-				target = HashUtils.getMurmur3Mod(path,
+				target = HashUtils.getMurmur3Mod(path, null,
 						schemaDef.distribution_factor);
 			return getDataClient(schemaDef.nodes, msTimeout).putFile(
 					schemaName, path, inputStream, lastModified, msTimeout,

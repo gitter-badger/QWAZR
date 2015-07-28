@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,13 +15,6 @@
  */
 package com.qwazr.utils.cassandra;
 
-import java.io.Closeable;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
@@ -29,6 +22,12 @@ import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.qwazr.utils.LockUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.Closeable;
 
 public class CassandraSession implements Closeable {
 
@@ -111,17 +110,16 @@ public class CassandraSession implements Closeable {
 		}
 	}
 
-	private SimpleStatement getStatement(String cql, Integer fetchSize,
-			Object... values) {
-		SimpleStatement statement = values != null && values.length > 0 ? new SimpleStatement(
-				cql, values) : new SimpleStatement(cql);
+	private SimpleStatement getStatement(Session session, String cql, Integer fetchSize,
+										 Object... values) {
+		SimpleStatement statement = values != null && values.length > 0 ? session.newSimpleStatement(
+				cql, values) : session.newSimpleStatement(cql);
 		if (fetchSize != null)
 			statement.setFetchSize(fetchSize);
 		return statement;
 	}
 
-	private ResultSet executeStatement(SimpleStatement statement) {
-		session = checkSession();
+	private ResultSet executeStatement(Session session, SimpleStatement statement) {
 		try {
 			return session.execute(statement);
 		} catch (NoHostAvailableException e1) {
@@ -138,16 +136,18 @@ public class CassandraSession implements Closeable {
 	}
 
 	public ResultSet executeWithFetchSize(String cql, int fetchSize,
-			Object... values) {
+										  Object... values) {
 		logger.info("Execute " + cql);
-		SimpleStatement statement = getStatement(cql, fetchSize, values);
-		return executeStatement(statement);
+		Session session = checkSession();
+		SimpleStatement statement = getStatement(session, cql, fetchSize, values);
+		return executeStatement(session, statement);
 	}
 
 	public ResultSet execute(String cql, Object... values) {
 		logger.info("Execute " + cql);
-		SimpleStatement statement = getStatement(cql, null, values);
-		return executeStatement(statement);
+		Session session = checkSession();
+		SimpleStatement statement = getStatement(session, cql, null, values);
+		return executeStatement(session, statement);
 	}
 
 	long getLastUse() {

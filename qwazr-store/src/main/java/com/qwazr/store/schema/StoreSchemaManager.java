@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,22 +15,6 @@
  */
 package com.qwazr.store.schema;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.ws.rs.core.Response.Status;
-
-import org.apache.commons.lang3.RandomUtils;
-
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.qwazr.cluster.manager.ClusterManager;
@@ -38,6 +22,16 @@ import com.qwazr.store.StoreServer;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;
 import com.qwazr.utils.server.ServerException;
+import org.apache.commons.lang3.RandomUtils;
+
+import javax.ws.rs.core.Response.Status;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class StoreSchemaManager extends
 		DirectoryJsonManager<StoreSchemaDefinition> {
@@ -186,11 +180,12 @@ public class StoreSchemaManager extends
 							+ nodesNumber + " nodes expected.");
 
 		// We select the nodes using Murmur3 hashing
+		Charset charset = Charset.defaultCharset();
 		HashFunction m3 = Hashing.murmur3_128(RandomUtils.nextInt(0,
 				Integer.MAX_VALUE));
 		TreeMap<String, String> nodesMap = new TreeMap<String, String>();
 		for (String node : nodes)
-			nodesMap.put(m3.hashString(node).toString(), node);
+			nodesMap.put(m3.hashString(node, charset).toString(), node);
 		schemaDefinition.nodes = new String[schemaDefinition.replication_factor][];
 		Iterator<String> nodeIterator = nodesMap.values().iterator();
 		for (int i = 0; i < schemaDefinition.replication_factor; i++) {
