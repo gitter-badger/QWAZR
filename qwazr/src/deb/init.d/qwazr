@@ -45,7 +45,7 @@ start)
             echo "QWAZR is already running ..."
         else
             echo "Starting QWAZR ..."
-            PID=`su -m -c "/usr/bin/java $OSS_OPTS" qwazr >> $QWAZR_LOG 2>&1 & echo $!`
+            PID=`su -m -c "/usr/bin/java $QWAZR_OPTS" qwazr >> $QWAZR_LOG 2>&1 & echo $!`
             if [ -z $PID ]; then
                echo "QWAZR starting failed"
             else
