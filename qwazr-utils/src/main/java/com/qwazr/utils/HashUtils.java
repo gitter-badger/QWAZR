@@ -23,12 +23,15 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class HashUtils {
 
-	public static final int getMurmur3Mod(final String hashString, final int mod) {
+	public static final int getMurmur3Mod(final String hashString, Charset charset, final int mod) {
 		HashFunction m3 = Hashing.murmur3_128();
-		return (Math.abs(m3.hashString(hashString).asInt()) % mod);
+		if (charset == null)
+			charset = Charset.defaultCharset();
+		return (Math.abs(m3.hashString(hashString, charset).asInt()) % mod);
 	}
 
 	public static String md5Hex(File file) throws IOException {
