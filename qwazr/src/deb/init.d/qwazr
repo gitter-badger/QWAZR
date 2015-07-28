@@ -30,6 +30,8 @@ OSS_LOG=/var/log/qwazr/server.out
 OSS_PID="/var/run/$OSS_NAME.pid"
 OSS_USER=qwazr
 
+export QWAZR_MASTERS QWAZR_SERVICES
+
 usage ()
 {
   echo "Usage : $0 {start|stop|restart}"
@@ -47,7 +49,7 @@ start)
             echo "$OSS_NAME is already running ..."
         else
             echo "Starting $OSS_NAME ..."
-            PID=`su - -c "/usr/bin/java $OSS_OPTS" $OSS_USER >> $OSS_LOG 2>&1 & echo $!`
+            PID=`su -m -c "/usr/bin/java $OSS_OPTS" $OSS_USER >> $OSS_LOG 2>&1 & echo $!`
             if [ -z $PID ]; then
                echo "$OSS_NAME starting failed"
             else
