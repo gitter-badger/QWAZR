@@ -11,8 +11,6 @@
 # Description:       Enable service provided by QWAZR.
 ### END INIT INFO
 
-OSS_NAME=qwazr
-
 CONFIGFILE=/etc/qwazr.conf
 if [ -f "$CONFIGFILE" ]; then
     . "$CONFIGFILE"
@@ -22,13 +20,13 @@ if [ -z "$PUBLIC_ADDR" ]; then
     PUBLIC_ADDR=`hostname`
 fi
 
-OSS_SHARE=/usr/share/qwazr
-OSS_JAR=$OSS_SHARE/$OSS_NAME.jar
 JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8 -Dlog4j.configuration=file:$QWAZR_DATA/log4j.properties"
-OSS_OPTS="$JAVA_OPTS -jar $OSS_JAR -l $LISTEN_ADDR -a $PUBLIC_ADDR -wp $WEBAPP_PORT -sp $WEBSERVICE_PORT -d $QWAZR_DATA"
-OSS_LOG=/var/log/qwazr/server.out
-OSS_PID="/var/run/$OSS_NAME.pid"
-OSS_USER=qwazr
+QWAZR_JAR=/usr/share/qwazr/qwazr.jar
+QWAZR_OPTS="$JAVA_OPTS -jar $QWAZR_JAR -l $LISTEN_ADDR -a $PUBLIC_ADDR -wp $WEBAPP_PORT -sp $WEBSERVICE_PORT -d $QWAZR_DATA"
+QWAZR_LOG=/var/log/qwazr/server.out
+QWAZR_PID_PATH="/var/run/qwazr.pid"
+
+export QWAZR_MASTERS QWAZR_SERVICES QWAZR_PID_PATH
 
 usage ()
 {
@@ -43,41 +41,35 @@ fi
 
 case $1 in
 start)
-        if [ -f $OSS_PID ]; then
+        if [ -f $QWAZR_PID_PATH ]; then
             echo "$OSS_NAME is already running ..."
         else
-            echo "Starting $OSS_NAME ..."
-            PID=`su - -c "/usr/bin/java $OSS_OPTS" $OSS_USER >> $OSS_LOG 2>&1 & echo $!`
-            if [ -z $PID ]; then
-               echo "$OSS_NAME starting failed"
-            else
-               echo $PID > $OSS_PID
-               echo "$OSS_NAME started ..."
-            fi
+            echo "Starting QWAZR ..."
+            su -m -c "/usr/bin/java $QWAZR_OPTS" qwazr >>$QWAZR_LOG 2>&1 &
+            echo "QWAZR started ..."
         fi
         ;;
 stop)
-        if [ -f $OSS_PID ]; then
-            echo "Stopping $OSS_NAME ..."
-            PID=`cat $OSS_PID`
+        if [ -f $QWAZR_PID_PATH ]; then
+            echo "Stopping QWAZR ..."
+            PID=`cat $QWAZR_PID_PATH`
             kill $PID
-            echo "$OSS_NAME stopped ..."
-            rm $OSS_PID
+            echo "QWAZR stopped ..."
         else
-            echo "$OSS_NAME is not running ..."
+            echo "QWAZR is not running ..."
         fi
         ;;
 status)
-        if [ -f $OSS_PID ]; then
-            PID=`cat $OSS_PID`
+        if [ -f $QWAZR_PID_PATH ]; then
+            PID=`cat $QWAZR_PID_PATH`
             if kill -0 $PID; then
-                echo "$OSS_NAME pid: $PID"
+                echo "QWAZR pid: $PID"
             else
                 echo "PID not valid"
-                rm $OSS_PID
+                rm $QWAZR_PID_PATH
             fi
         else
-            echo "$OSS_NAME is not running ..."
+            echo "QWAZR is not running ..."
         fi
         ;;
 restart|force-reload)
