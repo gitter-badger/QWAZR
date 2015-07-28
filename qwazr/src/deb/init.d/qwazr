@@ -24,7 +24,7 @@ JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8 -Dlog4j.configuration=file:$QWAZR_DA
 QWAZR_JAR=/usr/share/qwazr/qwazr.jar
 QWAZR_OPTS="$JAVA_OPTS -jar $QWAZR_JAR -l $LISTEN_ADDR -a $PUBLIC_ADDR -wp $WEBAPP_PORT -sp $WEBSERVICE_PORT -d $QWAZR_DATA"
 QWAZR_LOG=/var/log/qwazr/server.out
-QWAZR_PID_PATH="/var/run/qwazr.pid"
+QWAZR_PID="/var/run/qwazr.pid"
 
 export QWAZR_MASTERS QWAZR_SERVICES QWAZR_PID_PATH
 
@@ -41,18 +41,23 @@ fi
 
 case $1 in
 start)
-        if [ -f $QWAZR_PID_PATH ]; then
-            echo "$OSS_NAME is already running ..."
+        if [ -f QWAZR_PID ]; then
+            echo "QWAZR is already running ..."
         else
             echo "Starting QWAZR ..."
-            su -m -c "/usr/bin/java $QWAZR_OPTS" qwazr >>$QWAZR_LOG 2>&1 &
-            echo "QWAZR started ..."
+            PID=`su -m -c "/usr/bin/java $OSS_OPTS" qwazr >> $QWAZR_LOG 2>&1 & echo $!`
+            if [ -z $PID ]; then
+               echo "QWAZR starting failed"
+            else
+               echo $PID > $QWAZR_PID
+               echo "QWAZR started ..."
+            fi
         fi
         ;;
 stop)
-        if [ -f $QWAZR_PID_PATH ]; then
+        if [ -f $QWAZR_PID ]; then
             echo "Stopping QWAZR ..."
-            PID=`cat $QWAZR_PID_PATH`
+            PID=`cat $QWAZR_PID`
             kill $PID
             echo "QWAZR stopped ..."
         else
@@ -60,13 +65,13 @@ stop)
         fi
         ;;
 status)
-        if [ -f $QWAZR_PID_PATH ]; then
-            PID=`cat $QWAZR_PID_PATH`
+        if [ -f $QWAZR_PID ]; then
+            PID=`cat $QWAZR_PID`
             if kill -0 $PID; then
                 echo "QWAZR pid: $PID"
             else
                 echo "PID not valid"
-                rm $QWAZR_PID_PATH
+                rm $QWAZR_PID
             fi
         else
             echo "QWAZR is not running ..."
