@@ -69,7 +69,6 @@ public class Qwazr extends AbstractServer {
 		serverDefinition.defaultDataDirName = "qwazr";
 	}
 
-	private final static String SERVER_YAML_NAME = "server.yaml";
 	private static ServerConfiguration serverConfiguration = null;
 
 	private final HashSet<String> services = new HashSet<String>();
@@ -118,19 +117,8 @@ public class Qwazr extends AbstractServer {
 
 	@Override
 	public void commandLine(CommandLine cmd) throws IOException {
-		// Load the configuration file
-		File serverConfigurationFile = new File(getCurrentDataDir(),
-				SERVER_YAML_NAME);
-		if (serverConfigurationFile.exists()
-				&& serverConfigurationFile.isFile()) {
-			logger.info("Load server configuration file: "
-					+ serverConfigurationFile.getAbsolutePath());
-			serverConfiguration = ServerConfiguration
-					.getNewInstance(serverConfigurationFile);
-		} else {
-			logger.info("Load default server configuration");
-			serverConfiguration = ServerConfiguration.getDefaultConfiguration();
-		}
+		// Load the configuration
+		serverConfiguration = new ServerConfiguration();
 	}
 
 	@Override

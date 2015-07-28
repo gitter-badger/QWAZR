@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,15 +15,9 @@
  **/
 package com.qwazr;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.commons.io.IOUtils;
+import com.qwazr.utils.StringUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Set;
 
 public class ServerConfiguration {
@@ -61,9 +55,28 @@ public class ServerConfiguration {
 		}
 	}
 
-	public final Set<ServiceEnum> services = null;
+	public final Set<ServiceEnum> services;
 
-	public final Integer scheduler_max_threads = null;
+	public final Integer scheduler_max_threads;
+
+	ServerConfiguration() {
+		String services_env = System.getenv("QWAZR_SERVICES");
+		if (StringUtils.isEmpty(services_env)) {
+			services = null;
+		} else {
+			services = new HashSet<ServiceEnum>();
+			String[] services_array = StringUtils.split(services_env, ',');
+			for (String service : services_array) {
+				try {
+					services.add(ServiceEnum.valueOf(service.trim()));
+				} catch (IllegalArgumentException e) {
+					throw new IllegalArgumentException("Unknown service in QWAZR_SERVICES: " + service);
+				}
+			}
+		}
+		String s = System.getenv("QWAZR_SCHEDULER_MAX_THREADS");
+		scheduler_max_threads = StringUtils.isEmpty(s) ? 1000 : Integer.parseInt(s);
+	}
 
 	/**
 	 * @return the number of allowed threads. The default value is 1000.
@@ -72,42 +85,4 @@ public class ServerConfiguration {
 		return scheduler_max_threads == null ? 1000 : scheduler_max_threads;
 	}
 
-	/**
-	 * Load the configuration file.
-	 * 
-	 * @param file
-	 * @return an instance of ServerConfiguration
-	 * @throws JsonParseException
-	 * @throws JsonMappingException
-	 * @throws IOException
-	 */
-	static ServerConfiguration getNewInstance(File file)
-			throws JsonParseException, JsonMappingException, IOException {
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		return mapper.readValue(file, ServerConfiguration.class);
-	}
-
-	/**
-	 * Read the configuration file from the resources
-	 * 
-	 * @return
-	 * @throws JsonParseException
-	 * @throws JsonMappingException
-	 * @throws IOException
-	 */
-	static ServerConfiguration getDefaultConfiguration()
-			throws JsonParseException, JsonMappingException, IOException {
-		InputStream stream = Qwazr.class.getResourceAsStream("server.yaml");
-		if (stream == null)
-			throw new IOException(
-					"Unable to load the default configuration resource: server.yaml");
-		try {
-			ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-			return mapper.readValue(stream, ServerConfiguration.class);
-		} finally {
-			if (stream != null)
-				IOUtils.closeQuietly(stream);
-		}
-
-	}
 }
