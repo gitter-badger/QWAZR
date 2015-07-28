@@ -38,7 +38,6 @@ import com.qwazr.store.data.StoreMasterDataService;
 import com.qwazr.store.data.StoreNodeDataService;
 import com.qwazr.store.schema.StoreMasterSchemaService;
 import com.qwazr.tools.ToolsManager;
-import com.qwazr.utils.process.PIDFile;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServletApplication;
@@ -195,10 +194,6 @@ public class Qwazr extends AbstractServer {
 	public static void main(String[] args) {
 		// Start the server
 		try {
-			PIDFile pid = new PIDFile();
-			if (pid.isFileExists())
-				throw new RuntimeException("QWAZR is already running");
-			pid.savePidToFile().deletePidFileOnExit();
 			Qwazr server = new Qwazr();
 			server.start(args);
 			// Register the services
