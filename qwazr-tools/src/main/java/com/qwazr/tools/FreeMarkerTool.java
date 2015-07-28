@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,25 +15,18 @@
  **/
 package com.qwazr.tools;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.io.IOUtils;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+import org.apache.commons.io.IOUtils;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
@@ -98,7 +91,7 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	}
 
 	public void template(String templatePath, Map<String, Object> dataModel,
-			HttpServletResponse response) throws TemplateException, IOException {
+						 HttpServletResponse response) throws TemplateException, IOException {
 		if (response.getContentType() == null)
 			response.setContentType(default_content_type == null ? DEFAULT_CONTENT_TYPE
 					: default_content_type);
