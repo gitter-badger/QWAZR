@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,28 +17,21 @@ package com.qwazr.utils.server;
 
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
+import io.undertow.UndertowOptions;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
-
-import javax.servlet.ServletException;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.resteasy.plugins.server.undertow.UndertowJaxrsServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletException;
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
 
 /**
  * Generic REST server
@@ -145,9 +138,7 @@ public abstract class AbstractServer {
 	private File currentDataDir;
 
 	/**
-	 * 
-	 * @param serverDefinition
-	 *            The default parameters
+	 * @param serverDefinition The default parameters
 	 */
 	protected AbstractServer(ServerDefinition serverDefinition) {
 		this.serverDefinition = serverDefinition;
@@ -157,9 +148,8 @@ public abstract class AbstractServer {
 	 * Override this method to put additional options. By default, this method
 	 * create the options "h - help" and "p - port". Do not forget to call
 	 * super.defineOptions(options);
-	 * 
-	 * @param options
-	 *            The options instance
+	 *
+	 * @param options The options instance
 	 */
 	public void defineOptions(Options options) {
 		options.addOption(HELP_OPTION);
@@ -172,18 +162,15 @@ public abstract class AbstractServer {
 
 	/**
 	 * Call this method to start the server
-	 * 
-	 * @param args
-	 *            Any command line parameters
-	 * @throws IOException
-	 *             if any IO error occur
-	 * @throws ParseException
-	 *             if the command line parameters are not valid
-	 * @throws ServletException
-	 *             if the servlet configuration failed
+	 *
+	 * @param args Any command line parameters
+	 * @throws IOException      if any IO error occur
+	 * @throws ParseException   if the command line parameters are not valid
+	 * @throws ServletException if the servlet configuration failed
 	 */
 	final public void start(String[] args) throws IOException, ParseException,
 			ServletException {
+
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 		Options options = new Options();
 		defineOptions(options);
@@ -255,6 +242,7 @@ public abstract class AbstractServer {
 					+ servletPort);
 			servletBuilder = Undertow.builder()
 					.addHttpListener(servletPort, currentListenAddress)
+					.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000)
 					.setHandler(pathHandler);
 		}
 
@@ -265,8 +253,9 @@ public abstract class AbstractServer {
 			restPort = webServiceTcpPort;
 			logger.info("Start the REST server " + currentListenAddress + ":"
 					+ restPort);
-			restBuilder = Undertow.builder().addHttpListener(restPort,
-					currentListenAddress);
+			restBuilder = Undertow.builder()
+					.addHttpListener(restPort, currentListenAddress)
+					.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000);
 		}
 
 		load();
@@ -286,16 +275,14 @@ public abstract class AbstractServer {
 	public abstract void load() throws IOException;
 
 	/**
-	 * 
 	 * @return the hostname and port on which the web application can be
-	 *         contacted
+	 * contacted
 	 */
 	public String getWebApplicationPublicAddress() {
 		return currentPublicAddress + ':' + servletPort;
 	}
 
 	/**
-	 * 
 	 * @return the hostname and port on which the web service can be contacted
 	 */
 	public String getWebServicePublicAddress() {
@@ -303,7 +290,6 @@ public abstract class AbstractServer {
 	}
 
 	/**
-	 * 
 	 * @return the data directory
 	 */
 	public File getCurrentDataDir() {
