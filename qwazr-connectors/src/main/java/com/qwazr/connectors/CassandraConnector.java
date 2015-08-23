@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,18 +15,17 @@
  **/
 package com.qwazr.connectors;
 
-import java.io.File;
-import java.util.List;
-import java.util.UUID;
-
-import org.apache.commons.io.IOUtils;
-
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.cassandra.CassandraCluster;
 import com.qwazr.utils.cassandra.CassandraSession;
+import org.apache.commons.io.IOUtils;
+
+import java.io.File;
+import java.util.List;
+import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CassandraConnector extends AbstractConnector {
@@ -124,7 +123,7 @@ public class CassandraConnector extends AbstractConnector {
 	}
 
 	public ResultSet executeWithFetchSize(String csql, int fetchSize,
-			Object... values) {
+										  Object... values) {
 		CassandraSession session = cluster.getSession(keyspace);
 		return session.executeWithFetchSize(csql, fetchSize, values);
 	}
@@ -138,10 +137,8 @@ public class CassandraConnector extends AbstractConnector {
 		return UUIDs.timeBased();
 	}
 
-	static final long NUM_100NS_INTERVALS_SINCE_UUID_EPOCH = 0x01b21dd213814000L;
-
 	public long getTimeFromUUID(UUID uuid) {
-		return (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / 10000;
+		return UUIDs.unixTimestamp(uuid);
 	}
 
 }
