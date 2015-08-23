@@ -1,3 +1,4 @@
+#!/bin/sh
 # QWAZR start
 #
 
@@ -42,7 +43,8 @@ fi
 case $1 in
 start)
         if [ -f QWAZR_PID ]; then
-            echo "QWAZR is already running ..."
+            PID=`cat $QWAZR_PID`
+            echo "QWAZR is already running $PID ..."
         else
             echo "Starting QWAZR ..."
             PID=`cd $QWAZR_DATA; su -m -c "/usr/bin/java $QWAZR_OPTS" qwazr >> $QWAZR_LOG 2>&1 & echo $!`
@@ -59,7 +61,8 @@ stop)
             echo "Stopping QWAZR ..."
             PID=`cat $QWAZR_PID`
             kill $PID
-            echo "QWAZR stopped ..."
+            echo "QWAZR stopped $PID ..."
+            rm $QWAZR_PID
         else
             echo "QWAZR is not running ..."
         fi
@@ -70,7 +73,7 @@ status)
             if kill -0 $PID; then
                 echo "QWAZR pid: $PID"
             else
-                echo "PID not valid"
+                echo "PID not valid: $PID"
                 rm $QWAZR_PID
             fi
         else
