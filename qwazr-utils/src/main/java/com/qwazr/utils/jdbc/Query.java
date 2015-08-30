@@ -28,6 +28,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -197,7 +198,7 @@ public class Query {
 			throws SQLException {
 		ResultSetMetaData rs = resultSet.getMetaData();
 		int columnCount = rs.getColumnCount();
-		HashMap<String, Integer> columnMap = new HashMap<String, Integer>();
+		LinkedHashMap<String, Integer> columnMap = new LinkedHashMap<String, Integer>();
 		for (int i = 0; i < columnCount; i++)
 			columnMap.put(rs.getColumnLabel(i + 1), i);
 		ArrayList<Row> rows = new ArrayList<Row>();
