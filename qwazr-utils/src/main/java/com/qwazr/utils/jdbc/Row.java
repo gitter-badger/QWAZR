@@ -18,6 +18,7 @@ package com.qwazr.utils.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents a row from a ResultSet. A convenient way to retrieve data from
@@ -27,7 +28,7 @@ public class Row {
 
 	private final Map<String, Integer> columnMap;
 
-	private Object[] columns;
+	private final Object[] columns;
 
 	Row(Map<String, Integer> columnMap, int columnCount) {
 		this.columnMap = columnMap;
@@ -67,5 +68,11 @@ public class Row {
 		return columns[colNumber];
 	}
 
+	final public int size() {
+		return columns == null ? 0 : columns.length;
+	}
 
+	final public Set<String> getColumns() {
+		return columnMap.keySet();
+	}
 }
