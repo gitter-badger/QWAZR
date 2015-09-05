@@ -56,7 +56,6 @@
 
     <modules>
         <module>qwazr</module>
-        <module>qwazr-affinities</module>
         <module>qwazr-cluster</module>
         <module>qwazr-connectors</module>
         <module>qwazr-crawlers</module>
@@ -64,7 +63,6 @@
         <module>qwazr-extractor</module>
         <module>qwazr-graph</module>
         <module>qwazr-job</module>
-        <module>qwazr-native</module>
         <module>qwazr-search</module>
         <module>qwazr-store</module>
         <module>qwazr-tools</module>
