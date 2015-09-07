@@ -69,6 +69,16 @@
             <artifactId>commons-dbcp2</artifactId>
             <version>2.1.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-ldap-client-all</artifactId>
+            <version>1.0.0-M31</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-util</artifactId>
+            <version>1.0.0-M31</version>
+        </dependency>
     </dependencies>
 
 </project>

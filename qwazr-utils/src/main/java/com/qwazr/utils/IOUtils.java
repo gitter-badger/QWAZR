@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 package com.qwazr.utils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.stream.ImageInputStream;
 import java.io.*;
@@ -23,6 +26,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class IOUtils extends org.apache.commons.io.IOUtils {
+
+	private final static Logger logger = LoggerFactory
+			.getLogger(IOUtils.class);
 
 	public static final void close(final Closeable... closeables) {
 		if (closeables == null)
@@ -51,7 +57,8 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		try {
 			closeable.close();
 		} catch (IOException e) {
-			// We said Quietly
+			if (logger.isWarnEnabled())
+				logger.warn("Close failure on " + closeable, e);
 		}
 	}
 
@@ -61,7 +68,8 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		try {
 			autoCloseable.close();
 		} catch (Exception e) {
-			// We said Quietly
+			if (logger.isWarnEnabled())
+				logger.warn("Close failure on " + autoCloseable, e);
 		}
 	}
 
@@ -69,8 +77,17 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 			final Collection<? extends Closeable> closeables) {
 		if (closeables == null)
 			return;
-		for (Closeable closeable : closeables)
-			closeQuietly(closeable);
+		Closeable[] array = closeables.toArray(new Closeable[closeables.size()]);
+		int i = array.length;
+		while (i > 0) {
+			Closeable closeable = array[--i];
+			try {
+				closeQuietly(closeable);
+			} catch (Exception e) {
+				if (logger.isWarnEnabled())
+					logger.warn("Close failure on " + closeable, e);
+			}
+		}
 	}
 
 	public static final int copy(InputStream inputStream, File tempFile,
@@ -164,6 +181,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 			IOUtils.close(autoCloseables);
 			autoCloseables.clear();
 		}
+
 	}
 
 	/**
