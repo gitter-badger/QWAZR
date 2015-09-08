@@ -87,4 +87,5 @@ public interface JsonClientInterface {
 	 */
 	public HttpResponse execute(Request request, Object bodyObject,
 			Integer msTimeOut) throws IOException;
+
 }
