@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,22 @@
 package com.qwazr.search.index;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.qwazr.utils.StringUtils;
+import com.qwazr.utils.json.JsonMapper;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.lucene.document.*;
 import org.apache.lucene.facet.FacetField;
 import org.apache.lucene.index.DocValuesType;
 import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
+
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FieldDefinition {
@@ -72,6 +82,8 @@ public class FieldDefinition {
 	}
 
 	Field getNewField(String fieldName, Object value) {
+		if (value == null)
+			return null;
 		Field field = null;
 		Field.Store store = (stored != null && stored) ? Field.Store.YES : Field.Store.NO;
 		if (template != null) {
@@ -161,5 +173,27 @@ public class FieldDefinition {
 			field = new Field(fieldName, value.toString(), type);
 		}
 		return field;
+	}
+
+	public final static Object getValue(IndexableField field) {
+		if (field == null)
+			return null;
+		String s = field.stringValue();
+		if (s != null)
+			return s;
+		Number n = field.numericValue();
+		if (n != null)
+			return n;
+		return null;
+	}
+
+	public final static TypeReference<Map<String, FieldDefinition>> MapStringFieldTypeRef =
+			new TypeReference<Map<String, FieldDefinition>>() {
+			};
+
+	public static Map<String, FieldDefinition> newFieldMap(String jsonString) throws IOException {
+		if (StringUtils.isEmpty(jsonString))
+			return null;
+		return JsonMapper.MAPPER.readValue(jsonString, MapStringFieldTypeRef);
 	}
 }

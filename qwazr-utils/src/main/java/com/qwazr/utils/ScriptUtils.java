@@ -15,12 +15,18 @@
  */
 package com.qwazr.utils;
 
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.internal.objects.NativeJava;
+
 import java.io.Reader;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
@@ -48,6 +54,29 @@ public class ScriptUtils {
 				return null;
 			}
 		}, controlContext);
+	}
 
+	public static <T> Map<String, T> toMap(ScriptObjectMirror som, Class<T> type) throws ScriptException {
+		if (som == null)
+			return null;
+		if (som.isArray())
+			throw new ScriptException("The JS object is an array");
+
+		Map<String, T> map = new LinkedHashMap<String, T>();
+		if (som.isEmpty())
+			return map;
+		som.forEach((s, o) -> map.put(s, ((ScriptObjectMirror)o).to(type)));
+		return map;
+	}
+
+	public static <T> T[] toArray(ScriptObjectMirror som, Class<T> type) throws ScriptException {
+		if (som == null)
+			return null;
+		if (!som.isArray())
+			throw new ScriptException("The JS object is not an array");
+		T[] array = (T[])new Object[som.size()];
+		final AtomicInteger i = new AtomicInteger(0);
+		som.values().forEach(o -> array[i.getAndIncrement()] = ((ScriptObjectMirror) o).to(type));
+		return array;
 	}
 }

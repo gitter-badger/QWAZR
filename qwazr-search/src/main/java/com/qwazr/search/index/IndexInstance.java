@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,7 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
 import org.apache.lucene.facet.FacetsCollector;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -68,7 +69,6 @@ public class IndexInstance implements Closeable {
 	private final IndexWriterConfig indexWriterConfig;
 	private final IndexWriter indexWriter;
 	private final SearcherManager searcherManager;
-	private volatile IndexSearcher indexSearcher;
 	private volatile PerFieldAnalyzerWrapper perFieldAnalyzer;
 	private volatile Map<String, FieldDefinition> fieldMap;
 
@@ -89,13 +89,12 @@ public class IndexInstance implements Closeable {
 
 		fieldMapFile = new File(indexDirectory, FIELDS_FILE);
 		fieldMap = fieldMapFile.exists() ?
-				JsonMapper.MAPPER.readValue(fieldMapFile, IndexSingleClient.MapStringFieldTypeRef) : null;
+				JsonMapper.MAPPER.readValue(fieldMapFile, FieldDefinition.MapStringFieldTypeRef) : null;
 		perFieldAnalyzer = buildFieldAnalyzer(fieldMap);
 		indexWriterConfig = new IndexWriterConfig(perFieldAnalyzer);
 		indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 		indexWriter = new IndexWriter(luceneDirectory, indexWriterConfig);
 		searcherManager = new SearcherManager(indexWriter, true, null);
-		indexSearcher = searcherManager.acquire();
 	}
 
 	@Override
@@ -116,7 +115,12 @@ public class IndexInstance implements Closeable {
 	}
 
 	IndexStatus getStatus() throws IOException {
-		return new IndexStatus(indexSearcher.getIndexReader(), fieldMap);
+		IndexSearcher indexSearchser = searcherManager.acquire();
+		try {
+			return new IndexStatus(indexSearchser.getIndexReader(), fieldMap);
+		} finally {
+			searcherManager.release(indexSearchser);
+		}
 	}
 
 
@@ -178,7 +182,9 @@ public class IndexInstance implements Closeable {
 			String fieldName = field.getKey();
 			FieldDefinition fieldDef = fieldMap == null ? null : fieldMap.get(fieldName);
 			if (fieldDef == null) throw new IOException("No field definition for the field: " + fieldName);
-			doc.add(fieldDef.getNewField(fieldName, field.getValue()));
+			Field luceneField = fieldDef.getNewField(fieldName, field.getValue());
+			if (luceneField != null)
+				doc.add(luceneField);
 		}
 
 		if (termId == null)
@@ -191,7 +197,6 @@ public class IndexInstance implements Closeable {
 	private void nrtCommit() throws IOException {
 		indexWriter.commit();
 		searcherManager.maybeRefresh();
-		indexSearcher = searcherManager.acquire();
 	}
 
 	public Object postDocument(Map<String, Object> document) throws IOException {
@@ -211,7 +216,13 @@ public class IndexInstance implements Closeable {
 
 	public ResultDefinition search(QueryDefinition queryDef) throws ServerException, IOException {
 		QueryParser parser = new QueryParser(queryDef.default_field, perFieldAnalyzer);
+		if (queryDef.allow_leading_wildcard != null)
+			parser.setAllowLeadingWildcard(queryDef.allow_leading_wildcard);
+		if (queryDef.default_operator != null)
+			parser.setDefaultOperator(queryDef.default_operator);
+		IndexSearcher indexSearcher = searcherManager.acquire();
 		try {
+			long start_time = System.currentTimeMillis();
 			TopDocs topDocs;
 			FacetsCollector facetsCollector = null;
 			Query query = parser.parse(queryDef.query_string);
@@ -220,9 +231,12 @@ public class IndexInstance implements Closeable {
 				topDocs = FacetsCollector.search(indexSearcher, query, queryDef.getEnd(), facetsCollector);
 			} else
 				topDocs = indexSearcher.search(query, queryDef.getEnd());
-			return new ResultDefinition(indexSearcher, topDocs, queryDef, facetsCollector);
+			return new ResultDefinition(System.currentTimeMillis() - start_time, indexSearcher, topDocs, queryDef,
+					facetsCollector);
 		} catch (ParseException e) {
 			throw new ServerException(e);
+		} finally {
+			searcherManager.release(indexSearcher);
 		}
 	}
 }
