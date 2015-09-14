@@ -125,11 +125,20 @@ public class ArchiverTool extends AbstractTool {
 			ArchiveInputStream in = new ArchiveStreamFactory().createArchiveInputStream(is);
 			try {
 				ArchiveEntry entry;
-				while ((entry = in.getNextEntry()) != null) {
-					if (entry.isDirectory())
+				for (; ; ) {
+					entry = in.getNextEntry();
+					if (entry == null)
+						break;
+					if (!in.canReadEntryData(entry))
+						continue;
+					if (entry.isDirectory()) {
 						new File(destDir, entry.getName()).mkdir();
-					else
-						IOUtils.copy(in, new File(destDir, entry.getName()));
+						continue;
+					}
+					File destFile = new File(destDir, entry.getName());
+					if (!destFile.getParentFile().exists())
+						destFile.getParentFile().mkdirs();
+					IOUtils.copy(in, destFile);
 				}
 			} catch (IOException e) {
 				throw new IOException("Unable to extract the archive: " + sourceFile.getPath(), e);
