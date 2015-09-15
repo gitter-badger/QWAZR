@@ -90,15 +90,12 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
-	public static final int copy(InputStream inputStream, File tempFile,
-								 boolean bCloseInputStream) throws IOException {
-		FileOutputStream fos = new FileOutputStream(tempFile);
+	public static final int copy(InputStream inputStream, File destFile) throws IOException {
+		FileOutputStream fos = new FileOutputStream(destFile);
 		try {
 			return copy(inputStream, fos);
 		} finally {
 			close(fos);
-			if (bCloseInputStream)
-				close(inputStream);
 		}
 	}
 

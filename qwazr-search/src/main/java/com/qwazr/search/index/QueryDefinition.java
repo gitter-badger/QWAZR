@@ -37,6 +37,7 @@ public class QueryDefinition {
 
 	final public String default_field = null;
 	final public String query_string = null;
+	final public Boolean escape_query = null;
 	final public Map<String, Float> multi_field = null;
 
 	final public Integer start = null;
@@ -44,6 +45,9 @@ public class QueryDefinition {
 
 	final public Set<String> returned_fields = null;
 	final public Map<String, Facet> facets = null;
+	final public Map<String, Set<String>> filters = null;
+
+	final public Map<String, Integer> postings_highlighter = null;
 
 	final public Boolean allow_leading_wildcard = null;
 	final public QueryParser.Operator default_operator = null;

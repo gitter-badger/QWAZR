@@ -35,6 +35,8 @@ public class CurrentSession {
 	private volatile int errorCount = 0;
 	private volatile int crawledCount = 0;
 	private volatile String currentURI = null;
+	private volatile Integer currentDepth = null;
+	private volatile String abortingReason = null;
 
 	CurrentSession(WebCrawlDefinition crawlDefinition, String name) {
 		this.crawlDefinition = crawlDefinition;
@@ -86,15 +88,27 @@ public class CurrentSession {
 				return;
 			Thread.sleep(millis);
 		} catch (InterruptedException e) {
-			abort();
+			abort(e.getMessage());
 		}
 	}
 
 	/**
-	 * Call this method to request the aborting of the current session
+	 * Call this method to abort of the current session
 	 */
 	public void abort() {
-		abort.set(true);
+		this.abort(null);
+	}
+
+	/**
+	 * Call this method to abort the current session and set the reason.
+	 * If it was previously aborted, the reason is not updated
+	 *
+	 * @param reason the motivation of the abort
+	 */
+	public void abort(String reason) {
+		if (abort.getAndSet(true))
+			return;
+		abortingReason = reason;
 	}
 
 	/**
@@ -106,8 +120,15 @@ public class CurrentSession {
 		return abort.get();
 	}
 
-	void incIgnoredCount() {
-		ignoredCount++;
+	/**
+	 * @return the aborting reason if any
+	 */
+	public String getAbortingReason() {
+		return abortingReason;
+	}
+
+	synchronized int incIgnoredCount() {
+		return ignoredCount++;
 	}
 
 	/**
@@ -117,8 +138,8 @@ public class CurrentSession {
 		return ignoredCount;
 	}
 
-	void incCrawledCount() {
-		crawledCount++;
+	synchronized int incCrawledCount() {
+		return crawledCount++;
 	}
 
 	/**
@@ -128,8 +149,8 @@ public class CurrentSession {
 		return crawledCount;
 	}
 
-	void incErrorCount() {
-		errorCount++;
+	synchronized int incErrorCount() {
+		return errorCount++;
 	}
 
 	/**
@@ -161,10 +182,18 @@ public class CurrentSession {
 	}
 
 	/**
+	 * @return the currentDepth
+	 */
+	public Integer getCurrentDepth() {
+		return currentDepth;
+	}
+
+	/**
 	 * @param currentURI the currentURI to set
 	 */
-	public void setCurrentURI(String currentURI) {
+	synchronized public void setCurrentURI(String currentURI, Integer currentDepth) {
 		this.currentURI = currentURI;
+		this.currentDepth = currentDepth;
 	}
 
 	public WebCrawlDefinition getCrawlDefinition() {

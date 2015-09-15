@@ -15,6 +15,7 @@
  */
 package com.qwazr.search.index;
 
+import com.datastax.driver.core.utils.UUIDs;
 import com.qwazr.search.SearchServer;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.StringUtils;
@@ -23,11 +24,12 @@ import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.ServerException;
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.facet.DrillDownQuery;
 import org.apache.lucene.facet.Facets;
 import org.apache.lucene.facet.FacetsCollector;
 import org.apache.lucene.facet.FacetsConfig;
@@ -45,6 +47,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.postingshighlight.PostingsHighlighter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -145,11 +148,15 @@ public class IndexInstance implements Closeable {
 	private PerFieldAnalyzerWrapper buildFieldAnalyzer(Map<String, FieldDefinition> fields)
 			throws ServerException {
 		if (fields == null || fields.size() == 0)
-			return new PerFieldAnalyzerWrapper(new StandardAnalyzer(CharArraySet.EMPTY_SET));
+			return new PerFieldAnalyzerWrapper(new KeywordAnalyzer());
 		Map<String, Analyzer> analyzerMap = new HashMap<String, Analyzer>();
 		for (Map.Entry<String, FieldDefinition> field : fields.entrySet()) {
 			String fieldName = field.getKey();
 			FieldDefinition fieldDef = field.getValue();
+			if (fieldDef.template == FieldDefinition.Template.SortedSetMultiDocValuesFacetField)
+				facetsConfig.setMultiValued(fieldName, true);
+			else if (fieldDef.template == FieldDefinition.Template.SortedSetDocValuesFacetField)
+				facetsConfig.setMultiValued(fieldName, false);
 			try {
 				if (!StringUtils.isEmpty(fieldDef.analyzer))
 					analyzerMap.put(field.getKey(), (Analyzer) findAnalyzer(fieldDef.analyzer).newInstance());
@@ -158,7 +165,7 @@ public class IndexInstance implements Closeable {
 						"Class " + fieldDef.analyzer + " not known for the field " + fieldName);
 			}
 		}
-		return new PerFieldAnalyzerWrapper(new StandardAnalyzer(CharArraySet.EMPTY_SET), analyzerMap);
+		return new PerFieldAnalyzerWrapper(new KeywordAnalyzer(), analyzerMap);
 	}
 
 	public synchronized void setFields(Map<String, FieldDefinition> fields) throws ServerException, IOException {
@@ -179,18 +186,38 @@ public class IndexInstance implements Closeable {
 		return bytesBuilder.get();
 	}
 
+	private final static String FIELD_ID = "$id$";
+
+	private void addNewLuceneField(String fieldName, Object value, Document doc) throws IOException {
+		FieldDefinition fieldDef = fieldMap == null ? null : fieldMap.get(fieldName);
+		if (fieldDef == null) throw new IOException("No field definition for the field: " + fieldName);
+		fieldDef.putNewField(fieldName, value, doc);
+	}
+
 	private Object addNewLuceneDocument(Map<String, Object> document) throws IOException {
 		Document doc = new Document();
 
 		Term termId = null;
 
+		Object id = document.get(FIELD_ID);
+		if (id == null)
+			id = UUIDs.timeBased();
+		String id_string = id.toString();
+		doc.add(new StringField(FIELD_ID, id_string, Field.Store.NO));
+		termId = new Term(FIELD_ID, id_string);
+
 		for (Map.Entry<String, Object> field : document.entrySet()) {
 			String fieldName = field.getKey();
-			FieldDefinition fieldDef = fieldMap == null ? null : fieldMap.get(fieldName);
-			if (fieldDef == null) throw new IOException("No field definition for the field: " + fieldName);
-			Field luceneField = fieldDef.getNewField(fieldName, field.getValue());
-			if (luceneField != null)
-				doc.add(luceneField);
+			if (FIELD_ID.equals(fieldName))
+				continue;
+			Object fieldValue = field.getValue();
+			if (fieldValue instanceof Map<?, ?>)
+				fieldValue = ((Map<?, Object>) fieldValue).values();
+			if (fieldValue instanceof Collection<?>) {
+				for (Object val : ((Collection<Object>) fieldValue))
+					addNewLuceneField(fieldName, val, doc);
+			} else
+				addNewLuceneField(fieldName, fieldValue, doc);
 		}
 
 		Document facetedDoc = facetsConfig.build(doc);
@@ -244,7 +271,23 @@ public class IndexInstance implements Closeable {
 		try {
 			final TopDocs topDocs;
 			final Facets facets;
-			Query query = parser.parse(queryDef.query_string);
+			String qs =
+					queryDef.escape_query != null && queryDef.escape_query ? QueryParser.escape(queryDef.query_string) :
+							queryDef.query_string;
+			Query query = parser.parse(qs);
+			// Overload query with filters
+			if (queryDef.filters != null && !queryDef.filters.isEmpty()) {
+				DrillDownQuery drillDownQuery = new DrillDownQuery(facetsConfig, query);
+				for (Map.Entry<String, Set<String>> entry : queryDef.filters.entrySet()) {
+					Set<String> filter_terms = entry.getValue();
+					if (filter_terms == null)
+						continue;
+					String filter_field = entry.getKey();
+					for (String filter_term : filter_terms)
+						drillDownQuery.add(filter_field, filter_term);
+				}
+				query = drillDownQuery;
+			}
 			if (queryDef.facets != null && queryDef.facets.size() > 0) {
 				FacetsCollector facetsCollector = new FacetsCollector();
 				SortedSetDocValuesReaderState state = new DefaultSortedSetDocValuesReaderState(indexReader);
@@ -257,7 +300,21 @@ public class IndexInstance implements Closeable {
 				timeTracker.next("search_query");
 				facets = null;
 			}
-			return new ResultDefinition(timeTracker, indexSearcher, topDocs, queryDef, facets);
+			Map<String, String[]> postingsHighlightersMap = null;
+			if (queryDef.postings_highlighter != null) {
+				postingsHighlightersMap = new LinkedHashMap<String, String[]>();
+				for (Map.Entry<String, Integer> entry : queryDef.postings_highlighter.entrySet()) {
+					String field = entry.getKey();
+					PostingsHighlighter highlighter = new PostingsHighlighter(entry.getValue());
+					String highlights[] = highlighter.highlight(field, query, indexSearcher, topDocs);
+					if (highlights != null) {
+						postingsHighlightersMap.put(field, highlights);
+					}
+				}
+				timeTracker.next("postings_highlighters");
+			}
+
+			return new ResultDefinition(timeTracker, indexSearcher, topDocs, queryDef, facets, postingsHighlightersMap);
 		} catch (ParseException e) {
 			throw new ServerException(e);
 		} finally {

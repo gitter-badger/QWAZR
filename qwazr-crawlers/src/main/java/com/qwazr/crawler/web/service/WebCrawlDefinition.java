@@ -40,6 +40,11 @@ public class WebCrawlDefinition implements Cloneable {
 	public Integer max_depth = null;
 
 	/**
+	 * The maximum number of URLs
+	 */
+	public Integer max_url_number = null;
+
+	/**
 	 * A list of regular expression patterns. Any parameters which matches is
 	 * removed.
 	 */
@@ -287,6 +292,11 @@ public class WebCrawlDefinition implements Cloneable {
 
 	public WebCrawlDefinition setMax_depth(Integer max_depth) {
 		this.max_depth = max_depth;
+		return this;
+	}
+
+	public WebCrawlDefinition setMax_url_number(Integer max_url_number) {
+		this.max_url_number = max_url_number;
 		return this;
 	}
 
