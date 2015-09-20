@@ -15,16 +15,19 @@
  **/
 package com.qwazr.tools;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.qwazr.utils.TrackedFile;
 import com.qwazr.utils.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
-public class ToolsManager {
+public class ToolsManager implements TrackedFile.FileEventReceiver {
 
     private static final Logger logger = LoggerFactory.getLogger(ToolsManager.class);
 
@@ -36,57 +39,52 @@ public class ToolsManager {
 	INSTANCE = new ToolsManager(directory);
     }
 
+    private final File rootDirectory;
+    private final File toolsFile;
+    private final TrackedFile trackedFile;
+
     private final Map<String, AbstractTool> tools;
+    private volatile Map<String, AbstractTool> cachedTools;
 
     private ToolsManager(File rootDirectory) throws IOException {
-	tools = new ConcurrentHashMap<String, AbstractTool>();
-	File toolsFile = new File(rootDirectory, "tools.json");
-	if (!toolsFile.exists())
-	    return;
-	if (!toolsFile.isFile())
-	    return;
+	cachedTools = null;
+	tools = new HashMap<String, AbstractTool>();
+	this.rootDirectory = rootDirectory;
+	toolsFile = new File(rootDirectory, "tools.json");
+	trackedFile = new TrackedFile(this, toolsFile);
+	trackedFile.check();
+    }
+
+    public void load() throws IOException {
+	tools.clear();
 	logger.info("Loading tools configuration file: " + toolsFile.getAbsolutePath());
 	ToolsConfiguration configuration = JsonMapper.MAPPER.readValue(toolsFile, ToolsConfiguration.class);
-	if (configuration.tools == null)
-	    return;
-	for (AbstractTool tool : configuration.tools) {
-	    logger.info("Loading tool: " + tool.name);
-	    tool.load(rootDirectory);
-	    add(tool);
+	if (configuration.tools != null) {
+	    for (AbstractTool tool : configuration.tools) {
+		logger.info("Loading tool: " + tool.name);
+		tool.load(rootDirectory);
+		tools.put(tool.name, tool);
+	    }
 	}
+	cachedTools = new HashMap<String, AbstractTool>(tools);
     }
 
-    private void load() {
-
-    }
-
-    void add(AbstractTool tool) {
-	tools.put(tool.name, tool);
-    }
-
-    protected void unload() {
-	if (tools == null)
-	    return;
+    public void unload() {
 	for (AbstractTool tool : tools.values()) {
 	    try {
 		tool.unload();
 	    } catch (Exception e) {
 		// This should never happen
-		System.err.println(e);
+		logger.warn(e.getMessage(), e);
 	    }
 	}
-	// Paranoid free
 	tools.clear();
+	cachedTools = Collections.EMPTY_MAP;
     }
 
-    public ToolMap getReadOnlyMap() {
-	return new ToolMap();
+    public AbstractTool get(String name) throws IOException {
+	trackedFile.check();
+	return cachedTools.get(name);
     }
 
-    public class ToolMap {
-
-	public AbstractTool get(String name) {
-	    return tools.get(name);
-	}
-    }
 }
