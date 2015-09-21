@@ -1,46 +1,59 @@
 {
-    "connectors": [
-          {
-            "name": "cassandra",
-            "class": "com.qwazr.connectors.CassandraConnector",
-            "hosts": [
-                "localhost"
-            ],
-            "timeout_connect_ms": 20000,
-            "timeout_read_ms": 60000,
-            "timeout_pool_ms": 10000
-        },
+  "connectors": [
+    {
+      "name": "cassandra",
+      "class": "com.qwazr.connectors.CassandraConnector",
+      "hosts": [
+        "localhost"
+      ],
+      "timeout_connect_ms": 20000,
+      "timeout_read_ms": 60000,
+      "timeout_pool_ms": 10000
+    },
+    {
+      "name": "hdfs",
+      "class": "com.qwazr.connectors.HdfsConnector",
+      "config_path": "src/test/resources/hadoop",
+      "config_files": [
+        "core-site.xml"
+      ]
+    },
+    {
+      "name": "ldap",
+      "class": "com.qwazr.connectors.LdapConnector",
+      "host": "loclahost",
+      "port": 389,
+      "base_dn": "dc=qwazr,dc=net",
+      "username": "cn=admin,dc=qwazr,dc=net",
+      "password": "test"
+    },
+    {
+      "name": "ftp",
+      "class": "com.qwazr.connectors.FtpConnector",
+      "username": "anonymous",
+      "password": "test@qwazr.com",
+      "hostname": "ftp.qwazr.com"
+    },
+    {
+      "name": "mysql",
+      "class": "com.qwazr.connectors.DatabaseConnector",
+      "driver": "com.mysql.jdbc.Driver",
+      "url": "jdbc:mysql://localhost:3306/test?autoReconnect=true",
+      "username": "test",
+      "password": "test"
+    },
+    {
+      "name": "mongo",
+      "class": "com.qwazr.connectors.MongoDbConnector",
+      "hostname": "localhost",
+      "port": 27017,
+      "credentials": [
         {
-            "name": "hdfs",
-            "class": "com.qwazr.connectors.HdfsConnector",
-            "config_path": "src/test/resources/hadoop",
-            "config_files": [ "core-site.xml" ]
-        },
-        {
-            "name": "oss",
-            "class": "com.qwazr.connectors.OpenSearchServerConnector",
-            "url": "http://localhost:9090"
-        },
-        {
-            "name": "mysql",
-            "class": "com.qwazr.connectors.DatabaseConnector",
-            "driver": "com.mysql.jdbc.Driver",
-            "url": "jdbc:mysql://localhost:3306/test?autoReconnect=true",
-            "username": "test",
-            "password": "test"
-        },
-        {
-            "name": "mongo",
-            "class": "com.qwazr.connectors.MongoDbConnector",
-            "hostname": "localhost",
-            "port": 27017,
-            "credentials": [
-            	{
-            		"database": "test",
-            		"username": "test",
-            		"password": "test"
-            	}
-            ]
+          "database": "test",
+          "username": "test",
+          "password": "test"
         }
-   ]
+      ]
+    }
+  ]
 }
