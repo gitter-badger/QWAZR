@@ -104,13 +104,13 @@ public class ServicesProvider extends AbstractConnector {
     public IndexServiceInterface getNewIndexClient(Boolean local, Integer msTimeout) throws URISyntaxException {
 	if (local != null && local)
 	    return new IndexServiceImpl();
-	String[] nodes = ClusterManager.INSTANCE.getClusterClient().getActiveNodes(SearchServer.SERVICE_NAME_INDEX);
+	String[] nodes = ClusterManager.INSTANCE.getClusterClient().getActiveNodes(SearchServer.SERVICE_NAME_SEARCH);
 	if (nodes == null)
 	    throw new RuntimeException("Index service not available");
 	if (nodes.length == 1)
 	    return new IndexSingleClient(nodes[0], msTimeout);
 	return new IndexMultiClient(executorService,
-			ClusterManager.INSTANCE.getClusterClient().getActiveNodes(SearchServer.SERVICE_NAME_INDEX),
+			ClusterManager.INSTANCE.getClusterClient().getActiveNodes(SearchServer.SERVICE_NAME_SEARCH),
 			msTimeout);
     }
 }
