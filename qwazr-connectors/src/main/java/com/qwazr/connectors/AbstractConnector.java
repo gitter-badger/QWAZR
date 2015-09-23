@@ -23,15 +23,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 
-@JsonSubTypes({ @Type(value = CassandraConnector.class),
-
-		@Type(value = DatabaseConnector.class),
-
-		@Type(value = FtpConnector.class),
-
-		@Type(value = HdfsConnector.class),
-
-		@Type(value = LdapConnector.class) })
+@JsonSubTypes({ @Type(value = CassandraConnector.class), @Type(value = DatabaseConnector.class),
+		@Type(value = EmailConnector.class), @Type(value = FtpConnector.class),
+		@Type(value = HdfsConnector.class), @Type(value = LdapConnector.class) })
 
 public abstract class AbstractConnector {
 

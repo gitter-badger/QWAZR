@@ -79,6 +79,11 @@
             <artifactId>api-util</artifactId>
             <version>1.0.0-M31</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-email</artifactId>
+            <version>1.4</version>
+        </dependency>
     </dependencies>
 
 </project>
