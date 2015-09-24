@@ -75,15 +75,9 @@ public class LdapConnector extends AbstractConnector {
 	return connection;
     }
 
-    public Entry auth(LdapConnection connection, String username, String password, String user_filter)
+    public Entry auth(LdapConnection connection, String user_filter, String password)
 		    throws LdapException, CursorException {
-	if (username != null) {
-	    if (password != null)
-		connection.bind(username, password);
-	    else
-		connection.bind(username);
-	} else
-	    connection.bind();
+	connection.bind();
 	EntryCursor cursor = connection.search(base_dn, user_filter, SearchScope.SUBTREE);
 	try {
 	    if (!cursor.next())
