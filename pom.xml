@@ -26,9 +26,9 @@
         <url>http://www.qwazr.com</url>
     </organization>
     <scm>
-        <connection>scm:git:git@github.com:qwazr/qwazr.git</connection>
-        <developerConnection>scm:git:git@github.com:qwazr/qwazr.git</developerConnection>
-        <url>git@github.com:qwazr/qwazr.git</url>
+        <connection>scm:git:git@github.com:qwazr/QWAZR.git</connection>
+        <developerConnection>scm:git:git@github.com:qwazr/QWAZR.git</developerConnection>
+        <url>git@github.com:qwazr/QWAZR.git</url>
     </scm>
     <issueManagement>
         <url>https://github.com/qwazr/issues</url>
