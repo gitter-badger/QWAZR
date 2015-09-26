@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,7 @@ package com.qwazr.utils.server;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.ws.rs.core.Application;
 
@@ -30,15 +31,15 @@ import com.qwazr.utils.json.JacksonConfig;
  */
 public abstract class RestApplication extends Application {
 
-	public final static String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
+    public final static String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
 
-	@Override
-	public Set<Class<?>> getClasses() {
-		HashSet<Class<?>> classes = new HashSet<Class<?>>();
-		classes.add(JacksonConfig.class);
-		classes.add(JacksonJsonProvider.class);
-		classes.add(Jackson2JsonpInterceptor.class);
-		return classes;
-	}
+    @Override
+    public Set<Class<?>> getClasses() {
+	Set<Class<?>> classes = new HashSet<Class<?>>();
+	classes.add(JacksonConfig.class);
+	classes.add(JacksonJsonProvider.class);
+	classes.add(Jackson2JsonpInterceptor.class);
+	return classes;
+    }
 
 }
