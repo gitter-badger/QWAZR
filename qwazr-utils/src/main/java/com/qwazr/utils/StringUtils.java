@@ -245,4 +245,13 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 	return sb.toString();
     }
 
+    /**
+     * Split the string by line separator
+     *
+     * @param str the string to split
+     * @return an array with one item per line
+     */
+    public static String[] splitLines(String str) {
+	return split(str, System.lineSeparator());
+    }
 }
