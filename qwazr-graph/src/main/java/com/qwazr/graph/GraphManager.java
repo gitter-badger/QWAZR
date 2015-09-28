@@ -19,6 +19,7 @@ import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.database.store.DatabaseException;
 import com.qwazr.database.store.Table;
+import com.qwazr.database.store.Tables;
 import com.qwazr.graph.model.GraphDefinition;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.DirectoryJsonManager;
@@ -61,7 +62,8 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	graphMap = new HashMap<String, GraphInstance>();
 	executor = Executors.newFixedThreadPool(8);
 	Runtime.getRuntime().addShutdownHook(new Thread() {
-	    @Override public void run() {
+	    @Override
+	    public void run() {
 		executor.shutdown();
 	    }
 	});
@@ -72,7 +74,7 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	File dbDirectory = new File(directory, graphName);
 	if (!dbDirectory.exists())
 	    dbDirectory.mkdir();
-	Table table = Table.getInstance(dbDirectory, true);
+	Table table = Tables.getInstance(dbDirectory, true);
 	GraphInstance graphInstance = new GraphInstance(graphName, table, graphDef);
 	graphInstance.checkFields();
 	graphMap.put(graphName, graphInstance);
@@ -91,11 +93,13 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	}
     }
 
-    @Override public Set<String> nameSet() {
+    @Override
+    public Set<String> nameSet() {
 	return super.nameSet();
     }
 
-    @Override public GraphDefinition get(String name) throws IOException {
+    @Override
+    public GraphDefinition get(String name) throws IOException {
 	return super.get(name);
     }
 
@@ -111,12 +115,13 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	}
     }
 
-    @Override public GraphDefinition delete(String graphName) throws ServerException, IOException {
+    @Override
+    public GraphDefinition delete(String graphName) throws ServerException, IOException {
 	rwl.w.lock();
 	try {
 	    GraphDefinition graphDef = super.delete(graphName);
 	    File dbDirectory = new File(directory, graphName);
-	    Table table = Table.getInstance(dbDirectory, false);
+	    Table table = Tables.getInstance(dbDirectory, false);
 	    if (table != null)
 		table.close();
 	    FileUtils.deleteDirectory(dbDirectory);
