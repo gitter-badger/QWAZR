@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,9 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.ProtectionDomain;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,13 +41,13 @@ public class ScriptUtils {
 
 		static {
 			INSTANCE = new AccessControlContext(
-					new ProtectionDomain[] { new ProtectionDomain(null, null) });
+					new ProtectionDomain[]{new ProtectionDomain(null, null)});
 		}
 	}
 
 	public static void evalScript(final ScriptEngine scriptEngine,
-			final AccessControlContext controlContext, final Reader reader,
-			final Bindings bindings) throws ScriptException,
+								  final AccessControlContext controlContext, final Reader reader,
+								  final Bindings bindings) throws ScriptException,
 			PrivilegedActionException {
 		AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
 			@Override
@@ -65,7 +67,7 @@ public class ScriptUtils {
 		Map<String, T> map = new LinkedHashMap<String, T>();
 		if (som.isEmpty())
 			return map;
-		som.forEach((s, o) -> map.put(s, ((ScriptObjectMirror)o).to(type)));
+		som.forEach((s, o) -> map.put(s, ((ScriptObjectMirror) o).to(type)));
 		return map;
 	}
 
@@ -74,9 +76,25 @@ public class ScriptUtils {
 			return null;
 		if (!som.isArray())
 			throw new ScriptException("The JS object is not an array");
-		T[] array = (T[])new Object[som.size()];
+		T[] array = (T[]) new Object[som.size()];
 		final AtomicInteger i = new AtomicInteger(0);
 		som.values().forEach(o -> array[i.getAndIncrement()] = ((ScriptObjectMirror) o).to(type));
 		return array;
+	}
+
+	public static void fillStringCollection(ScriptObjectMirror som, Collection<String> collection)
+			throws ScriptException {
+		if (som == null)
+			return;
+		if (!som.isArray())
+			throw new ScriptException("The JS object is not an array");
+		som.values().forEach(o -> collection.add(o.toString()));
+	}
+
+	public static void fillStringMap(ScriptObjectMirror som, Map<String, String> map)
+			throws ScriptException {
+		if (som == null)
+			return;
+		som.forEach((s, o) -> map.put(s, o.toString()));
 	}
 }

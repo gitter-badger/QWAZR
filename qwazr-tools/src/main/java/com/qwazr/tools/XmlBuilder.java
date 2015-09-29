@@ -15,21 +15,35 @@
  **/
 package com.qwazr.tools;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.qwazr.tools.postagger.POSTaggerTool;
+import com.jamesmurty.utils.XMLBuilder2;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-@JsonSubTypes({ @Type(value = MarkdownTool.class), @Type(value = POSTaggerTool.class),
-		@Type(value = FreeMarkerTool.class) })
-public abstract class AbstractTool {
+public class XMLBuilder extends AbstractTool {
 
-    public final String name = null;
+    @Override
+    public void load(File parentDir) {
+    }
 
-    public abstract void load(File parentDir);
+    @Override
+    public void unload() {
+    }
 
-    public abstract void unload();
+    /**
+     * {@link XMLBuilder2}
+     */
+    public XMLBuilder2 create(String root) {
+	return XMLBuilder2.create(root);
+    }
+
+    public void saveTo(XMLBuilder2 builder, String path) throws IOException {
+	FileWriter writer = new FileWriter(path);
+	try {
+	    builder.toWriter(true, writer, null);
+	} finally {
+	    writer.close();
+	}
+    }
 }

@@ -15,7 +15,6 @@
  **/
 package com.qwazr.tools;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.qwazr.utils.TrackedFile;
 import com.qwazr.utils.json.JsonMapper;
 import org.slf4j.Logger;
