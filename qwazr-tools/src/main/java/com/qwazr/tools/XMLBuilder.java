@@ -32,7 +32,12 @@ public class XMLBuilder extends AbstractTool {
     }
 
     /**
-     * {@link XMLBuilder2}
+     *
+     * @param root
+     *            the name of the root element
+     * @return an new XML builder instance
+     *
+     *         {@link XMLBuilder2}
      */
     public XMLBuilder2 create(String root) {
 	return XMLBuilder2.create(root);
