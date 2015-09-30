@@ -23,32 +23,32 @@ import java.io.IOException;
 
 public class XMLBuilder extends AbstractTool {
 
-    @Override
-    public void load(File parentDir) {
-    }
-
-    @Override
-    public void unload() {
-    }
-
-    /**
-     *
-     * @param root
-     *            the name of the root element
-     * @return an new XML builder instance
-     *
-     *         {@link XMLBuilder2}
-     */
-    public XMLBuilder2 create(String root) {
-	return XMLBuilder2.create(root);
-    }
-
-    public void saveTo(XMLBuilder2 builder, String path) throws IOException {
-	FileWriter writer = new FileWriter(path);
-	try {
-	    builder.toWriter(true, writer, null);
-	} finally {
-	    writer.close();
+	@Override
+	public void load(File parentDir) {
 	}
-    }
+
+	@Override
+	public void unload() {
+	}
+
+	/**
+	 *
+	 * @param root
+	 *            the name of the root element
+	 * @return an new XML builder instance
+	 *
+	 *         {@link XMLBuilder2}
+	 */
+	public XMLBuilder2 create(String root) {
+		return XMLBuilder2.create(root);
+	}
+
+	public void saveTo(XMLBuilder2 builder, String path) throws IOException {
+		FileWriter writer = new FileWriter(path);
+		try {
+			builder.toWriter(true, writer, null);
+		} finally {
+			writer.close();
+		}
+	}
 }

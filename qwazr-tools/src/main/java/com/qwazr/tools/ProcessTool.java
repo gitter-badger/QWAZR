@@ -28,108 +28,108 @@ import java.util.Map;
 
 public class ProcessTool extends AbstractTool {
 
-    final public List<String> commands = null;
-    final public Map<String, String> environnment_variables = null;
-    final public String working_directory = null;
+	final public List<String> commands = null;
+	final public Map<String, String> environnment_variables = null;
+	final public String working_directory = null;
 
-    @Override
-    public void load(File parentDir) {
-    }
-
-    @Override
-    public void unload() {
-    }
-
-    public Process execute(File workingDirectory, List<String> commandAndArgs, Map<String, String> env,
-	    File outputFile, File errorFile) throws IOException {
-
-	List<String> commandsAndArgs = new ArrayList<String>();
-	if (commands != null)
-	    commandsAndArgs.addAll(commands);
-	// create the process builder
-	final ProcessBuilder processBuilder = new ProcessBuilder(commandsAndArgs);
-
-	// Set the working directory
-	final File workingDirectoryFile;
-	if (workingDirectory != null)
-	    workingDirectoryFile = workingDirectory;
-	else if (working_directory != null)
-	    workingDirectoryFile = new File(working_directory);
-	else
-	    workingDirectoryFile = null;
-	if (!workingDirectoryFile.exists())
-	    throw new IOException("The path does not exist: " + workingDirectoryFile);
-	if (!workingDirectoryFile.isDirectory())
-	    throw new IOException("The path is not a directory: " + workingDirectoryFile);
-	processBuilder.directory(workingDirectoryFile);
-
-	// Set IN/OUT
-	if (errorFile != null) {
-	    if (errorFile == outputFile)
-		processBuilder.redirectErrorStream(true);
-	    else
-		processBuilder.redirectError(errorFile);
+	@Override
+	public void load(File parentDir) {
 	}
-	if (outputFile != null)
-	    processBuilder.redirectOutput(outputFile);
 
-	// Execute
-	return processBuilder.start();
-    }
+	@Override
+	public void unload() {
+	}
 
-    /**
-     * Call this command from Javascript to execute a local binary.
-     * 
-     * <pre>
-     * {@code
-     * {
-     *     "working_directory": "/path/to/directory",
-     *     "environment_variables": {
-     *         "lang": "de",
-     *         "hello": "world"
-     *     },
-     *     "commands": ["convert", "my.jpg", "my.gif"],
-     *     "output_file": "/path/to/out.log",
-     *     "error_file": "/path/to/in.log"
-     * }
-     * }
-     * </pre>
-     *
-     * @param som
-     *            The Javascript object
-     * @return
-     */
-    public Process execute(ScriptObjectMirror som) throws ScriptException, IOException {
+	public Process execute(File workingDirectory, List<String> commandAndArgs, Map<String, String> env,
+						   File outputFile, File errorFile) throws IOException {
 
-	// Extract the working directoru
-	String workingDirectory = (String) som.get("working_directory");
-	final File workingDirectoryFile = workingDirectory != null ? new File(workingDirectory) : null;
+		List<String> commandsAndArgs = new ArrayList<String>();
+		if (commands != null)
+			commandsAndArgs.addAll(commands);
+		// create the process builder
+		final ProcessBuilder processBuilder = new ProcessBuilder(commandsAndArgs);
 
-	// Extracts the arguments
-	ScriptObjectMirror jsCommands = (ScriptObjectMirror) som.get("commands");
-	final List<String> commands;
-	if (jsCommands != null) {
-	    commands = new ArrayList<String>(jsCommands.size());
-	    ScriptUtils.fillStringCollection(jsCommands, commands);
-	} else
-	    commands = null;
+		// Set the working directory
+		final File workingDirectoryFile;
+		if (workingDirectory != null)
+			workingDirectoryFile = workingDirectory;
+		else if (working_directory != null)
+			workingDirectoryFile = new File(working_directory);
+		else
+			workingDirectoryFile = null;
+		if (!workingDirectoryFile.exists())
+			throw new IOException("The path does not exist: " + workingDirectoryFile);
+		if (!workingDirectoryFile.isDirectory())
+			throw new IOException("The path is not a directory: " + workingDirectoryFile);
+		processBuilder.directory(workingDirectoryFile);
 
-	// Set the environment variables
-	ScriptObjectMirror jsEnv = (ScriptObjectMirror) som.get("environment_variables");
-	final Map<String, String> envVars;
-	if (jsEnv != null) {
-	    envVars = new LinkedHashMap<String, String>();
-	    ScriptUtils.fillStringMap(jsEnv, envVars);
-	} else
-	    envVars = null;
+		// Set IN/OUT
+		if (errorFile != null) {
+			if (errorFile == outputFile)
+				processBuilder.redirectErrorStream(true);
+			else
+				processBuilder.redirectError(errorFile);
+		}
+		if (outputFile != null)
+			processBuilder.redirectOutput(outputFile);
 
-	// Set the output and error files
-	String outputPath = (String) som.get("output_file");
-	final File outputFile = outputPath != null ? new File(outputPath) : null;
-	String errorPath = (String) som.get("error_file");
-	final File errorFile = errorPath != null ? new File(errorPath) : null;
+		// Execute
+		return processBuilder.start();
+	}
 
-	return execute(workingDirectoryFile, commands, envVars, outputFile, errorFile);
-    }
+	/**
+	 * Call this command from Javascript to execute a local binary.
+	 *
+	 * <pre>
+	 * {@code
+	 * {
+	 *     "working_directory": "/path/to/directory",
+	 *     "environment_variables": {
+	 *         "lang": "de",
+	 *         "hello": "world"
+	 *     },
+	 *     "commands": ["convert", "my.jpg", "my.gif"],
+	 *     "output_file": "/path/to/out.log",
+	 *     "error_file": "/path/to/in.log"
+	 * }
+	 * }
+	 * </pre>
+	 *
+	 * @param som
+	 *            The Javascript object
+	 * @return
+	 */
+	public Process execute(ScriptObjectMirror som) throws ScriptException, IOException {
+
+		// Extract the working directoru
+		String workingDirectory = (String) som.get("working_directory");
+		final File workingDirectoryFile = workingDirectory != null ? new File(workingDirectory) : null;
+
+		// Extracts the arguments
+		ScriptObjectMirror jsCommands = (ScriptObjectMirror) som.get("commands");
+		final List<String> commands;
+		if (jsCommands != null) {
+			commands = new ArrayList<String>(jsCommands.size());
+			ScriptUtils.fillStringCollection(jsCommands, commands);
+		} else
+			commands = null;
+
+		// Set the environment variables
+		ScriptObjectMirror jsEnv = (ScriptObjectMirror) som.get("environment_variables");
+		final Map<String, String> envVars;
+		if (jsEnv != null) {
+			envVars = new LinkedHashMap<String, String>();
+			ScriptUtils.fillStringMap(jsEnv, envVars);
+		} else
+			envVars = null;
+
+		// Set the output and error files
+		String outputPath = (String) som.get("output_file");
+		final File outputFile = outputPath != null ? new File(outputPath) : null;
+		String errorPath = (String) som.get("error_file");
+		final File errorFile = errorPath != null ? new File(errorPath) : null;
+
+		return execute(workingDirectoryFile, commands, envVars, outputFile, errorFile);
+	}
 
 }
