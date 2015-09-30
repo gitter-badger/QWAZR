@@ -15,64 +15,60 @@
  */
 package com.qwazr.utils.jdbc;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
+import java.util.AbstractMap;
 import java.util.Set;
 
 /**
  * Represents a row from a ResultSet. A convenient way to retrieve data from
  * ResultSet if you don't want to use POJO. *
  */
-public class Row {
+public class Row extends AbstractMap<String, Object> {
 
-	private final Map<String, Integer> columnMap;
+    private final RowSet rowSet;
 
-	private final Object[] columns;
+    Row(RowSet rowSet) {
+	this.rowSet = rowSet;
+    }
 
-	Row(Map<String, Integer> columnMap, int columnCount) {
-		this.columnMap = columnMap;
-		this.columns = new Object[columnCount];
-	}
+    @Override
+    public Set<Entry<String, Object>> entrySet() {
+	return rowSet;
+    }
 
-	Row(Map<String, Integer> columnMap, int columnCount, ResultSet rs) throws SQLException {
-		this(columnMap, columnCount);
-		for (Map.Entry<String, Integer> entry : columnMap.entrySet()) {
-			int columnIndex = entry.getValue();
-			Object object = rs.getObject(columnIndex + 1);
-			columns[columnIndex] = object;
-		}
-	}
+    /**
+     * @param columnNumber
+     *            the number of the column
+     * @return the value for the give column
+     */
+    final public Object get(int columnNumber) {
+	Object col = rowSet.columns[columnNumber];
+	if (col == null)
+	    return null;
+	return col;
+    }
 
-	/**
-	 * @param columnNumber the number of the column
-	 * @return the value for the give column
-	 */
-	final public Object get(int columnNumber) {
-		Object col = columns[columnNumber];
-		if (col == null)
-			return null;
-		return col;
-	}
+    /**
+     * @param label
+     *            the label of the column
+     * @return the value for the given column label
+     */
+    final public Object get(Object label) {
+	Integer colNumber = rowSet.columnMap.get(label.toString());
+	if (colNumber == null)
+	    return null;
+	if (colNumber > rowSet.columns.length)
+	    return null;
+	return rowSet.columns[colNumber];
+    }
 
-	/**
-	 * @param label the label of the column
-	 * @return the value for the given column label
-	 */
-	final public Object get(String label) {
-		Integer colNumber = columnMap.get(label);
-		if (colNumber == null)
-			return null;
-		if (colNumber > columns.length)
-			return null;
-		return columns[colNumber];
-	}
+    @Override
+    public boolean containsValue(Object value) {
+	if (rowSet.columns == null)
+	    return false;
+	for (Object col : rowSet.columns)
+	    if (col == value)
+		return true;
+	return false;
+    }
 
-	final public int size() {
-		return columns == null ? 0 : columns.length;
-	}
-
-	final public Set<String> getColumns() {
-		return columnMap.keySet();
-	}
 }
