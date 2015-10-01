@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletException;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.util.logging.Level;
 
 /**
@@ -187,20 +188,21 @@ public abstract class AbstractServer {
 
 		File dataDir = null;
 		// Data directory option
-		if (serverDefinition.defaultDataDirName != null) {
+		if (cmd.hasOption(DATADIR_OPTION.getOpt())) {
+			dataDir = new File(cmd.getOptionValue(DATADIR_OPTION.getOpt()));
+			if (!dataDir.exists())
+				throw new IOException("The data directory does not exists: " + dataDir);
+		} else if (serverDefinition.defaultDataDirName != null) {
 			dataDir = new File(System.getProperty("user.home"),
 					serverDefinition.defaultDataDirName);
-			if (cmd.hasOption(DATADIR_OPTION.getOpt()))
-				dataDir = new File(cmd.getOptionValue(DATADIR_OPTION.getOpt()));
-			if (!dataDir.exists())
-				throw new IOException("The data directory does not exists: "
-						+ dataDir);
-			if (!dataDir.isDirectory())
-				throw new IOException(
-						"The data directory path is not a directory: "
-								+ dataDir);
-
 		}
+		if (dataDir == null || !dataDir.exists())
+			dataDir = new File(System.getProperty("user.dir"));
+		if (!dataDir.isDirectory())
+			throw new IOException(
+					"The data directory path is not a directory: "
+							+ dataDir);
+		logger.info("Data directory sets to: " + dataDir);
 
 		currentDataDir = dataDir;
 
