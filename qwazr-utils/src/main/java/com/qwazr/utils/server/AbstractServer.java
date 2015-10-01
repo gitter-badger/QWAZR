@@ -188,19 +188,21 @@ public abstract class AbstractServer {
 
 		File dataDir = null;
 		// Data directory option
-		if (serverDefinition.defaultDataDirName != null) {
-			dataDir = new File(System.getProperty("user.dir"),
-					serverDefinition.defaultDataDirName);
-			if (cmd.hasOption(DATADIR_OPTION.getOpt()))
-				dataDir = new File(cmd.getOptionValue(DATADIR_OPTION.getOpt()));
+		if (cmd.hasOption(DATADIR_OPTION.getOpt())) {
+			dataDir = new File(cmd.getOptionValue(DATADIR_OPTION.getOpt()));
 			if (!dataDir.exists())
-				throw new IOException("The data directory does not exists: "
-						+ dataDir);
-			if (!dataDir.isDirectory())
-				throw new IOException(
-						"The data directory path is not a directory: "
-								+ dataDir);
+				throw new IOException("The data directory does not exists: " + dataDir);
+		} else if (serverDefinition.defaultDataDirName != null) {
+			dataDir = new File(System.getProperty("user.home"),
+					serverDefinition.defaultDataDirName);
 		}
+		if (dataDir == null || !dataDir.exists())
+			dataDir = new File(System.getProperty("user.dir"));
+		if (!dataDir.isDirectory())
+			throw new IOException(
+					"The data directory path is not a directory: "
+							+ dataDir);
+		logger.info("Data directory sets to: " + dataDir);
 
 		currentDataDir = dataDir;
 
