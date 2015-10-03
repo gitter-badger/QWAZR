@@ -82,43 +82,34 @@ public class Qwazr extends AbstractServer {
 	super(serverDefinition);
     }
 
-    @Path("/")
-    public static class WelcomeServiceImpl {
+    @Path("/") public static class WelcomeServiceImpl {
 
-	@GET
-	@Path("/")
-	@Produces(MediaType.APPLICATION_JSON)
-	public WelcomeStatus welcome() {
+	@GET @Path("/") @Produces(MediaType.APPLICATION_JSON) public WelcomeStatus welcome() {
 	    return new WelcomeStatus(services);
 	}
 
     }
 
-    @ApplicationPath("/")
-    public static class QwazrApplication extends RestApplication {
+    @ApplicationPath("/") public static class QwazrApplication extends RestApplication {
 
-	@Override
-	public synchronized Set<Class<?>> getClasses() {
+	@Override public synchronized Set<Class<?>> getClasses() {
 	    Set<Class<?>> classes = super.getClasses();
 	    services.forEach((s, classes1) -> classes.addAll(classes1));
 	    return classes;
 	}
     }
 
-    @Override
-    public void defineOptions(Options options) {
+    @Override public void defineOptions(Options options) {
 	super.defineOptions(options);
 	options.addOption(JobServer.THREADS_OPTION);
     }
 
-    @Override
-    public void commandLine(CommandLine cmd) throws IOException {
+    @Override public void commandLine(CommandLine cmd) throws IOException {
 	// Load the configuration
 	serverConfiguration = new ServerConfiguration();
     }
 
-    @Override
-    public void load() throws IOException {
+    @Override public void load() throws IOException {
 
 	File currentDataDir = getCurrentDataDir();
 
@@ -178,15 +169,13 @@ public class Qwazr extends AbstractServer {
 
     }
 
-    @Override
-    public ServletApplication getServletApplication() {
+    @Override public ServletApplication getServletApplication() {
 	if (ServiceEnum.webapps.isActive(serverConfiguration))
 	    return new WebappApplication();
 	return null;
     }
 
-    @Override
-    public RestApplication getRestApplication() {
+    @Override public RestApplication getRestApplication() {
 	return new QwazrApplication();
     }
 
