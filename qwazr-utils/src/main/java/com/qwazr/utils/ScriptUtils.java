@@ -34,7 +34,7 @@ import javax.script.Bindings;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-public class ScriptUtils {
+public class ScriptUtils  {
 
 	public static class RestrictedAccessControlContext {
 		public static final AccessControlContext INSTANCE;
