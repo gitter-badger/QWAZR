@@ -17,17 +17,21 @@ package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.apache.directory.api.ldap.model.constants.LdapSecurityConstants;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
-import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.entry.*;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.api.ldap.model.password.PasswordUtil;
 import org.apache.directory.ldap.client.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LdapConnector extends AbstractConnector {
@@ -75,25 +79,80 @@ public class LdapConnector extends AbstractConnector {
 	return connection;
     }
 
-    public Entry auth(LdapConnection connection, String user_filter, String password)
-		    throws LdapException, CursorException {
+    public Entry auth(LdapConnection connection, String user_filter, String password) throws LdapException,
+	    CursorException {
+	Entry entry = getEntry(connection, user_filter);
+	if (entry == null)
+	    throw new LdapException("User not found");
+	Dn userDN = entry.getDn();
+	connection.unBind();
+	connection.bind(userDN, password);
+	return entry;
+    }
+
+    public Entry getEntry(LdapConnection connection, String filter) throws LdapException, CursorException {
 	connection.bind();
-	EntryCursor cursor = connection.search(base_dn, user_filter, SearchScope.SUBTREE);
+	EntryCursor cursor = connection.search(base_dn, filter, SearchScope.SUBTREE);
 	try {
 	    if (!cursor.next())
-		throw new LdapException("No entry found");
+		return null;
 	    Entry entry = cursor.get();
 	    if (entry == null)
 		throw new LdapException("No entry found");
-	    Dn userDN = entry.getDn();
-	    connection.unBind();
-	    connection.bind(userDN, password);
 	    return entry;
 	} finally {
 	    if (!cursor.isClosed())
 		cursor.close();
 	}
+    }
 
+    public void add(LdapConnection connection, String dn, Object... elements) throws LdapException {
+	connection.bind();
+	connection.add(new DefaultEntry(dn, elements));
+    }
+
+    public void createUser(LdapConnection connection, String dn, String clearPassword, ScriptObjectMirror attrs)
+	    throws LdapException {
+	connection.bind();
+	Entry entry = new DefaultEntry(dn + ", " + base_dn);
+	if (clearPassword != null)
+	    entry.add("userPassword", getShaPassword(clearPassword));
+	if (attrs != null) {
+	    for (Map.Entry<String, Object> attr : attrs.entrySet()) {
+		String key = attr.getKey();
+		Object value = attr.getValue();
+		if (value instanceof String) {
+		    entry.add(key, (String) value);
+		} else if (value instanceof ScriptObjectMirror) {
+		    ScriptObjectMirror som = (ScriptObjectMirror) value;
+		    if (som.isArray()) {
+			for (Object obj : som.values())
+			    entry.add(key, obj.toString());
+		    } else
+			throw new LdapException("Unsupported hash: " + som);
+		} else
+		    throw new LdapException("Unsupported type: " + value.getClass());
+	    }
+	}
+	connection.add(entry);
+    }
+
+    public void updatePassword(LdapConnection connection, String dn, String passwordAttribute, String clearPassword)
+	    throws LdapException {
+	connection.bind();
+	Modification changePassword = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
+		passwordAttribute, getShaPassword(clearPassword));
+	connection.modify(dn + ", " + base_dn, changePassword);
+    }
+
+    public void updateString(LdapConnection connection, String dn, String attr, String... values) throws LdapException {
+	connection.bind();
+	Modification modif = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, attr, values);
+	connection.modify(dn + ", " + base_dn, modif);
+    }
+
+    public byte[] getShaPassword(String clearPassword) {
+	return PasswordUtil.createStoragePassword(clearPassword.getBytes(), LdapSecurityConstants.HASH_METHOD_SHA);
     }
 
     public void unload() {
