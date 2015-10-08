@@ -81,23 +81,29 @@ public class LdapConnector extends AbstractConnector {
 
     public Entry auth(LdapConnection connection, String user_filter, String password) throws LdapException,
 	    CursorException {
+	Entry entry = getEntry(connection, user_filter);
+	if (entry == null)
+	    throw new LdapException("User not found");
+	Dn userDN = entry.getDn();
+	connection.unBind();
+	connection.bind(userDN, password);
+	return entry;
+    }
+
+    public Entry getEntry(LdapConnection connection, String filter) throws LdapException, CursorException {
 	connection.bind();
-	EntryCursor cursor = connection.search(base_dn, user_filter, SearchScope.SUBTREE);
+	EntryCursor cursor = connection.search(base_dn, filter, SearchScope.SUBTREE);
 	try {
 	    if (!cursor.next())
-		throw new LdapException("No entry found");
+		return null;
 	    Entry entry = cursor.get();
 	    if (entry == null)
 		throw new LdapException("No entry found");
-	    Dn userDN = entry.getDn();
-	    connection.unBind();
-	    connection.bind(userDN, password);
 	    return entry;
 	} finally {
 	    if (!cursor.isClosed())
 		cursor.close();
 	}
-
     }
 
     public void add(LdapConnection connection, String dn, Object... elements) throws LdapException {
@@ -136,7 +142,13 @@ public class LdapConnector extends AbstractConnector {
 	connection.bind();
 	Modification changePassword = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
 		passwordAttribute, getShaPassword(clearPassword));
-	connection.modify(dn, changePassword);
+	connection.modify(dn + ", " + base_dn, changePassword);
+    }
+
+    public void updateString(LdapConnection connection, String dn, String attr, String... values) throws LdapException {
+	connection.bind();
+	Modification modif = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, attr, values);
+	connection.modify(dn + ", " + base_dn, modif);
     }
 
     public byte[] getShaPassword(String clearPassword) {
