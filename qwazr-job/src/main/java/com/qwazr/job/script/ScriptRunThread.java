@@ -19,10 +19,8 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.connectors.AbstractConnector;
 import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.job.script.ScriptRunStatus.ScriptState;
-import com.qwazr.tools.AbstractTool;
 import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.IOUtils;
 import org.slf4j.Logger;
@@ -39,7 +37,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@JsonInclude(Include.NON_EMPTY) public class ScriptRunThread extends SimpleScriptContext implements Runnable {
+@JsonInclude(Include.NON_EMPTY)
+public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(ScriptRunThread.class);
 
@@ -58,7 +57,7 @@ import java.util.Set;
     private final File scriptFile;
 
     ScriptRunThread(ScriptEngine scriptEngine, File scriptFile, Map<String, ? extends Object> bindings,
-		    ConnectorManager connectors, ToolsManager tools) {
+	    ConnectorManager connectors, ToolsManager tools) {
 	uuid = UUIDs.timeBased().toString();
 	state = ScriptState.ready;
 	startTime = null;
@@ -92,7 +91,8 @@ import java.util.Set;
 	}
     }
 
-    @Override public void run() {
+    @Override
+    public void run() {
 	logger.info("Execute: " + scriptFile.getName());
 	state = ScriptState.running;
 	startTime = System.currentTimeMillis();
@@ -138,7 +138,7 @@ import java.util.Set;
 
     public ScriptRunStatus getStatus() {
 	return new ScriptRunStatus(ClusterManager.INSTANCE.myAddress, scriptFile.getName(), uuid, state, startTime,
-			endTime, bindings == null ? null : bindings.keySet(), exception);
+		endTime, bindings == null ? null : bindings.keySet(), exception);
     }
 
     boolean hasExpired(long currentTime) {
