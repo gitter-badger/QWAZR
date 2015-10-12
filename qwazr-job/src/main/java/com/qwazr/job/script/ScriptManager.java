@@ -15,29 +15,6 @@
  **/
 package com.qwazr.job.script;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.ws.rs.core.Response.Status;
-
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.job.JobServer;
@@ -46,6 +23,20 @@ import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.LockUtils.ReadWriteLock;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.server.ServerException;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.ws.rs.core.Response.Status;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ScriptManager {
 
@@ -109,9 +100,9 @@ public class ScriptManager {
     }
 
     private ScriptRunThread getNewScriptRunThread(String scriptPath, Map<String, ? extends Object> objects)
-		    throws ServerException, IOException {
+	    throws ServerException, IOException {
 	ScriptRunThread scriptRunThread = new ScriptRunThread(scriptEngine, getScriptFile(scriptPath), objects,
-			ConnectorManager.INSTANCE, ToolsManager.INSTANCE);
+		ConnectorManager.INSTANCE, ToolsManager.INSTANCE);
 	addScriptRunThread(scriptPath, scriptRunThread);
 	return scriptRunThread;
     }
@@ -125,8 +116,8 @@ public class ScriptManager {
 	return scriptRunThread;
     }
 
-    public ScriptRunStatus runAsync(String scriptPath, Map<String, ? extends Object> objects)
-		    throws ServerException, IOException {
+    public ScriptRunStatus runAsync(String scriptPath, Map<String, ? extends Object> objects) throws ServerException,
+	    IOException {
 	if (logger.isInfoEnabled())
 	    logger.info("Run async: " + scriptPath);
 	ScriptRunThread scriptRunThread = getNewScriptRunThread(scriptPath, objects);
@@ -184,10 +175,11 @@ public class ScriptManager {
 	}
     }
 
-    public ScriptMultiClient getNewClient(Integer msTimeout) throws URISyntaxException {
-	return new ScriptMultiClient(clientExecutorService,
-			ClusterManager.INSTANCE.getClusterClient().getActiveNodes(JobServer.SERVICE_NAME_SCRIPT),
-			msTimeout);
+    public ScriptServiceInterface getNewClient(Integer msTimeout) throws URISyntaxException {
+	if (!ClusterManager.INSTANCE.isCluster())
+	    return new ScriptServiceImpl();
+	return new ScriptMultiClient(clientExecutorService, ClusterManager.INSTANCE.getClusterClient().getActiveNodes(
+		JobServer.SERVICE_NAME_SCRIPT), msTimeout);
     }
 
     void getSemaphores(Collection<String> semaphores) {
