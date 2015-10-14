@@ -17,14 +17,15 @@ package com.qwazr.search.index;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.TimeTracker;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.facet.FacetResult;
 import org.apache.lucene.facet.Facets;
 import org.apache.lucene.facet.LabelAndValue;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
@@ -39,6 +40,7 @@ public class ResultDefinition {
     final public Float max_score;
     final public List<ResultDocument> documents;
     final public Map<String, Map<String, Number>> facets;
+    final public String query;
 
     public ResultDefinition() {
 	this.timer = null;
@@ -46,6 +48,7 @@ public class ResultDefinition {
 	this.documents = null;
 	this.facets = null;
 	this.max_score = null;
+	this.query = null;
     }
 
     public class ResultDocument {
@@ -104,15 +107,23 @@ public class ResultDefinition {
 	}
     }
 
+    private static String getQuery(Boolean queryDebug, String defaultField, Query query) {
+	if (queryDebug == null || query == null)
+	    return null;
+	if (!queryDebug && query != null)
+	    return null;
+	return query.toString(defaultField == null ? StringUtils.EMPTY : defaultField);
+    }
+
     ResultDefinition(TimeTracker timeTracker, IndexSearcher searcher, TopDocs topDocs, QueryDefinition queryDef,
-	    Facets facets, Map<String, String[]> postingsHighlightsMap) throws IOException {
+	    Facets facets, Map<String, String[]> postingsHighlightsMap, Query query) throws IOException {
+	this.query = getQuery(queryDef.query_debug, queryDef.default_field, query);
 	total_hits = topDocs.totalHits;
 	max_score = topDocs.getMaxScore();
 	int pos = queryDef.start == null ? 0 : queryDef.start;
 	int end = queryDef.getEnd();
 	documents = new ArrayList<ResultDocument>();
 	ScoreDoc[] docs = topDocs.scoreDocs;
-	IndexReader reader = searcher.getIndexReader();
 	while (pos < total_hits && pos < end) {
 	    final ScoreDoc scoreDoc = docs[pos];
 	    final Document document = searcher.doc(scoreDoc.doc, queryDef.returned_fields);
@@ -126,15 +137,15 @@ public class ResultDefinition {
 	this.timer = timeTracker == null ? null : timeTracker.getMap();
     }
 
-    ResultDefinition(TimeTracker timeTracker, IndexSearcher searcher, TopDocs topDocs, MltQueryDefinition mltQueryDef)
-	    throws IOException {
+    ResultDefinition(TimeTracker timeTracker, IndexSearcher searcher, TopDocs topDocs, MltQueryDefinition mltQueryDef,
+	    Query query) throws IOException {
+	this.query = getQuery(mltQueryDef.query_debug, null, query);
 	total_hits = topDocs.totalHits;
 	max_score = topDocs.getMaxScore();
 	int pos = mltQueryDef.start == null ? 0 : mltQueryDef.start;
 	int end = mltQueryDef.getEnd();
 	documents = new ArrayList<ResultDocument>();
 	ScoreDoc[] docs = topDocs.scoreDocs;
-	IndexReader reader = searcher.getIndexReader();
 	while (pos < total_hits && pos < end) {
 	    final ScoreDoc scoreDoc = docs[pos];
 	    final Document document = searcher.doc(scoreDoc.doc, mltQueryDef.returned_fields);
@@ -147,6 +158,7 @@ public class ResultDefinition {
     }
 
     ResultDefinition(TimeTracker timeTracker) {
+	query = null;
 	total_hits = 0;
 	documents = Collections.emptyList();
 	facets = null;
@@ -219,5 +231,9 @@ public class ResultDefinition {
 
     public Map<String, Long> getTimer() {
 	return timer;
+    }
+
+    public String getQuery() {
+	return query;
     }
 }
