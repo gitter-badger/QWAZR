@@ -16,6 +16,7 @@
 package com.qwazr.utils.jdbc;
 
 import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -69,6 +70,10 @@ public class Row extends AbstractMap<String, Object> {
 	    if (col == value)
 		return true;
 	return false;
+    }
+
+    public Collection<String> getColumns() {
+	return rowSet.columnMap.keySet();
     }
 
 }
