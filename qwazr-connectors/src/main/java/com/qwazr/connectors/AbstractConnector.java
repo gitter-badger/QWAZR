@@ -15,23 +15,24 @@
  **/
 package com.qwazr.connectors;
 
-import java.io.File;
-
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.io.File;
+
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 
 @JsonSubTypes({ @Type(value = CassandraConnector.class), @Type(value = DatabaseConnector.class),
-		@Type(value = EmailConnector.class), @Type(value = FtpConnector.class),
-		@Type(value = HdfsConnector.class), @Type(value = LdapConnector.class) })
+				@Type(value = EmailConnector.class), @Type(value = FtpConnector.class),
+				@Type(value = HdfsConnector.class), @Type(value = LdapConnector.class),
+				@Type(value = MongoDbConnector.class), @Type(value = TableRealmConnector.class) })
 
 public abstract class AbstractConnector {
 
-    public final String name = null;
+	public final String name = null;
 
-    public abstract void load(File parentDir);
+	public abstract void load(File parentDir);
 
-    public abstract void unload();
+	public abstract void unload();
 }

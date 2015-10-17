@@ -15,31 +15,28 @@
  */
 package com.qwazr.utils.server;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-
-import javax.ws.rs.core.Application;
-
-import org.jboss.resteasy.plugins.providers.jackson.Jackson2JsonpInterceptor;
-
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.qwazr.utils.json.JacksonConfig;
+import org.jboss.resteasy.plugins.providers.jackson.Jackson2JsonpInterceptor;
+
+import javax.ws.rs.core.Application;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Generic RestApplication
  */
-public abstract class RestApplication extends Application {
+public class RestApplication extends Application {
 
-    public final static String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
+	public final static String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
 
-    @Override
-    public Set<Class<?>> getClasses() {
-	Set<Class<?>> classes = new HashSet<Class<?>>();
-	classes.add(JacksonConfig.class);
-	classes.add(JacksonJsonProvider.class);
-	classes.add(Jackson2JsonpInterceptor.class);
-	return classes;
-    }
+	@Override
+	public Set<Class<?>> getClasses() {
+		Set<Class<?>> classes = new HashSet<Class<?>>();
+		classes.add(JacksonConfig.class);
+		classes.add(JacksonJsonProvider.class);
+		classes.add(Jackson2JsonpInterceptor.class);
+		return classes;
+	}
 
 }
