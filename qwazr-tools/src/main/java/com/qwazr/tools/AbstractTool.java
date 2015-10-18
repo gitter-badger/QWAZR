@@ -18,18 +18,18 @@ package com.qwazr.tools;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.qwazr.tools.postagger.POSTaggerTool;
 
 import java.io.File;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-@JsonSubTypes({ @Type(value = MarkdownTool.class), @Type(value = POSTaggerTool.class),
-		@Type(value = FreeMarkerTool.class) })
+@JsonSubTypes({ @Type(value = ArchiverTool.class), @Type(value = CSVPrinter.class), @Type(value = FreeMarkerTool.class),
+				@Type(value = MarkdownTool.class), @Type(value = ProcessTool.class),
+				@Type(value = PropertiesTool.class), @Type(value = XMLTool.class), @Type(value = XPathTool.class) })
 public abstract class AbstractTool {
 
-    public final String name = null;
+	public final String name = null;
 
-    public abstract void load(File parentDir);
+	public abstract void load(File parentDir);
 
-    public abstract void unload();
+	public abstract void unload();
 }

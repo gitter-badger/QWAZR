@@ -15,31 +15,46 @@
  */
 package com.qwazr.utils.server;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-
-import javax.ws.rs.core.Application;
-
-import org.jboss.resteasy.plugins.providers.jackson.Jackson2JsonpInterceptor;
-
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.qwazr.utils.json.JacksonConfig;
+import io.undertow.servlet.Servlets;
+import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.ServletInfo;
+import org.jboss.resteasy.plugins.providers.jackson.Jackson2JsonpInterceptor;
+import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Generic RestApplication
  */
-public abstract class RestApplication extends Application {
+public class RestApplication extends Application {
 
-    public final static String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
+	public final static String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
 
-    @Override
-    public Set<Class<?>> getClasses() {
-	Set<Class<?>> classes = new HashSet<Class<?>>();
-	classes.add(JacksonConfig.class);
-	classes.add(JacksonJsonProvider.class);
-	classes.add(Jackson2JsonpInterceptor.class);
-	return classes;
-    }
+	@Override
+	public Set<Class<?>> getClasses() {
+		Set<Class<?>> classes = new HashSet<Class<?>>();
+		classes.add(JacksonConfig.class);
+		classes.add(JacksonJsonProvider.class);
+		classes.add(Jackson2JsonpInterceptor.class);
+		return classes;
+	}
 
+	DeploymentInfo getDeploymentInfo() {
+		ApplicationPath appPath = getClass().getAnnotation(ApplicationPath.class);
+		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(this.getClass().getClassLoader())
+						.setContextPath(appPath.value()).setDeploymentName("REST");
+		List<ServletInfo> servletInfos = new ArrayList<ServletInfo>();
+		servletInfos.add(new ServletInfo("REST", HttpServletDispatcher.class)
+						.addInitParam("javax.ws.rs.Application", getClass().getName()).setAsyncSupported(true)
+						.addMapping("/*"));
+		deploymentInfo.addServlets(servletInfos);
+		return deploymentInfo;
+	}
 }

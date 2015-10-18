@@ -19,6 +19,7 @@ import com.qwazr.ServerConfiguration.ServiceEnum;
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
+import com.qwazr.connectors.AbstractConnector;
 import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.service.WebCrawlerServiceImpl;
@@ -39,17 +40,15 @@ import com.qwazr.store.schema.StoreMasterSchemaService;
 import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
-import com.qwazr.utils.server.ServletApplication;
 import com.qwazr.webapps.WebappManagerServiceImpl;
 import com.qwazr.webapps.WebappServer;
 import com.qwazr.webapps.WebappServer.WebappApplication;
+import io.undertow.security.idm.IdentityManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -63,132 +62,153 @@ import java.util.Set;
 
 public class Qwazr extends AbstractServer {
 
-    static final Logger logger = LoggerFactory.getLogger(Qwazr.class);
+	static final Logger logger = LoggerFactory.getLogger(Qwazr.class);
 
-    private final static ServerDefinition serverDefinition = new ServerDefinition();
+	private final static ServerDefinition serverDefinition = new ServerDefinition();
 
-    static {
-	serverDefinition.defaultWebApplicationTcpPort = 9090;
-	serverDefinition.defaultWebServiceTcpPort = 9091;
-	serverDefinition.mainJarPath = "qwazr.jar";
-	serverDefinition.defaultDataDirName = "qwazr";
-    }
-
-    private static ServerConfiguration serverConfiguration = null;
-
-    private static final MultivaluedMap<String, Class<?>> services = new MultivaluedHashMap<>();
-
-    private Qwazr() {
-	super(serverDefinition);
-    }
-
-    @Path("/") public static class WelcomeServiceImpl {
-
-	@GET @Path("/") @Produces(MediaType.APPLICATION_JSON) public WelcomeStatus welcome() {
-	    return new WelcomeStatus(services);
+	static {
+		serverDefinition.defaultWebApplicationTcpPort = 9090;
+		serverDefinition.defaultWebServiceTcpPort = 9091;
+		serverDefinition.mainJarPath = "qwazr.jar";
+		serverDefinition.defaultDataDirName = "qwazr";
 	}
 
-    }
+	private static ServerConfiguration serverConfiguration = null;
 
-    @ApplicationPath("/") public static class QwazrApplication extends RestApplication {
+	private static final MultivaluedMap<String, Class<?>> services = new MultivaluedHashMap<>();
 
-	@Override public synchronized Set<Class<?>> getClasses() {
-	    Set<Class<?>> classes = super.getClasses();
-	    services.forEach((s, classes1) -> classes.addAll(classes1));
-	    return classes;
-	}
-    }
-
-    @Override public void defineOptions(Options options) {
-	super.defineOptions(options);
-	options.addOption(JobServer.THREADS_OPTION);
-    }
-
-    @Override public void commandLine(CommandLine cmd) throws IOException {
-	// Load the configuration
-	serverConfiguration = new ServerConfiguration();
-    }
-
-    @Override public void load() throws IOException {
-
-	File currentDataDir = getCurrentDataDir();
-
-	ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
-
-	ConnectorManager.load(currentDataDir);
-	ToolsManager.load(currentDataDir);
-
-	services.add("welcome", WelcomeServiceImpl.class);
-	services.add("cluster", ClusterServiceImpl.class);
-
-	if (ServiceEnum.extractor.isActive(serverConfiguration)) {
-	    ExtractorServer.loadParserManager();
-	    services.add(ServiceEnum.extractor.name(), ExtractorServiceImpl.class);
+	private Qwazr() {
+		super(serverDefinition);
 	}
 
-	if (ServiceEnum.webapps.isActive(serverConfiguration)) {
-	    WebappServer.load(currentDataDir);
-	    services.add(ServiceEnum.webapps.name(), WebappManagerServiceImpl.class);
+	@Path("/")
+	public static class WelcomeServiceImpl {
+
+		@GET
+		@Path("/")
+		@Produces(MediaType.APPLICATION_JSON)
+		public WelcomeStatus welcome() {
+			return new WelcomeStatus(services);
+		}
+
 	}
 
-	if (ServiceEnum.scripts.isActive(serverConfiguration)) {
-	    JobServer.loadScript(currentDataDir);
-	    services.add(ServiceEnum.scripts.name(), ScriptServiceImpl.class);
+	@ApplicationPath("/")
+	public static class QwazrApplication extends RestApplication {
+
+		@Override
+		public synchronized Set<Class<?>> getClasses() {
+			Set<Class<?>> classes = super.getClasses();
+			services.forEach((s, classes1) -> classes.addAll(classes1));
+			return classes;
+		}
 	}
 
-	if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
-	    JobServer.loadScheduler(currentDataDir, serverConfiguration.getSchedulerMaxThreads());
-	    services.add(ServiceEnum.schedulers.name(), SchedulerServiceImpl.class);
+	@Override
+	public void defineOptions(Options options) {
+		super.defineOptions(options);
+		options.addOption(JobServer.THREADS_OPTION);
 	}
 
-	if (ServiceEnum.webcrawler.isActive(serverConfiguration)) {
-	    WebCrawlerServer.load(this);
-	    services.add(ServiceEnum.webcrawler.name(), WebCrawlerServiceImpl.class);
+	@Override
+	public void commandLine(CommandLine cmd) throws IOException {
+		// Load the configuration
+		serverConfiguration = new ServerConfiguration();
 	}
 
-	if (ServiceEnum.search.isActive(serverConfiguration)) {
-	    SearchServer.loadIndexManager(currentDataDir);
-	    services.add(ServiceEnum.search.name(), IndexServiceImpl.class);
+	@Override
+	public void load() throws IOException {
+
+		File currentDataDir = getCurrentDataDir();
+
+		ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
+
+		services.add("welcome", WelcomeServiceImpl.class);
+		services.add("cluster", ClusterServiceImpl.class);
+
+		if (ServiceEnum.extractor.isActive(serverConfiguration)) {
+			ExtractorServer.loadParserManager();
+			services.add(ServiceEnum.extractor.name(), ExtractorServiceImpl.class);
+		}
+
+		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
+			WebappServer.load(currentDataDir);
+			services.add(ServiceEnum.webapps.name(), WebappManagerServiceImpl.class);
+		}
+
+		if (ServiceEnum.scripts.isActive(serverConfiguration)) {
+			JobServer.loadScript(currentDataDir);
+			services.add(ServiceEnum.scripts.name(), ScriptServiceImpl.class);
+		}
+
+		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
+			JobServer.loadScheduler(currentDataDir, serverConfiguration.getSchedulerMaxThreads());
+			services.add(ServiceEnum.schedulers.name(), SchedulerServiceImpl.class);
+		}
+
+		if (ServiceEnum.webcrawler.isActive(serverConfiguration)) {
+			WebCrawlerServer.load(this);
+			services.add(ServiceEnum.webcrawler.name(), WebCrawlerServiceImpl.class);
+		}
+
+		if (ServiceEnum.search.isActive(serverConfiguration)) {
+			SearchServer.loadIndexManager(currentDataDir);
+			services.add(ServiceEnum.search.name(), IndexServiceImpl.class);
+		}
+
+		if (ServiceEnum.graph.isActive(serverConfiguration)) {
+			GraphServer.load(currentDataDir);
+			services.add(ServiceEnum.graph.name(), GraphServiceImpl.class);
+		}
+
+		if (ServiceEnum.table.isActive(serverConfiguration)) {
+			TableServer.load(currentDataDir);
+			services.add(ServiceEnum.table.name(), TableServiceImpl.class);
+		}
+
+		if (ServiceEnum.store.isActive(serverConfiguration)) {
+			StoreServer.load(currentDataDir);
+			services.add(ServiceEnum.store.name(), StoreMasterDataService.class);
+			services.add(ServiceEnum.store.name(), StoreMasterSchemaService.class);
+		}
+
+		ConnectorManager.load(currentDataDir);
+		ToolsManager.load(currentDataDir);
+
 	}
 
-	if (ServiceEnum.graph.isActive(serverConfiguration)) {
-	    GraphServer.load(currentDataDir);
-	    services.add(ServiceEnum.graph.name(), GraphServiceImpl.class);
+	@Override
+	public Class<WebappApplication> getServletApplication() {
+		if (ServiceEnum.webapps.isActive(serverConfiguration))
+			return WebappApplication.class;
+		return null;
 	}
 
-	if (ServiceEnum.table.isActive(serverConfiguration)) {
-	    TableServer.load(currentDataDir);
-	    services.add(ServiceEnum.table.name(), TableServiceImpl.class);
+	@Override
+	protected IdentityManager getIdentityManager(String realm) throws IOException {
+		AbstractConnector connector = ConnectorManager.INSTANCE.get(realm);
+		if (connector == null)
+			throw new IOException("No realm connector with this name: " + realm);
+		if (!(connector instanceof IdentityManager))
+			throw new IOException("This is a not a realm connector: " + realm);
+		return (IdentityManager) connector;
 	}
 
-	if (ServiceEnum.store.isActive(serverConfiguration)) {
-	    StoreServer.load(currentDataDir);
-	    services.add(ServiceEnum.store.name(), StoreMasterDataService.class);
-	    services.add(ServiceEnum.store.name(), StoreMasterSchemaService.class);
+	@Override
+	public Class<QwazrApplication> getRestApplication() {
+		return QwazrApplication.class;
 	}
 
-    }
-
-    @Override public ServletApplication getServletApplication() {
-	if (ServiceEnum.webapps.isActive(serverConfiguration))
-	    return new WebappApplication();
-	return null;
-    }
-
-    @Override public RestApplication getRestApplication() {
-	return new QwazrApplication();
-    }
-
-    public static void main(String[] args) {
-	// Start the server
-	try {
-	    Qwazr server = new Qwazr();
-	    server.start(args);
-	    // Register the services
-	    ClusterManager.INSTANCE.registerMe(server.services.keySet());
-	} catch (IOException | ParseException | ServletException e) {
-	    logger.error(e.getMessage(), e);
-	    System.exit(1);
+	public static void main(String[] args) {
+		// Start the server
+		try {
+			Qwazr server = new Qwazr();
+			server.start(args);
+			// Register the services
+			ClusterManager.INSTANCE.registerMe(server.services.keySet());
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			System.exit(1);
+		}
 	}
-    }
 }
