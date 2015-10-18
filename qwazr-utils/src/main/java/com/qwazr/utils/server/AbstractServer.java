@@ -31,11 +31,10 @@ import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.LoginConfig;
 import io.undertow.servlet.api.ServletContainer;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang3.StringUtils;
-import org.jboss.resteasy.plugins.server.undertow.UndertowJaxrsServer;
-import org.jboss.resteasy.spi.ResteasyDeployment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -244,10 +243,10 @@ public abstract class AbstractServer {
 		currentDataDir = dataDir;
 
 		// TCP port and listening adresss options
-		int webAppTcpPort = cmd.hasOption(WEBAPP_TCP_PORT_OPTION.getOpt()) ?
+		servletPort = cmd.hasOption(WEBAPP_TCP_PORT_OPTION.getOpt()) ?
 						Integer.parseInt(cmd.getOptionValue(WEBAPP_TCP_PORT_OPTION.getOpt())) :
 						serverDefinition.defaultWebApplicationTcpPort;
-		int webServiceTcpPort = cmd.hasOption(WEBSERVICE_TCP_PORT_OPTION.getOpt()) ?
+		restPort = cmd.hasOption(WEBSERVICE_TCP_PORT_OPTION.getOpt()) ?
 						Integer.parseInt(cmd.getOptionValue(WEBSERVICE_TCP_PORT_OPTION.getOpt())) :
 						serverDefinition.defaultWebServiceTcpPort;
 		currentListenAddress = cmd.hasOption(LISTEN_ADDRESS_OPTION.getOpt()) ?
@@ -262,12 +261,12 @@ public abstract class AbstractServer {
 
 		commandLine(cmd);
 
+		load();
+
 		// Launch the servlet application if any
-		Builder servletBuilder = null;
 		Class<? extends ServletApplication> servletApplicationClass = getServletApplication();
 		if (servletApplicationClass != null) {
 			ServletApplication servletApplication = servletApplicationClass.newInstance();
-			servletPort = webAppTcpPort;
 			DeploymentInfo deploymentInfo = servletApplication.getDeploymentInfo();
 			DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 			manager.deploy();
@@ -277,54 +276,40 @@ public abstract class AbstractServer {
 				prefixPath = "/";
 			pathHandler.addPrefixPath(prefixPath, manager.start());
 			logger.info("Start the WEB server " + currentListenAddress + ":" + servletPort);
-			servletBuilder = Undertow.builder().addHttpListener(servletPort, currentListenAddress)
+			Builder servletBuilder = Undertow.builder().addHttpListener(servletPort, currentListenAddress)
 							.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(pathHandler);
+			servletBuilder.build().start();
 		}
 
 		// Launch the jaxrs application if any
-		Builder restBuilder = null;
 		Class<? extends RestApplication> restApplicationClass = getRestApplication();
 		if (restApplicationClass != null) {
-			restPort = webServiceTcpPort;
-			logger.info("Start the REST server " + currentListenAddress + ":" + restPort);
-			restBuilder = Undertow.builder().addHttpListener(restPort, currentListenAddress)
-							.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000);
-		}
-
-		load();
-
-		// Start the servers
-		if (servletBuilder != null)
-			servletBuilder.build().start();
-		if (restBuilder != null && restApplicationClass != null) {
-			UndertowJaxrsServer restServer = new UndertowJaxrsServer();
-
-			ApplicationPath appPath = restApplicationClass.getAnnotation(ApplicationPath.class);
-			ResteasyDeployment deployment = new ResteasyDeployment();
-			deployment.setApplication(restApplicationClass.newInstance());
-
-			DeploymentInfo di = restServer.undertowDeployment(deployment, appPath.value());
-			di.setClassLoader(restApplicationClass.getClassLoader());
-			di.setContextPath(appPath.value());
-			di.setDeploymentName("Resteasy" + appPath.value());
-
-			final ServletContainer container = ServletContainer.Factory.newInstance();
-			DeploymentManager manager = container.addDeployment(di);
+			RestApplication restApplication = restApplicationClass.newInstance();
+			DeploymentInfo deploymentInfo = restApplication.getDeploymentInfo();
+			IdentityManager identityManager = null;
+			if (webServiceRealm != null) {
+				identityManager = getIdentityManager(webServiceRealm);
+				deploymentInfo.setIdentityManager(identityManager)
+								.setLoginConfig(new LoginConfig("BASIC", webServiceRealm));
+				deploymentInfo.addInitParameter("resteasy.role.based.security", "true");
+			}
+			ServletContainer container = Servlets.defaultContainer();
+			DeploymentManager manager = container.addDeployment(deploymentInfo);
 			manager.deploy();
-			PathHandler pathHandler = new PathHandler();
-			pathHandler.addPrefixPath(appPath.value(), manager.start());
-			HttpHandler root = pathHandler;
-			final IdentityManager identityManager = getIdentityManager(webServiceRealm);
+			HttpHandler httpHandler = manager.start();
 			if (identityManager != null)
-				root = addSecurity(root, identityManager, webServiceRealm);
-			restBuilder.setHandler(root).build().start();
+				httpHandler = addSecurity(httpHandler, identityManager, webServiceRealm);
+			ApplicationPath appPath = restApplicationClass.getAnnotation(ApplicationPath.class);
+			PathHandler pathHandler = new PathHandler();
+			pathHandler.addPrefixPath(appPath.value(), httpHandler);
+			logger.info("Start the REST server " + currentListenAddress + ":" + restPort);
+			Builder restBuilder = Undertow.builder().addHttpListener(restPort, currentListenAddress)
+							.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
+			restBuilder.build().start();
 		}
-
 	}
 
-	private static HttpHandler addSecurity(final HttpHandler toWrap, final IdentityManager identityManager,
-					String realm) {
-		HttpHandler handler = toWrap;
+	private static HttpHandler addSecurity(HttpHandler handler, final IdentityManager identityManager, String realm) {
 		handler = new AuthenticationCallHandler(handler);
 		handler = new AuthenticationConstraintHandler(handler);
 		final List<AuthenticationMechanism> mechanisms = Collections

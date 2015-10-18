@@ -16,12 +16,8 @@
 package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qwazr.database.TableServiceImpl;
 import com.qwazr.database.model.ColumnDefinition;
-import com.qwazr.database.model.TableRequest;
-import com.qwazr.database.model.TableRequestResult;
-import com.qwazr.utils.json.JsonMapper;
 import io.undertow.security.idm.Account;
 import io.undertow.security.idm.Credential;
 import io.undertow.security.idm.IdentityManager;
@@ -30,9 +26,9 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.security.Principal;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -44,6 +40,7 @@ public class TableRealmConnector extends AbstractConnector implements IdentityMa
 	public final String roles_column = null;
 
 	private TableServiceImpl tableService = null;
+	private Set<String> columns = null;
 
 	@Override
 	public void load(File parentDir) {
@@ -61,6 +58,9 @@ public class TableRealmConnector extends AbstractConnector implements IdentityMa
 							new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED), null,
 							true);
 		}
+		columns = new HashSet<String>();
+		columns.add(password_column);
+		columns.add(roles_column);
 	}
 
 	@Override
@@ -81,17 +81,20 @@ public class TableRealmConnector extends AbstractConnector implements IdentityMa
 			throw new RuntimeException("Unsupported credential type: " + credential.getClass().getName());
 		PasswordCredential passwordCredential = (PasswordCredential) credential;
 
-		// We build the query
-		ObjectNode jsonQuery = JsonMapper.MAPPER.createObjectNode();
-		jsonQuery.put(login_column, id);
-		TableRequest request = new TableRequest(0, 1, null, null, jsonQuery);
-		TableRequestResult result = tableService.queryRows(table_name, request);
-		if (result.count == null || result.count == 0)
+		// We request the database
+		final LinkedHashMap<String, Object> row = tableService.getRow(table_name, id, columns);
+		if (row == null)
 			return null;
-		Map<String, Object> row = result.rows.get(0);
+
 		Object password = row.get(password_column);
 		if (password == null)
 			return null;
+		if (password instanceof String[]) {
+			String[] passwordArray = (String[]) password;
+			if (passwordArray.length == 0)
+				return null;
+			password = passwordArray[0];
+		}
 
 		// The password is stored hashed
 		String digest = DigestUtils.md5Hex(new String(passwordCredential.getPassword()));
@@ -101,8 +104,8 @@ public class TableRealmConnector extends AbstractConnector implements IdentityMa
 		//We retrieve the roles
 		Object object = row.get(roles_column);
 		LinkedHashSet<String> roles = new LinkedHashSet<String>();
-		if (object instanceof ArrayList<?>) {
-			for (Object o : (ArrayList<?>) object)
+		if (object instanceof String[]) {
+			for (Object o : (String[]) object)
 				roles.add(o.toString());
 		} else
 			roles.add(object.toString());
