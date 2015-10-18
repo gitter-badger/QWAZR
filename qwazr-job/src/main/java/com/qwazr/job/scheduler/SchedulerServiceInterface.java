@@ -15,8 +15,11 @@
  **/
 package com.qwazr.job.scheduler;
 
+import com.qwazr.job.JobServer;
+
 import java.util.TreeMap;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -29,6 +32,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+@RolesAllowed(JobServer.SERVICE_NAME_SCHEDULER)
 @Path("/schedulers")
 public interface SchedulerServiceInterface {
 
