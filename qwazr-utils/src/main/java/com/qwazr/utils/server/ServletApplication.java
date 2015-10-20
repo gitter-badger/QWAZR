@@ -27,24 +27,22 @@ import java.util.List;
  */
 public abstract class ServletApplication {
 
-	protected abstract List<ServletInfo> getServletInfos();
+    protected abstract List<ServletInfo> getServletInfos();
 
-	protected abstract SessionListener getSessionListener();
+    protected abstract SessionListener getSessionListener();
 
-	protected abstract String getContextPath();
+    protected abstract String getContextPath();
 
-	DeploymentInfo getDeploymentInfo() {
-		DeploymentInfo deploymentInfo = Servlets.deployment()
-				.setClassLoader(getClass().getClassLoader())
-				.setContextPath(
-						getContextPath()).setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
-				.setDeploymentName(getClass().getName() + getContextPath());
-		List<ServletInfo> servletInfos = getServletInfos();
-		if (servletInfos != null)
-			deploymentInfo.addServlets(servletInfos);
-		SessionListener sessionListener = getSessionListener();
-		if (sessionListener != null)
-			deploymentInfo.addSessionListener(sessionListener);
-		return deploymentInfo;
-	}
+    DeploymentInfo getDeploymentInfo() {
+	DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(getClass().getClassLoader())
+		.setContextPath(getContextPath()).setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
+		.setDeploymentName(getClass().getName() + getContextPath());
+	List<ServletInfo> servletInfos = getServletInfos();
+	if (servletInfos != null)
+	    deploymentInfo.addServlets(servletInfos);
+	SessionListener sessionListener = getSessionListener();
+	if (sessionListener != null)
+	    deploymentInfo.addSessionListener(sessionListener);
+	return deploymentInfo;
+    }
 }

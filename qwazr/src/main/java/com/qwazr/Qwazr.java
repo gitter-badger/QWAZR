@@ -141,11 +141,6 @@ public class Qwazr extends AbstractServer {
 			services.add(ServiceEnum.scripts.name(), ScriptServiceImpl.class);
 		}
 
-		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
-			JobServer.loadScheduler(currentDataDir, serverConfiguration.getSchedulerMaxThreads());
-			services.add(ServiceEnum.schedulers.name(), SchedulerServiceImpl.class);
-		}
-
 		if (ServiceEnum.webcrawler.isActive(serverConfiguration)) {
 			WebCrawlerServer.load(this);
 			services.add(ServiceEnum.webcrawler.name(), WebCrawlerServiceImpl.class);
@@ -175,6 +170,11 @@ public class Qwazr extends AbstractServer {
 		ConnectorManager.load(currentDataDir);
 		ToolsManager.load(currentDataDir);
 
+		// Scheduler is last, because it may immediatly execute a script
+		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
+			JobServer.loadScheduler(currentDataDir, serverConfiguration.getSchedulerMaxThreads());
+			services.add(ServiceEnum.schedulers.name(), SchedulerServiceImpl.class);
+		}
 	}
 
 	@Override
