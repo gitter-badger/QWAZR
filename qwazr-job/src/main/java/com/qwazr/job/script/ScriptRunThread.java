@@ -40,148 +40,148 @@ import java.util.Set;
 @JsonInclude(Include.NON_EMPTY)
 public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 
-    private static final Logger logger = LoggerFactory.getLogger(ScriptRunThread.class);
+	private static final Logger logger = LoggerFactory.getLogger(ScriptRunThread.class);
 
-    private final String uuid;
-    private volatile ScriptState state;
-    private volatile Long startTime;
-    private volatile Long endTime;
-    private volatile Long expirationTime;
-    private volatile Exception exception;
+	private final String uuid;
+	private volatile ScriptState state;
+	private volatile Long startTime;
+	private volatile Long endTime;
+	private volatile Long expirationTime;
+	private volatile Exception exception;
 
-    private final Set<String> semaphores;
-    private final IOUtils.CloseableList closeables;
+	private final Set<String> semaphores;
+	private final IOUtils.CloseableList closeables;
 
-    private final Map<String, ? extends Object> bindings;
-    private final ScriptEngine scriptEngine;
-    private final File scriptFile;
+	private final Map<String, ? extends Object> bindings;
+	private final ScriptEngine scriptEngine;
+	private final File scriptFile;
 
-    ScriptRunThread(ScriptEngine scriptEngine, File scriptFile, Map<String, ? extends Object> bindings,
-	    ConnectorManager connectors, ToolsManager tools) {
-	uuid = UUIDs.timeBased().toString();
-	state = ScriptState.ready;
-	startTime = null;
-	endTime = null;
-	expirationTime = null;
-	this.globalScope = new GlobalBindings();
-	this.bindings = bindings;
-	this.scriptEngine = scriptEngine;
-	this.semaphores = new HashSet<String>();
-	this.closeables = new IOUtils.CloseableList();
-	if (bindings != null)
-	    engineScope.putAll(bindings);
-	if (connectors != null)
-	    engineScope.put("connectors", connectors);
-	if (tools != null)
-	    engineScope.put("tools", tools);
-	engineScope.put("closeable", closeables);
-	this.scriptFile = scriptFile;
-	this.setWriter(new StringWriter());
-	this.setErrorWriter(new StringWriter());
-	removeAttributeIfAny("quit", "exit");
-    }
-
-    private void removeAttributeIfAny(String... names) {
-	if (names == null)
-	    return;
-	for (String name : names) {
-	    int scope = getAttributesScope(name);
-	    if (scope != -1)
-		removeAttribute(name, scope);
-	}
-    }
-
-    @Override
-    public void run() {
-	logger.info("Execute: " + scriptFile.getName());
-	state = ScriptState.running;
-	startTime = System.currentTimeMillis();
-	FileReader fileReader = null;
-	try {
-	    fileReader = new FileReader(scriptFile);
-	    scriptEngine.eval(fileReader, this);
-	    state = ScriptState.terminated;
-	} catch (Exception e) {
-	    state = ScriptState.error;
-	    exception = e;
-	    logger.error("Error on " + scriptFile.getName() + " - " + e.getMessage(), e);
-	} finally {
-	    endTime = System.currentTimeMillis();
-	    expirationTime = endTime + 2 * 60 * 1000;
-	    if (fileReader != null)
-		IOUtils.closeQuietly(fileReader);
-	    for (String semaphore : semaphores)
-		ScriptManager.INSTANCE.unregisterSemaphore(semaphore, uuid);
-	    closeables.close();
-	}
-    }
-
-    public Exception getException() {
-	return exception;
-    }
-
-    public String getUUID() {
-	return uuid;
-    }
-
-    public String getOut() {
-	return getWriter().toString();
-    }
-
-    public String getErr() {
-	return getErrorWriter().toString();
-    }
-
-    ScriptState getState() {
-	return state;
-    }
-
-    public ScriptRunStatus getStatus() {
-	return new ScriptRunStatus(ClusterManager.INSTANCE.myAddress, scriptFile.getName(), uuid, state, startTime,
-		endTime, bindings == null ? null : bindings.keySet(), exception);
-    }
-
-    boolean hasExpired(long currentTime) {
-	if (expirationTime == null)
-	    return false;
-	return expirationTime < currentTime;
-    }
-
-    public class GlobalBindings extends HashMap<String, Object> implements Bindings {
-
-	/**
-	 *
-	 */
-	private final long serialVersionUID = -7250097260119419346L;
-
-	private GlobalBindings() {
-	    this.put("console", new ScriptConsole());
-	    this.put("semaphore", new ScriptSemaphore());
+	ScriptRunThread(ScriptEngine scriptEngine, File scriptFile, Map<String, ? extends Object> bindings,
+					ConnectorManager connectors, ToolsManager tools) {
+		uuid = UUIDs.timeBased().toString();
+		state = ScriptState.ready;
+		startTime = null;
+		endTime = null;
+		expirationTime = null;
+		this.globalScope = new GlobalBindings();
+		this.bindings = bindings;
+		this.scriptEngine = scriptEngine;
+		this.semaphores = new HashSet<String>();
+		this.closeables = new IOUtils.CloseableList();
+		if (bindings != null)
+			engineScope.putAll(bindings);
+		if (connectors != null)
+			engineScope.put("connectors", connectors);
+		if (tools != null)
+			engineScope.put("tools", tools);
+		engineScope.put("closeable", closeables);
+		this.scriptFile = scriptFile;
+		this.setWriter(new StringWriter());
+		this.setErrorWriter(new StringWriter());
+		removeAttributeIfAny("quit", "exit");
 	}
 
-	public void sleep(int msTimeout) throws InterruptedException {
-	    Thread.sleep(msTimeout);
-	}
-    }
-
-    public class ScriptSemaphore {
-
-	public Set<String> owners(String semaphore_id, Boolean local, Integer timeOut) {
-	    return new ScriptServiceImpl().getSemaphoreOwners(semaphore_id, local, timeOut);
-	}
-
-	public void register(String semaphore_id) {
-	    synchronized (semaphores) {
-		semaphores.add(semaphore_id);
-		ScriptManager.INSTANCE.registerSemaphore(semaphore_id, uuid);
-	    }
+	private void removeAttributeIfAny(String... names) {
+		if (names == null)
+			return;
+		for (String name : names) {
+			int scope = getAttributesScope(name);
+			if (scope != -1)
+				removeAttribute(name, scope);
+		}
 	}
 
-	public void unregister(String semaphore_id) {
-	    synchronized (semaphores) {
-		ScriptManager.INSTANCE.unregisterSemaphore(semaphore_id, uuid);
-		semaphores.remove(semaphore_id);
-	    }
+	@Override
+	public void run() {
+		logger.info("Execute: " + scriptFile.getName());
+		state = ScriptState.running;
+		startTime = System.currentTimeMillis();
+		FileReader fileReader = null;
+		try {
+			fileReader = new FileReader(scriptFile);
+			scriptEngine.eval(fileReader, this);
+			state = ScriptState.terminated;
+		} catch (Exception e) {
+			state = ScriptState.error;
+			exception = e;
+			logger.error("Error on " + scriptFile.getName() + " - " + e.getMessage(), e);
+		} finally {
+			endTime = System.currentTimeMillis();
+			expirationTime = endTime + 2 * 60 * 1000;
+			if (fileReader != null)
+				IOUtils.closeQuietly(fileReader);
+			for (String semaphore : semaphores)
+				ScriptManager.INSTANCE.unregisterSemaphore(semaphore, uuid);
+			closeables.close();
+		}
 	}
-    }
+
+	public Exception getException() {
+		return exception;
+	}
+
+	public String getUUID() {
+		return uuid;
+	}
+
+	public String getOut() {
+		return getWriter().toString();
+	}
+
+	public String getErr() {
+		return getErrorWriter().toString();
+	}
+
+	ScriptState getState() {
+		return state;
+	}
+
+	public ScriptRunStatus getStatus() {
+		return new ScriptRunStatus(ClusterManager.INSTANCE.myAddress, scriptFile.getName(), uuid, state, startTime,
+						endTime, bindings == null ? null : bindings.keySet(), exception);
+	}
+
+	boolean hasExpired(long currentTime) {
+		if (expirationTime == null)
+			return false;
+		return expirationTime < currentTime;
+	}
+
+	public class GlobalBindings extends HashMap<String, Object> implements Bindings {
+
+		/**
+		 *
+		 */
+		private final long serialVersionUID = -7250097260119419346L;
+
+		private GlobalBindings() {
+			this.put("console", new ScriptConsole());
+			this.put("semaphore", new ScriptSemaphore());
+		}
+
+		public void sleep(int msTimeout) throws InterruptedException {
+			Thread.sleep(msTimeout);
+		}
+	}
+
+	public class ScriptSemaphore {
+
+		public Set<String> owners(String semaphore_id, Boolean local, Integer timeOut) {
+			return new ScriptServiceImpl().getSemaphoreOwners(semaphore_id, local, timeOut);
+		}
+
+		public void register(String semaphore_id) {
+			synchronized (semaphores) {
+				semaphores.add(semaphore_id);
+				ScriptManager.INSTANCE.registerSemaphore(semaphore_id, uuid);
+			}
+		}
+
+		public void unregister(String semaphore_id) {
+			synchronized (semaphores) {
+				ScriptManager.INSTANCE.unregisterSemaphore(semaphore_id, uuid);
+				semaphores.remove(semaphore_id);
+			}
+		}
+	}
 }
