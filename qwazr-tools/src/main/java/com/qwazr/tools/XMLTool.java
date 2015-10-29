@@ -24,116 +24,130 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.parsers.*;
 import java.io.*;
 
 public class XMLTool extends AbstractTool {
 
-    private SAXParserFactory saxParserFactory;
-    private DocumentBuilderFactory documentBuilderFactory;
+	private SAXParserFactory saxParserFactory;
+	private DocumentBuilderFactory documentBuilderFactory;
 
-    @Override
-    public void load(File parentDir) {
-	SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-	saxParserFactory.setNamespaceAware(true);
-	documentBuilderFactory = DocumentBuilderFactory.newInstance();
-	documentBuilderFactory.setNamespaceAware(true);
-    }
-
-    @Override
-    public void unload() {
-    }
-
-    /**
-     * @param root
-     *            the name of the root element
-     * @return an new XML builder instance
-     *         <p>
-     *         {@link XMLBuilder2}
-     */
-    public XMLBuilder2 create(String root) {
-	return XMLBuilder2.create(root);
-    }
-
-    /**
-     * Save the XML to the file described by the given path
-     *
-     * @param builder
-     * @param path
-     * @throws IOException
-     */
-    public void saveTo(XMLBuilder2 builder, String path) throws IOException {
-	FileWriter writer = new FileWriter(path);
-	try {
-	    builder.toWriter(true, writer, null);
-	} finally {
-	    writer.close();
+	@Override
+	public void load(File parentDir) {
+		SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+		saxParserFactory.setNamespaceAware(true);
+		documentBuilderFactory = DocumentBuilderFactory.newInstance();
+		documentBuilderFactory.setNamespaceAware(true);
 	}
-    }
 
-    /**
-     * Parse and XML stream
-     *
-     * @param jsObject
-     * @param is
-     * @throws ParserConfigurationException
-     * @throws SAXException
-     * @throws IOException
-     */
-    public void parseStream(ScriptObjectMirror jsObject, InputStream is) throws ParserConfigurationException,
-	    SAXException, IOException {
-	DefaultHandler defaultHandler = (DefaultHandler) ScriptUtils.convert(jsObject, DefaultHandler.class);
-	SAXParser saxParser = saxParserFactory.newSAXParser();
-	saxParser.parse(is, defaultHandler);
-    }
-
-    /**
-     * Parse an XML file
-     *
-     * @param jsObject
-     * @param path
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
-     */
-    public void parseFile(ScriptObjectMirror jsObject, String path) throws IOException, SAXException,
-	    ParserConfigurationException {
-	InputStream in = new BufferedInputStream(new FileInputStream(path));
-	try {
-	    parseStream(jsObject, in);
-	} finally {
-	    IOUtils.closeQuietly(in);
+	@Override
+	public void unload() {
 	}
-    }
 
-    /**
-     * Parse an XML string and build a DOM object
-     * 
-     * @param xmlString
-     * @return
-     * @throws IOException
-     * @throws SAXException
-     * @throws ParserConfigurationException
-     */
-    public Document domParseString(String xmlString) throws IOException, SAXException, ParserConfigurationException {
-	DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
-	InputSource input = new InputSource();
-	input.setCharacterStream(new StringReader(xmlString));
-	return docBuilder.parse(input);
-    }
+	/**
+	 * @param root the name of the root element
+	 * @return an new XML builder instance
+	 * <p/>
+	 * {@link XMLBuilder2}
+	 */
+	public XMLBuilder2 create(String root) {
+		return XMLBuilder2.create(root);
+	}
 
-    /**
-     * Parse an XML file and build a DOM object
-     * 
-     * @param file
-     * @return
-     * @throws ParserConfigurationException
-     * @throws IOException
-     * @throws SAXException
-     */
-    public Document domParseFile(String file) throws ParserConfigurationException, IOException, SAXException {
-	DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
-	return docBuilder.parse(file);
-    }
+	/**
+	 * Save the XML to the file described by the given path
+	 *
+	 * @param builder
+	 * @param path
+	 * @throws IOException
+	 */
+	public void saveTo(XMLBuilder2 builder, String path) throws IOException {
+		FileWriter writer = new FileWriter(path);
+		try {
+			builder.toWriter(true, writer, null);
+		} finally {
+			writer.close();
+		}
+	}
 
+	/**
+	 * Parse and XML stream
+	 *
+	 * @param jsObject
+	 * @param is
+	 * @throws ParserConfigurationException
+	 * @throws SAXException
+	 * @throws IOException
+	 */
+	public void parseStream(ScriptObjectMirror jsObject, InputStream is)
+					throws ParserConfigurationException, SAXException, IOException {
+		DefaultHandler defaultHandler = (DefaultHandler) ScriptUtils.convert(jsObject, DefaultHandler.class);
+		SAXParser saxParser = saxParserFactory.newSAXParser();
+		saxParser.parse(is, defaultHandler);
+	}
+
+	/**
+	 * Parse an XML file
+	 *
+	 * @param jsObject
+	 * @param path
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws ParserConfigurationException
+	 */
+	public void parseFile(ScriptObjectMirror jsObject, String path)
+					throws IOException, SAXException, ParserConfigurationException {
+		InputStream in = new BufferedInputStream(new FileInputStream(path));
+		try {
+			parseStream(jsObject, in);
+		} finally {
+			IOUtils.closeQuietly(in);
+		}
+	}
+
+	/**
+	 * Parse an XML string and build a DOM object
+	 *
+	 * @param xmlString
+	 * @return
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws ParserConfigurationException
+	 */
+	public Document domParseString(String xmlString) throws IOException, SAXException, ParserConfigurationException {
+		DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
+		InputSource input = new InputSource();
+		input.setCharacterStream(new StringReader(xmlString));
+		return docBuilder.parse(input);
+	}
+
+	/**
+	 * Parse an XML file and build a DOM object
+	 *
+	 * @param file
+	 * @return
+	 * @throws ParserConfigurationException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	public Document domParseFile(String file) throws ParserConfigurationException, IOException, SAXException {
+		DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
+		return docBuilder.parse(file);
+	}
+
+	public String printXML(Object object) throws JAXBException {
+		StringWriter sw = new StringWriter();
+		toXML(object, sw);
+		return sw.toString();
+	}
+
+	public void toXML(Object object, Writer writer) throws JAXBException {
+		JAXBContext jaxbContext = JAXBContext.newInstance(object.getClass());
+		Marshaller marshaller = jaxbContext.createMarshaller();
+		StringWriter sw = new StringWriter();
+		marshaller.marshal(object, writer);
+	}
 }
