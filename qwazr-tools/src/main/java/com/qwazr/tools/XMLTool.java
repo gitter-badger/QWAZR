@@ -50,7 +50,6 @@ public class XMLTool extends AbstractTool {
 	/**
 	 * @param root the name of the root element
 	 * @return an new XML builder instance
-	 * <p/>
 	 * {@link XMLBuilder2}
 	 */
 	public XMLBuilder2 create(String root) {
@@ -60,9 +59,9 @@ public class XMLTool extends AbstractTool {
 	/**
 	 * Save the XML to the file described by the given path
 	 *
-	 * @param builder
-	 * @param path
-	 * @throws IOException
+	 * @param builder an XML builder
+	 * @param path    the destination path
+	 * @throws IOException if any I/O error occurs
 	 */
 	public void saveTo(XMLBuilder2 builder, String path) throws IOException {
 		FileWriter writer = new FileWriter(path);
@@ -74,29 +73,29 @@ public class XMLTool extends AbstractTool {
 	}
 
 	/**
-	 * Parse and XML stream
+	 * Parse an XML stream and call the JS functions
 	 *
-	 * @param jsObject
-	 * @param is
-	 * @throws ParserConfigurationException
-	 * @throws SAXException
-	 * @throws IOException
+	 * @param jsObject any Javascript receiving the events
+	 * @param input    the stream
+	 * @throws ParserConfigurationException if any XML error occurs
+	 * @throws SAXException                 if any XML error occurs
+	 * @throws IOException                  if any I/O error occurs
 	 */
-	public void parseStream(ScriptObjectMirror jsObject, InputStream is)
+	public void parseStream(ScriptObjectMirror jsObject, InputStream input)
 					throws ParserConfigurationException, SAXException, IOException {
 		DefaultHandler defaultHandler = (DefaultHandler) ScriptUtils.convert(jsObject, DefaultHandler.class);
 		SAXParser saxParser = saxParserFactory.newSAXParser();
-		saxParser.parse(is, defaultHandler);
+		saxParser.parse(input, defaultHandler);
 	}
 
 	/**
 	 * Parse an XML file
 	 *
-	 * @param jsObject
-	 * @param path
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
+	 * @param jsObject the Javascript object receiving the events
+	 * @param path     the path to the XML file to read
+	 * @throws IOException                  if any I/O error occurs
+	 * @throws SAXException                 if any XML error occurs
+	 * @throws ParserConfigurationException if any XML error occurs
 	 */
 	public void parseFile(ScriptObjectMirror jsObject, String path)
 					throws IOException, SAXException, ParserConfigurationException {
@@ -111,11 +110,11 @@ public class XMLTool extends AbstractTool {
 	/**
 	 * Parse an XML string and build a DOM object
 	 *
-	 * @param xmlString
-	 * @return
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
+	 * @param xmlString the XML as String
+	 * @return a DOM document
+	 * @throws IOException                  if any I/O error occurs
+	 * @throws SAXException                 if any XML error occurs
+	 * @throws ParserConfigurationException if any XML error occurs
 	 */
 	public Document domParseString(String xmlString) throws IOException, SAXException, ParserConfigurationException {
 		DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -127,23 +126,37 @@ public class XMLTool extends AbstractTool {
 	/**
 	 * Parse an XML file and build a DOM object
 	 *
-	 * @param file
-	 * @return
-	 * @throws ParserConfigurationException
-	 * @throws IOException
-	 * @throws SAXException
+	 * @param file the file to read
+	 * @return a new DOM document
+	 * @throws ParserConfigurationException if any XML error occurs
+	 * @throws IOException                  if any I/O error occurs
+	 * @throws SAXException                 if any XML error occurs
 	 */
 	public Document domParseFile(String file) throws ParserConfigurationException, IOException, SAXException {
 		DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
 		return docBuilder.parse(file);
 	}
 
+	/**
+	 * Generate an XML string from an Object using JAXB
+	 *
+	 * @param object the object to serialize
+	 * @return an XML string which represent the object
+	 * @throws JAXBException if any serialisation error occurs
+	 */
 	public String printXML(Object object) throws JAXBException {
 		StringWriter sw = new StringWriter();
 		toXML(object, sw);
 		return sw.toString();
 	}
 
+	/**
+	 * Write an XML representation of an object
+	 *
+	 * @param object the object to serialize
+	 * @param writer the destination writer
+	 * @throws JAXBException if any serialisation error occurs
+	 */
 	public void toXML(Object object, Writer writer) throws JAXBException {
 		JAXBContext jaxbContext = JAXBContext.newInstance(object.getClass());
 		Marshaller marshaller = jaxbContext.createMarshaller();

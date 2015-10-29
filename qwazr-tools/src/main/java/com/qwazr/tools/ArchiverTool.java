@@ -99,10 +99,10 @@ public class ArchiverTool extends AbstractTool {
 	/**
 	 * Decompress the file as a String
 	 *
-	 * @param sourceFile
+	 * @param sourceFile the file to uncompress
 	 * @return a string with the uncompressed content
-	 * @throws IOException
-	 * @throws CompressorException
+	 * @throws IOException         related to I/O errors
+	 * @throws CompressorException if any compression error occurs
 	 */
 	public String decompressString(File sourceFile) throws IOException, CompressorException {
 		InputStream input = getCompressorNewInputStream(new BufferedInputStream(new FileInputStream(sourceFile)));
@@ -117,9 +117,9 @@ public class ArchiverTool extends AbstractTool {
 	 * Decompress a JSON structure
 	 *
 	 * @param sourceFile
-	 * @return
-	 * @throws IOException
-	 * @throws CompressorException
+	 * @return the decompressed object
+	 * @throws IOException         related to I/O errors
+	 * @throws CompressorException if any compression error occurs
 	 */
 	public Object decompressJson(File sourceFile) throws IOException, CompressorException {
 		InputStream input = getCompressorNewInputStream(new BufferedInputStream(new FileInputStream(sourceFile)));
@@ -235,9 +235,10 @@ public class ArchiverTool extends AbstractTool {
 	/**
 	 * Compress a stream an write the compressed content in a file
 	 *
-	 * @param input
-	 * @param destFile * @throws CompressorException
-	 * @throws IOException
+	 * @param input    the stream to compress
+	 * @param destFile the compressed file
+	 * @throws CompressorException if any compression error occurs
+	 * @throws IOException         if any I/O error occurs
 	 */
 	public void compress(InputStream input, File destFile) throws IOException, CompressorException {
 		OutputStream output = getCompressor(new BufferedOutputStream(new FileOutputStream(destFile)));
@@ -251,10 +252,10 @@ public class ArchiverTool extends AbstractTool {
 	/**
 	 * Compress an array of byte and write it to a file
 	 *
-	 * @param bytes
-	 * @param destFile
-	 * @throws CompressorException
-	 * @throws IOException
+	 * @param bytes    the bytes to compress
+	 * @param destFile the compressed file
+	 * @throws CompressorException if any compression error occurs
+	 * @throws IOException         related to I/O errors
 	 */
 	public void compress(byte[] bytes, File destFile) throws CompressorException, IOException {
 		InputStream input = new ByteArrayInputStream(bytes);
@@ -268,10 +269,10 @@ public class ArchiverTool extends AbstractTool {
 	/**
 	 * Compress an UTF-8 string and write it to a file
 	 *
-	 * @param content
-	 * @param destFile
-	 * @throws CompressorException
-	 * @throws IOException
+	 * @param content  the text to compress
+	 * @param destFile the compressed file
+	 * @throws CompressorException if any compression error occurs
+	 * @throws IOException         related to I/O errors
 	 */
 	public void compress(String content, File destFile) throws CompressorException, IOException {
 		compress(CharsetUtils.encodeUtf8(content), destFile);
@@ -280,10 +281,10 @@ public class ArchiverTool extends AbstractTool {
 	/**
 	 * Compress the content of a file to a new file
 	 *
-	 * @param sourceFile
-	 * @param destFile
-	 * @throws CompressorException
-	 * @throws IOException
+	 * @param sourceFile the file to compress
+	 * @param destFile   the compressed file
+	 * @throws CompressorException if any compression error occurs
+	 * @throws IOException         related to I/O errors
 	 */
 	public void compress(File sourceFile, File destFile) throws CompressorException, IOException {
 		InputStream input = new BufferedInputStream(new FileInputStream(sourceFile));
