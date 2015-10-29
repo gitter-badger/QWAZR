@@ -19,46 +19,52 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import org.apache.commons.csv.CSVFormat;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CSVPrinter extends AbstractTool {
 
-    public enum Format {
+	public enum Format {
 
-	DEFAULT(CSVFormat.DEFAULT),
+		DEFAULT(CSVFormat.DEFAULT),
 
-	EXCEL(CSVFormat.EXCEL),
+		EXCEL(CSVFormat.EXCEL),
 
-	MYSQL(CSVFormat.MYSQL),
+		MYSQL(CSVFormat.MYSQL),
 
-	RFC4180(CSVFormat.RFC4180),
+		RFC4180(CSVFormat.RFC4180),
 
-	TDF(CSVFormat.TDF);
+		TDF(CSVFormat.TDF);
 
-	private final CSVFormat csvFormat;
+		private final CSVFormat csvFormat;
 
-	private Format(CSVFormat csvFormat) {
-	    this.csvFormat = csvFormat;
+		private Format(CSVFormat csvFormat) {
+			this.csvFormat = csvFormat;
+		}
 	}
-    }
 
-    public final Format format = Format.DEFAULT;
+	public final Format format = Format.DEFAULT;
 
-    @Override
-    public void load(File parentDir) {
-    }
+	@Override
+	public void load(File parentDir) {
+	}
 
-    @Override
-    public void unload() {
-    }
+	@Override
+	public void unload() {
+	}
 
-    public org.apache.commons.csv.CSVPrinter getNewPrinter(Appendable appendable, IOUtils.CloseableContext closeable)
-	    throws IOException {
-	org.apache.commons.csv.CSVPrinter printer = new org.apache.commons.csv.CSVPrinter(appendable, format.csvFormat);
-	if (closeable != null)
-	    closeable.add(printer);
-	return printer;
-    }
+	public org.apache.commons.csv.CSVPrinter getNewPrinter(Appendable appendable, IOUtils.CloseableContext closeable)
+					throws IOException {
+		return getNewPrinter(format.csvFormat, appendable, closeable);
+	}
+
+	public org.apache.commons.csv.CSVPrinter getNewPrinter(CSVFormat format, Appendable appendable,
+					IOUtils.CloseableContext closeable) throws IOException {
+		org.apache.commons.csv.CSVPrinter printer = new org.apache.commons.csv.CSVPrinter(appendable, format);
+		if (closeable != null)
+			closeable.add(printer);
+		return printer;
+	}
 
 }

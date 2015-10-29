@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,13 @@ import org.slf4j.LoggerFactory;
 
 public class ScriptConsole {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(ConsoleLogger.class);
+	private static final Logger logger = LoggerFactory.getLogger(ConsoleLogger.class);
 
 	public void log(Object object) {
-		log().info(object);
+		getLog().info(object);
 	}
 
-	public ConsoleLogger log() {
+	public ConsoleLogger getLog() {
 		return ConsoleLogger.INSTANCE;
 	}
 
@@ -38,35 +37,56 @@ public class ScriptConsole {
 		public void info(Object object) {
 			if (object == null)
 				return;
-			if (logger.isInfoEnabled())
+			if (!logger.isInfoEnabled())
+				return;
+			if (object instanceof Throwable)
+				logger.info(object.toString(), (Throwable) object);
+			else
 				logger.info(object.toString());
 		}
 
 		public void warn(Object object) {
 			if (object == null)
 				return;
-			if (logger.isWarnEnabled())
+			if (!logger.isWarnEnabled())
+				return;
+			if (object instanceof Throwable)
+				logger.warn(object.toString(), (Throwable) object);
+			else
 				logger.warn(object.toString());
 		}
 
 		public void error(Object object) {
 			if (object == null)
 				return;
-			if (logger.isErrorEnabled())
+			if (!logger.isErrorEnabled())
+				return;
+			System.out.println("TYPE: " + object.getClass().getName());
+			if (object instanceof Throwable)
+				logger.error(object.toString(), (Throwable) object);
+			else
 				logger.error(object.toString());
 		}
 
 		public void debug(Object object) {
 			if (object == null)
 				return;
-			if (logger.isDebugEnabled())
+			if (!logger.isDebugEnabled())
+				return;
+			if (object instanceof Throwable)
+				logger.debug(object.toString(), (Throwable) object);
+			else
 				logger.debug(object.toString());
 		}
 
 		public void trace(Object object) {
 			if (object == null)
 				return;
-			if (logger.isTraceEnabled())
+			if (!logger.isTraceEnabled())
+				return;
+			if (object instanceof Throwable)
+				logger.trace(object.toString(), (Throwable) object);
+			else
 				logger.trace(object.toString());
 		}
 

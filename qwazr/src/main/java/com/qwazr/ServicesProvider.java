@@ -38,79 +38,81 @@ import java.util.concurrent.Executors;
 
 public class ServicesProvider extends AbstractConnector {
 
-    private ExecutorService executorService = null;
+	private ExecutorService executorService = null;
 
-    @Override public void load(File data_directory) {
-	executorService = Executors.newFixedThreadPool(8);
-    }
+	@Override
+	public void load(File data_directory) {
+		executorService = Executors.newFixedThreadPool(8);
+	}
 
-    @Override public void unload() {
-	executorService.shutdown();
-    }
+	@Override
+	public void unload() {
+		executorService.shutdown();
+	}
 
-    public ClusterMultiClient getCluster() {
-	if (ClusterManager.INSTANCE == null)
-	    return null;
-	return ClusterManager.INSTANCE.getClusterClient();
-    }
+	public ClusterMultiClient getCluster() {
+		if (ClusterManager.INSTANCE == null)
+			return null;
+		return ClusterManager.INSTANCE.getClusterClient();
+	}
 
-    /**
-     * Create a new WebCrawler client instance.
-     * This API queries the cluster to get the current active node for the WebCrawler service.
-     *
-     * @return a new WebCrawlerMultiClient instance
-     * @throws URISyntaxException
-     */
-    public WebCrawlerMultiClient getNewWebCrawlerClient() throws URISyntaxException {
-	return getNewWebCrawlerClient(null);
-    }
+	/**
+	 * Create a new WebCrawler client instance.
+	 * This API queries the cluster to get the current active node for the WebCrawler service.
+	 *
+	 * @return a new WebCrawlerMultiClient instance
+	 * @throws URISyntaxException
+	 */
+	public WebCrawlerMultiClient getNewWebCrawlerClient() throws URISyntaxException {
+		return getNewWebCrawlerClient(null);
+	}
 
-    /**
-     * Create a new WebCrawler client instance.
-     * This API queries the cluster to get the current active node for the WebCrawler service.
-     *
-     * @param msTimeout the default timeout used by the client
-     * @return a new WebCrawlerMultiClient instance
-     * @throws URISyntaxException
-     */
-    public WebCrawlerMultiClient getNewWebCrawlerClient(Integer msTimeout) throws URISyntaxException {
-	return new WebCrawlerMultiClient(ClusterManager.INSTANCE.getClusterClient()
-			.getActiveNodes(WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), msTimeout);
-    }
+	/**
+	 * Create a new WebCrawler client instance.
+	 * This API queries the cluster to get the current active node for the WebCrawler service.
+	 *
+	 * @param msTimeout the default timeout used by the client
+	 * @return a new WebCrawlerMultiClient instance
+	 * @throws URISyntaxException
+	 */
+	public WebCrawlerMultiClient getNewWebCrawlerClient(Integer msTimeout) throws URISyntaxException {
+		return new WebCrawlerMultiClient(ClusterManager.INSTANCE.getClusterClient()
+						.getActiveNodes(WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), msTimeout);
+	}
 
-    /**
-     * Create a new Script client instance.
-     * This API queries the cluster to get the current active node for the Script service.
-     *
-     * @return
-     * @throws URISyntaxException
-     */
-    public ScriptMultiClient getNewScriptClient() throws URISyntaxException {
-	return getNewScriptClient(null);
-    }
+	/**
+	 * Create a new Script client instance.
+	 * This API queries the cluster to get the current active node for the Script service.
+	 *
+	 * @return
+	 * @throws URISyntaxException
+	 */
+	public ScriptMultiClient getNewScriptClient() throws URISyntaxException {
+		return getNewScriptClient(null);
+	}
 
-    public ScriptMultiClient getNewScriptClient(Integer msTimeout) throws URISyntaxException {
-	return new ScriptMultiClient(executorService,
-			ClusterManager.INSTANCE.getClusterClient().getActiveNodes(JobServer.SERVICE_NAME_SCRIPT),
-			msTimeout);
-    }
+	public ScriptMultiClient getNewScriptClient(Integer msTimeout) throws URISyntaxException {
+		return new ScriptMultiClient(executorService,
+						ClusterManager.INSTANCE.getClusterClient().getActiveNodes(JobServer.SERVICE_NAME_SCRIPT),
+						msTimeout);
+	}
 
-    public ExtractorServiceInterface getNewExtractorClient() {
-	if (ParserManager.INSTANCE == null)
-	    throw new RuntimeException("Extractor service not available");
-	return new ExtractorServiceImpl();
-    }
+	public ExtractorServiceInterface getNewExtractorClient() {
+		if (ParserManager.INSTANCE == null)
+			throw new RuntimeException("Extractor service not available");
+		return new ExtractorServiceImpl();
+	}
 
-    public IndexServiceInterface getNewIndexClient(Boolean local, Integer msTimeout) throws URISyntaxException {
-	if (local != null && local)
-	    return new IndexServiceImpl();
-	String[] nodes = ClusterManager.INSTANCE.getClusterClient().getActiveNodes(SearchServer.SERVICE_NAME_SEARCH);
-	if (nodes == null)
-	    throw new RuntimeException("Index service not available");
-	if (nodes.length == 1)
-	    return new IndexSingleClient(nodes[0], msTimeout);
-	return new IndexMultiClient(executorService,
-			ClusterManager.INSTANCE.getClusterClient().getActiveNodes(SearchServer.SERVICE_NAME_SEARCH),
-			msTimeout);
-    }
+	public IndexServiceInterface getNewIndexClient(Boolean local, Integer msTimeout) throws URISyntaxException {
+		if (local != null && local)
+			return new IndexServiceImpl();
+		String[] nodes = ClusterManager.INSTANCE.getClusterClient().getActiveNodes(SearchServer.SERVICE_NAME_SEARCH);
+		if (nodes == null)
+			throw new RuntimeException("Index service not available");
+		if (nodes.length == 1)
+			return new IndexSingleClient(nodes[0], msTimeout);
+		return new IndexMultiClient(executorService,
+						ClusterManager.INSTANCE.getClusterClient().getActiveNodes(SearchServer.SERVICE_NAME_SEARCH),
+						msTimeout);
+	}
 }
