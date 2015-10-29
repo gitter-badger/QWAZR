@@ -40,8 +40,8 @@ public class ProcessTool extends AbstractTool {
 	public void unload() {
 	}
 
-	public Process execute(File workingDirectory, List<String> commandAndArgs, Map<String, String> env,
-						   File outputFile, File errorFile) throws IOException {
+	public Process execute(File workingDirectory, List<String> commandAndArgs, Map<String, String> env, File outputFile,
+					File errorFile) throws IOException {
 
 		List<String> commandsAndArgs = new ArrayList<String>();
 		if (commands != null)
@@ -79,7 +79,6 @@ public class ProcessTool extends AbstractTool {
 
 	/**
 	 * Call this command from Javascript to execute a local binary.
-	 *
 	 * <pre>
 	 * {@code
 	 * {
@@ -95,9 +94,10 @@ public class ProcessTool extends AbstractTool {
 	 * }
 	 * </pre>
 	 *
-	 * @param som
-	 *            The Javascript object
-	 * @return
+	 * @param som The Javascript object
+	 * @return the launched process
+	 * @throws ScriptException if any Javascript error occurs
+	 * @throws IOException     if any I/O error occurs
 	 */
 	public Process execute(ScriptObjectMirror som) throws ScriptException, IOException {
 
