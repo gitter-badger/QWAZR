@@ -19,9 +19,13 @@ import com.jamesmurty.utils.XMLBuilder2;
 import com.qwazr.utils.IOUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.api.scripting.ScriptUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.bind.JAXBContext;
@@ -31,6 +35,8 @@ import javax.xml.parsers.*;
 import java.io.*;
 
 public class XMLTool extends AbstractTool {
+
+	private static final Logger logger = LoggerFactory.getLogger(XMLTool.class);
 
 	private SAXParserFactory saxParserFactory;
 	private DocumentBuilderFactory documentBuilderFactory;
@@ -118,6 +124,7 @@ public class XMLTool extends AbstractTool {
 	 */
 	public Document domParseString(String xmlString) throws IOException, SAXException, ParserConfigurationException {
 		DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
+		docBuilder.setErrorHandler(ToolErrorHandler.INSTANCE);
 		InputSource input = new InputSource();
 		input.setCharacterStream(new StringReader(xmlString));
 		return docBuilder.parse(input);
@@ -134,6 +141,7 @@ public class XMLTool extends AbstractTool {
 	 */
 	public Document domParseFile(String file) throws ParserConfigurationException, IOException, SAXException {
 		DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
+		docBuilder.setErrorHandler(ToolErrorHandler.INSTANCE);
 		return docBuilder.parse(file);
 	}
 
@@ -162,5 +170,25 @@ public class XMLTool extends AbstractTool {
 		Marshaller marshaller = jaxbContext.createMarshaller();
 		StringWriter sw = new StringWriter();
 		marshaller.marshal(object, writer);
+	}
+
+	private static class ToolErrorHandler implements ErrorHandler {
+
+		private static final ToolErrorHandler INSTANCE = new ToolErrorHandler();
+
+		@Override
+		public void warning(SAXParseException exception) throws SAXException {
+			logger.warn(exception.getMessage(), exception);
+		}
+
+		@Override
+		public void error(SAXParseException exception) throws SAXException {
+			logger.error(exception.getMessage(), exception);
+		}
+
+		@Override
+		public void fatalError(SAXParseException exception) throws SAXException {
+			throw exception;
+		}
 	}
 }
