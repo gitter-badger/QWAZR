@@ -15,24 +15,20 @@
  **/
 package com.qwazr.webapps.transaction;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpSession;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.tools.ToolsManager;
+import com.qwazr.utils.FileClassCompilerLoader;
 import com.qwazr.utils.LockUtils;
-import com.qwazr.utils.StringUtils;
-import org.apache.commons.io.FilenameUtils;
+
+import javax.servlet.http.HttpSession;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ApplicationContext implements Closeable, AutoCloseable {
 
@@ -60,8 +56,7 @@ public class ApplicationContext implements Closeable, AutoCloseable {
 		staticMatchers = PathBind.loadMatchers(webappDefinition.statics);
 
 		if (webappDefinition.javac != null && webappDefinition.javac.source_root != null) {
-			compilerLoader = new FileClassCompilerLoader(webappDefinition.javac.classpath,
-							new File(webappDefinition.javac.source_root));
+			compilerLoader = new FileClassCompilerLoader(webappDefinition.javac);
 		} else {
 			compilerLoader = null;
 		}
