@@ -15,6 +15,7 @@
  **/
 package com.qwazr.utils;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 
@@ -28,6 +29,12 @@ import java.util.*;
 
 public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public static class JavacDefinition {
+		public final String source_root = null;
+		public final List<String> classpath = null;
+	}
+
 	private volatile URLClassLoader classLoader;
 
 	private final File sourceRootFile;
@@ -40,12 +47,12 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	private final Map<String, Long> lastModifiedMap;
 	private final LockUtils.ReadWriteLock mapRwl;
 
-	public FileClassCompilerLoader(List<String> classPath, File sourceRootFile) throws MalformedURLException {
+	public FileClassCompilerLoader(JavacDefinition javacDefinition) throws MalformedURLException {
+		sourceRootFile = new File(javacDefinition.source_root);
 		List<URL> urlList = new ArrayList<URL>();
 		if (sourceRootFile != null)
 			urlList.add(sourceRootFile.toURI().toURL());
-		this.classPath = buildClassPath(classPath, urlList);
-		this.sourceRootFile = sourceRootFile;
+		this.classPath = buildClassPath(javacDefinition.classpath, urlList);
 		this.sourceRootPrefix = sourceRootFile.getAbsolutePath();
 		this.sourceRootURLs = urlList.toArray(new URL[urlList.size()]);
 		this.sourceRootPrefixLength = sourceRootPrefix.length();
@@ -53,7 +60,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 		mapRwl = new LockUtils.ReadWriteLock();
 	}
 
-	private final static String buildClassPath(List<String> classPath, Collection<URL> urlCollection)
+	private final static String buildClassPath(Collection<String> classPath, Collection<URL> urlCollection)
 					throws MalformedURLException {
 		final List<String> classPathes = new ArrayList<String>();
 		if (classPath != null) {
@@ -84,7 +91,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 			classLoader = new URLClassLoader(sourceRootURLs);
 	}
 
-	public Class<?> loadClass(File sourceFile)
+	public <T> Class<T> loadClass(File sourceFile)
 					throws IOException, ScriptException, InterruptedException, ClassNotFoundException {
 		String sourcePath = sourceFile.getAbsolutePath();
 		if (!sourcePath.startsWith(sourceRootPrefix))
@@ -97,7 +104,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 		try {
 			Long time = lastModifiedMap.get(baseName);
 			if (time != null && time == sourceFileLastModified)
-				return classLoader.loadClass(baseName);
+				return (Class<T>) classLoader.loadClass(baseName);
 		} finally {
 			mapRwl.r.unlock();
 		}
@@ -106,11 +113,11 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 		try {
 			Long time = lastModifiedMap.get(baseName);
 			if (time != null && time == sourceFileLastModified)
-				return classLoader.loadClass(baseName);
+				return (Class<T>) classLoader.loadClass(baseName);
 			compile(sourceFile);
 			lastModifiedMap.put(baseName, sourceFileLastModified);
 			resetClassLoader(false);
-			return classLoader.loadClass(baseName);
+			return (Class<T>) classLoader.loadClass(baseName);
 		} finally {
 			mapRwl.w.unlock();
 		}
