@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ **/
 package com.qwazr.search.index;
 
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.TimeTracker;
 import com.qwazr.utils.server.ServerException;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.facet.DrillDownQuery;
 import org.apache.lucene.facet.Facets;
 import org.apache.lucene.facet.FacetsCollector;
@@ -27,6 +26,8 @@ import org.apache.lucene.facet.sortedset.DefaultSortedSetDocValuesReaderState;
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesFacetCounts;
 import org.apache.lucene.facet.sortedset.SortedSetDocValuesReaderState;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.TermsQuery;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
@@ -34,15 +35,124 @@ import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.postingshighlight.PostingsHighlighter;
 
+import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class QueryUtils {
 
-	final static Query getLuceneQuery(QueryDefinition queryDef, Analyzer analyzer, FacetsConfig facetsConfig)
+	final static SortField buildSortField(Map<String, FieldDefinition> fields, String field,
+					QueryDefinition.SortEnum sortEnum) throws ServerException {
+
+		final boolean reverse;
+		final Object missingValue;
+		switch (sortEnum) {
+		case ascending:
+			missingValue = null;
+			reverse = false;
+			break;
+		case ascending_missing_first:
+			missingValue = SortField.STRING_LAST;
+			reverse = false;
+			break;
+		case ascending_missing_last:
+			missingValue = SortField.STRING_FIRST;
+			reverse = false;
+			break;
+		case descending:
+			missingValue = null;
+			reverse = true;
+			break;
+		case descending_missing_first:
+			missingValue = SortField.STRING_LAST;
+			reverse = true;
+			break;
+		case descending_missing_last:
+			missingValue = SortField.STRING_FIRST;
+			reverse = true;
+			break;
+		default:
+			missingValue = null;
+			reverse = false;
+			break;
+		}
+
+		final SortField sortField;
+
+		if ("$score".equals(field)) {
+			sortField = new SortField(field, SortField.Type.SCORE, reverse);
+		} else if ("$doc".equals(field)) {
+			sortField = new SortField(field, SortField.Type.DOC, reverse);
+		} else {
+			FieldDefinition fieldDefinition = fields.get(field);
+			if (fieldDefinition == null)
+				throw new ServerException(Response.Status.BAD_REQUEST, "Unknown sort field: " + field);
+			sortField = fieldDefinition.getSortField(field, reverse);
+		}
+		if (missingValue != null)
+			sortField.setMissingValue(missingValue);
+		return sortField;
+	}
+
+	final static Sort buildSort(Map<String, FieldDefinition> fields,
+					LinkedHashMap<String, QueryDefinition.SortEnum> sorts) throws ServerException {
+		if (sorts.isEmpty())
+			return null;
+		final SortField[] sortFields = new SortField[sorts.size()];
+		int i = 0;
+		for (Map.Entry<String, QueryDefinition.SortEnum> sort : sorts.entrySet())
+			sortFields[i++] = buildSortField(fields, sort.getKey(), sort.getValue());
+		if (sortFields.length == 1)
+			return new Sort(sortFields[0]);
+		return new Sort(sortFields);
+	}
+
+	final static Term facetTerm(String indexedField, String dim, String... path) {
+		return new Term(indexedField, FacetsConfig.pathToString(dim, path));
+	}
+
+	final static List<Term> facetTerms(String indexedField, String dim, Collection<String> terms) {
+		List<Term> termList = new ArrayList<>(terms.size());
+		for (String term : terms)
+			termList.add(facetTerm(indexedField, dim, term));
+		return termList;
+	}
+
+	final static Query facetTermQuery(FacetsConfig facetsConfig, String dim, Set<String> filter_terms) {
+		String indexedField = facetsConfig.getDimConfig(dim).indexFieldName;
+		if (filter_terms.size() == 1)
+			return new TermQuery(facetTerm(indexedField, dim, filter_terms.iterator().next()));
+		return new TermsQuery(facetTerms(indexedField, dim, filter_terms));
+	}
+
+	final static Query buildFacetFiltersQuery(FacetsConfig facetsConfig, List<Map<String, Set<String>>> facet_filters,
+					Query query) {
+		if (facet_filters.isEmpty())
+			return query;
+
+		DrillDownQuery ddq;
+
+		BooleanQuery.Builder rootBuilder = new BooleanQuery.Builder();
+		rootBuilder.add(query, BooleanClause.Occur.MUST);
+
+		for (Map<String, Set<String>> mapEntry : facet_filters) {
+			for (Map.Entry<String, Set<String>> entry : mapEntry.entrySet()) {
+				Set<String> filter_terms = entry.getValue();
+				if (filter_terms == null || filter_terms.isEmpty())
+					continue;
+				String dim = entry.getKey();
+				Query orFilterQuery = facetTermQuery(facetsConfig, dim, filter_terms);
+				rootBuilder.add(orFilterQuery, BooleanClause.Occur.FILTER);
+			}
+		}
+
+		return rootBuilder.build();
+	}
+
+	final static Query getLuceneQuery(QueryDefinition queryDef, PerFieldAnalyzer analyzer)
 					throws QueryNodeException, ParseException {
+
+		// Configure the QueryParser
 		final StandardQueryParser parser = new StandardQueryParser(analyzer);
 		if (queryDef.multi_field != null && !queryDef.multi_field.isEmpty()) {
 			Set<String> fieldSet = queryDef.multi_field.keySet();
@@ -58,6 +168,8 @@ public class QueryUtils {
 			parser.setPhraseSlop(queryDef.phrase_slop);
 		if (queryDef.enable_position_increments != null)
 			parser.setEnablePositionIncrements(queryDef.enable_position_increments);
+
+		// Deal wih query string
 		final String qs;
 		// Check if we have to escape some characters
 		if (queryDef.escape_query != null && queryDef.escape_query) {
@@ -68,6 +180,7 @@ public class QueryUtils {
 		} else
 			qs = queryDef.query_string;
 
+		// Parse the query
 		Query query = parser.parse(qs, queryDef.default_field);
 
 		if (queryDef.auto_generate_phrase_query != null && queryDef.auto_generate_phrase_query && qs != null
@@ -78,41 +191,41 @@ public class QueryUtils {
 		}
 
 		// Overload query with facet filters
-		if (queryDef.facet_drilldown != null && !queryDef.facet_drilldown.isEmpty()) {
-			DrillDownQuery drillDownQuery = new DrillDownQuery(facetsConfig, query);
-			for (Map.Entry<String, Set<String>> entry : queryDef.facet_drilldown.entrySet()) {
-				Set<String> filter_terms = entry.getValue();
-				if (filter_terms == null)
-					continue;
-				String filter_field = entry.getKey();
-				for (String filter_term : filter_terms)
-					drillDownQuery.add(filter_field, filter_term);
-			}
-			query = drillDownQuery;
-		}
+		if (queryDef.facet_filters != null)
+			query = buildFacetFiltersQuery(analyzer.getContext().facetsConfig, queryDef.facet_filters, query);
+
 		return query;
 	}
 
-	final static ResultDefinition search(Map<String, FieldDefinition> fieldMap, IndexSearcher indexSearcher,
-					QueryDefinition queryDef, Analyzer analyzer, FacetsConfig facetsConfig)
+	final static ResultDefinition search(IndexSearcher indexSearcher, QueryDefinition queryDef,
+					PerFieldAnalyzer analyzer)
 					throws ServerException, IOException, QueryNodeException, InterruptedException, ParseException {
 
-		Query query = getLuceneQuery(queryDef, analyzer, facetsConfig);
+		Query query = getLuceneQuery(queryDef, analyzer);
 
 		final IndexReader indexReader = indexSearcher.getIndexReader();
 		final TimeTracker timeTracker = new TimeTracker();
 		final TopDocs topDocs;
 		final Facets facets;
+		final PerFieldAnalyzer.AnalyzerContext analyzerContext = analyzer.getContext();
+
+		final Sort sort = queryDef.sorts == null ? null : buildSort(analyzerContext.fields, queryDef.sorts);
 
 		if (queryDef.facets != null && queryDef.facets.size() > 0) {
 			FacetsCollector facetsCollector = new FacetsCollector();
 			SortedSetDocValuesReaderState state = new DefaultSortedSetDocValuesReaderState(indexReader);
-			topDocs = FacetsCollector.search(indexSearcher, query, queryDef.getEnd(), facetsCollector);
+			if (sort != null)
+				topDocs = FacetsCollector.search(indexSearcher, query, queryDef.getEnd(), sort, facetsCollector);
+			else
+				topDocs = FacetsCollector.search(indexSearcher, query, queryDef.getEnd(), facetsCollector);
 			timeTracker.next("search_query");
 			facets = new SortedSetDocValuesFacetCounts(state, facetsCollector);
 			timeTracker.next("facet_count");
 		} else {
-			topDocs = indexSearcher.search(query, queryDef.getEnd());
+			if (sort != null)
+				topDocs = indexSearcher.search(query, queryDef.getEnd(), sort);
+			else
+				topDocs = indexSearcher.search(query, queryDef.getEnd());
 			timeTracker.next("search_query");
 			facets = null;
 		}
@@ -131,7 +244,7 @@ public class QueryUtils {
 			timeTracker.next("postings_highlighters");
 		}
 
-		return new ResultDefinition(fieldMap, timeTracker, indexSearcher, topDocs, queryDef, facets,
+		return new ResultDefinition(analyzerContext.fields, timeTracker, indexSearcher, topDocs, queryDef, facets,
 						postingsHighlightersMap, query);
 
 	}

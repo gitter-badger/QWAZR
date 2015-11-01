@@ -21,7 +21,10 @@ import com.qwazr.search.index.*;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.json.JsonMapper;
 import org.apache.commons.cli.ParseException;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.FixMethodOrder;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import javax.servlet.ServletException;
@@ -30,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,9 +49,15 @@ public class FullTest {
 	public static final Map<String, FieldDefinition> FIELDS_JSON = getFieldMap("fields.json");
 	public static final QueryDefinition MATCH_ALL_QUERY = getQuery("query_match_all.json");
 	public static final QueryDefinition FACETS_ROWS_QUERY = getQuery("query_facets_rows.json");
+	public static final QueryDefinition FACETS_FILTERS_QUERY = getQuery("query_facets_filters.json");
+	public static final QueryDefinition QUERY_SORTFIELD = getQuery("query_sortfield.json");
+	public static final QueryDefinition QUERY_SORTFIELDS = getQuery("query_sortfields.json");
+	public static final QueryDefinition QUERY_CHECK_DOCVALUES = getQuery("query_check_docvalues.json");
 	public static final QueryDefinition DELETE_QUERY = getQuery("query_delete.json");
 	public static final Map<String, Object> UPDATE_DOC = getDoc("update_doc.json");
 	public static final List<Map<String, Object>> UPDATE_DOCS = getDocs("update_docs.json");
+	public static final Map<String, Object> UPDATE_DOC_VALUE = getDoc("update_doc_value.json");
+	public static final List<Map<String, Object>> UPDATE_DOCS_VALUES = getDocs("update_docs_values.json");
 
 	@Before
 	public void startServer() throws IOException, ParseException, ServletException, IllegalAccessException,
@@ -188,10 +198,12 @@ public class FullTest {
 	@Test
 	public void test200UpdateDocs() throws URISyntaxException, IOException {
 		IndexServiceInterface client = getClient();
-		Response response = client.postDocuments(SCHEMA_NAME, INDEX_NAME, UPDATE_DOCS);
-		Assert.assertNotNull(response);
-		Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
-		checkAllSizes(client, 4);
+		for (int i = 0; i < 6; i++) { // Yes, six times: we said "testing" !
+			Response response = client.postDocuments(SCHEMA_NAME, INDEX_NAME, UPDATE_DOCS);
+			Assert.assertNotNull(response);
+			Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
+			checkAllSizes(client, 4);
+		}
 	}
 
 	private BackupStatus doBackup(IndexServiceInterface client) {
@@ -225,16 +237,59 @@ public class FullTest {
 	@Test
 	public void test300UpdateDoc() throws URISyntaxException, IOException {
 		IndexServiceInterface client = getClient();
-		Response response = client.postDocument(SCHEMA_NAME, INDEX_NAME, UPDATE_DOC);
+		for (int i = 0; i < 7; i++) { // Seven times: we said "testing" !
+			Response response = client.postDocument(SCHEMA_NAME, INDEX_NAME, UPDATE_DOC);
+			Assert.assertNotNull(response);
+			Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
+			checkAllSizes(client, 5);
+		}
+	}
+
+	@Test
+	public void test350UpdateDocValue() throws URISyntaxException, IOException {
+		IndexServiceInterface client = getClient();
+
+		// Check that the initial stock is 0 for all documents
+		ResultDefinition result = checkQueryIndex(client, QUERY_CHECK_DOCVALUES, 5);
+		Assert.assertNotNull(result.documents);
+		for (ResultDocument document : result.documents) {
+			Integer stock = (Integer) document.fields.get("stock");
+			Assert.assertNotNull(stock);
+			Assert.assertEquals(0, (int) stock);
+		}
+
+		// Update one document value
+		Response response = client.updateDocumentValues(SCHEMA_NAME, INDEX_NAME, UPDATE_DOC_VALUE);
 		Assert.assertNotNull(response);
 		Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
 		checkAllSizes(client, 5);
+
+		// Update a list of documents values
+		response = client.updateDocumentsValues(SCHEMA_NAME, INDEX_NAME, UPDATE_DOCS_VALUES);
+		Assert.assertNotNull(response);
+		Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
+		checkAllSizes(client, 5);
+
+		// Check the result
+		result = checkQueryIndex(client, QUERY_CHECK_DOCVALUES, 5);
+		Assert.assertNotNull(result.documents);
+		for (ResultDocument document : result.documents) {
+			// Check that the price is still here
+			Assert.assertNotNull(document.fields);
+			Double price = (Double) document.fields.get("price");
+			Assert.assertNotNull(price);
+			Assert.assertNotEquals(0, price);
+			// The stock should be change to another value than 0
+			Integer stock = (Integer) document.fields.get("stock");
+			Assert.assertNotNull(stock);
+			Assert.assertNotEquals(0, (double) stock);
+		}
 	}
 
 	private void checkFacetRowsQuery(ResultDefinition result) {
 		Assert.assertNotNull(result.documents);
 		Assert.assertEquals(3, result.documents.size());
-		for (ResultDefinition.ResultDocument doc : result.documents) {
+		for (ResultDocument doc : result.documents) {
 			Assert.assertNotNull(doc.fields);
 			Assert.assertEquals(2, doc.fields.size());
 			Assert.assertTrue(doc.fields.containsKey("name"));
@@ -251,6 +306,56 @@ public class FullTest {
 		IndexServiceInterface client = getClient();
 		checkFacetRowsQuery(checkQueryIndex(client, FACETS_ROWS_QUERY, 5));
 		checkFacetRowsQuery(checkQuerySchema(client, FACETS_ROWS_QUERY, 5));
+	}
+
+	private void checkFacetFiltersResult(ResultDefinition result) {
+		Assert.assertNotNull(result.documents);
+		Assert.assertEquals(2, result.documents.size());
+		Assert.assertNotNull(result.documents.get(0).fields);
+		Assert.assertNotNull(result.documents.get(1).fields);
+		Assert.assertEquals("Fourth name", result.documents.get(0).fields.get("name"));
+		Assert.assertEquals("Fifth name", result.documents.get(1).fields.get("name"));
+	}
+
+	@Test
+	public void test410QueryFacetFilterDoc() throws URISyntaxException, IOException {
+		IndexServiceInterface client = getClient();
+		checkFacetFiltersResult(checkQueryIndex(client, FACETS_FILTERS_QUERY, 2));
+		checkFacetFiltersResult(checkQuerySchema(client, FACETS_FILTERS_QUERY, 2));
+	}
+
+	private <T extends Comparable> void checkDescending(T startValue, String field,
+					Collection<ResultDocument> documents) {
+		T old = startValue;
+		for (ResultDocument document : documents) {
+			Assert.assertNotNull(document.fields);
+			T val = (T) document.fields.get(field);
+			Assert.assertNotNull(val);
+			Assert.assertTrue(val.compareTo(old) <= 0);
+			old = val;
+		}
+	}
+
+	private <T extends Comparable> void checkAscending(T startValue, String field,
+					Collection<ResultDocument> documents) {
+		T old = startValue;
+		for (ResultDocument document : documents) {
+			Assert.assertNotNull(document.fields);
+			T val = (T) document.fields.get(field);
+			Assert.assertNotNull(val);
+			Assert.assertTrue(val.compareTo(old) >= 0);
+			old = val;
+		}
+	}
+
+	@Test
+	public void test420QuerySortFieldDoc() throws URISyntaxException, IOException {
+		IndexServiceInterface client = getClient();
+		ResultDefinition result = checkQueryIndex(client, QUERY_SORTFIELD, 5);
+		Assert.assertNotNull(result.documents);
+		checkDescending(Double.MAX_VALUE, "price", result.documents);
+		result = checkQueryIndex(client, QUERY_SORTFIELDS, 5);
+		checkAscending(Double.MIN_VALUE, "price", result.documents);
 	}
 
 	@Test
