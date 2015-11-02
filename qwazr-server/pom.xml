@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>qwazr-core</artifactId>
+    <artifactId>qwazr-server</artifactId>
     <name>QWAZR</name>
     <description>A Javascript based distributed and scalable application server</description>
     <packaging>jar</packaging>
