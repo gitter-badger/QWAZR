@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,13 @@ package com.qwazr.tools;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CSVPrinter extends AbstractTool {
+public class CSVTool extends AbstractTool {
 
 	public enum Format {
 
@@ -46,25 +47,41 @@ public class CSVPrinter extends AbstractTool {
 
 	public final Format format = Format.DEFAULT;
 
-	@Override
-	public void load(File parentDir) {
+	@Override public void load(File parentDir) {
 	}
 
-	@Override
-	public void unload() {
+	@Override public void unload() {
 	}
 
-	public org.apache.commons.csv.CSVPrinter getNewPrinter(Appendable appendable, IOUtils.CloseableContext closeable)
-					throws IOException {
+	public CSVPrinter getNewPrinter(Appendable appendable, IOUtils.CloseableContext closeable) throws IOException {
 		return getNewPrinter(format.csvFormat, appendable, closeable);
 	}
 
-	public org.apache.commons.csv.CSVPrinter getNewPrinter(CSVFormat format, Appendable appendable,
-					IOUtils.CloseableContext closeable) throws IOException {
-		org.apache.commons.csv.CSVPrinter printer = new org.apache.commons.csv.CSVPrinter(appendable, format);
+	public CSVPrinter getNewPrinter(CSVFormat format, Appendable appendable, IOUtils.CloseableContext closeable)
+					throws IOException {
+		CSVPrinter printer = new CSVPrinter(appendable, format);
 		if (closeable != null)
 			closeable.add(printer);
 		return printer;
+	}
+
+	public CSVParser getNewParser(CSVFormat format, File file, IOUtils.CloseableContext closeable) throws IOException {
+		FileReader fileReader = new FileReader(file);
+		if (closeable != null)
+			closeable.add(fileReader);
+		return getNewParser(format, fileReader, closeable);
+	}
+
+	public CSVParser getNewParser(Reader reader, IOUtils.CloseableContext closeable) throws IOException {
+		return getNewParser(format.csvFormat, reader, closeable);
+	}
+
+	public CSVParser getNewParser(CSVFormat format, Reader reader, IOUtils.CloseableContext closeable)
+					throws IOException {
+		CSVParser parser = new CSVParser(reader, format);
+		if (closeable != null)
+			closeable.add(parser);
+		return parser;
 	}
 
 }
