@@ -55,7 +55,7 @@
     </properties>
 
     <modules>
-        <module>qwazr-core</module>
+        <module>qwazr-server</module>
         <module>qwazr-cluster</module>
         <module>qwazr-connectors</module>
         <module>qwazr-crawlers</module>
