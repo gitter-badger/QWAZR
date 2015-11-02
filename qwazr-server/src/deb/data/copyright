@@ -1,0 +1,7 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Qwazr
+Source: https://github.com/qwazr/QWAZR
+
+Files: *
+Copyright: Copyright 2014-2015 QWAZR SAS.<contact@qwazr.com>
+License: Apache2
