@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.io.File;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-@JsonSubTypes({ @Type(value = ArchiverTool.class), @Type(value = CSVPrinter.class), @Type(value = FreeMarkerTool.class),
+@JsonSubTypes({ @Type(value = ArchiverTool.class), @Type(value = CSVTool.class), @Type(value = FreeMarkerTool.class),
 				@Type(value = MarkdownTool.class), @Type(value = ProcessTool.class),
 				@Type(value = PropertiesTool.class), @Type(value = XMLTool.class), @Type(value = XPathTool.class) })
 public abstract class AbstractTool {
