@@ -61,7 +61,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	}
 
 	private final static String buildClassPath(Collection<String> classPath, Collection<URL> urlCollection)
-					throws MalformedURLException {
+			throws MalformedURLException {
 		final List<String> classPathes = new ArrayList<String>();
 		if (classPath != null) {
 			for (String cp : classPath) {
@@ -92,7 +92,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	}
 
 	public <T> Class<T> loadClass(File sourceFile)
-					throws IOException, ScriptException, InterruptedException, ClassNotFoundException {
+			throws IOException, ReflectiveOperationException, InterruptedException {
 		String sourcePath = sourceFile.getAbsolutePath();
 		if (!sourcePath.startsWith(sourceRootPrefix))
 			throw new IOException("The file is not in the source root: " + sourceFile + " / " + sourceRootFile);
@@ -141,11 +141,11 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 			options.add("-sourcepath");
 			options.add(sourceRootPrefix);
 			JavaCompiler.CompilationTask task = compiler
-							.getTask(pw, fileManager, diagnostics, options, null, sourceFiles);
+					.getTask(pw, fileManager, diagnostics, options, null, sourceFiles);
 			if (!task.call()) {
 				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics())
 					pw.format("Error on line %d in %s%n%s%n", diagnostic.getLineNumber(),
-									diagnostic.getSource().toUri(), diagnostic.getMessage(null));
+							diagnostic.getSource().toUri(), diagnostic.getMessage(null));
 				pw.flush();
 				pw.close();
 				sw.close();
