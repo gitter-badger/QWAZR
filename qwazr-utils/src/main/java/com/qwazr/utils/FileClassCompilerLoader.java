@@ -63,6 +63,11 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	private final static String buildClassPath(Collection<String> classPath, Collection<URL> urlCollection)
 			throws MalformedURLException {
 		final List<String> classPathes = new ArrayList<String>();
+
+		String classpath = System.getProperty("java.class.path");
+		if (!StringUtils.isEmpty(classpath))
+			classPathes.add(classpath);
+
 		if (classPath != null) {
 			for (String cp : classPath) {
 				File file = new File(cp);
