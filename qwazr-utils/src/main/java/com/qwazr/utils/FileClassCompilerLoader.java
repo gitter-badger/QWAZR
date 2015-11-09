@@ -23,6 +23,7 @@ import javax.script.ScriptException;
 import javax.tools.*;
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -47,7 +48,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	private final Map<String, Long> lastModifiedMap;
 	private final LockUtils.ReadWriteLock mapRwl;
 
-	public FileClassCompilerLoader(JavacDefinition javacDefinition) throws MalformedURLException {
+	public FileClassCompilerLoader(JavacDefinition javacDefinition) throws MalformedURLException, URISyntaxException {
 		sourceRootFile = new File(javacDefinition.source_root);
 		List<URL> urlList = new ArrayList<URL>();
 		if (sourceRootFile != null)
@@ -61,8 +62,17 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	}
 
 	private final static String buildClassPath(Collection<String> classPath, Collection<URL> urlCollection)
-			throws MalformedURLException {
+			throws MalformedURLException, URISyntaxException {
 		final List<String> classPathes = new ArrayList<String>();
+
+		URLClassLoader classLoader = (URLClassLoader) URLClassLoader.getSystemClassLoader();
+		if (classLoader != null && classLoader.getURLs() != null) {
+			for (URL url : classLoader.getURLs()) {
+				classPathes.add(new File(url.toURI()).getAbsolutePath());
+				urlCollection.add(url);
+			}
+		}
+
 		if (classPath != null) {
 			for (String cp : classPath) {
 				File file = new File(cp);
