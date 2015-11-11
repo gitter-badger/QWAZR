@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.connectors.AbstractConnector;
-import com.qwazr.connectors.ConnectorManager;
+import com.qwazr.connectors.ConnectorManagerImpl;
 import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.service.WebCrawlerServiceImpl;
 import com.qwazr.database.TableServer;
@@ -37,7 +37,7 @@ import com.qwazr.search.index.IndexServiceImpl;
 import com.qwazr.store.StoreServer;
 import com.qwazr.store.data.StoreMasterDataService;
 import com.qwazr.store.schema.StoreMasterSchemaService;
-import com.qwazr.tools.ToolsManager;
+import com.qwazr.tools.ToolsManagerImpl;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.webapps.WebappManagerServiceImpl;
@@ -167,8 +167,8 @@ public class Qwazr extends AbstractServer {
 			services.add(ServiceEnum.store.name(), StoreMasterSchemaService.class);
 		}
 
-		ConnectorManager.load(currentDataDir);
-		ToolsManager.load(currentDataDir);
+		ConnectorManagerImpl.load(currentDataDir);
+		ToolsManagerImpl.load(currentDataDir);
 
 		// Scheduler is last, because it may immediatly execute a script
 		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
@@ -186,7 +186,7 @@ public class Qwazr extends AbstractServer {
 
 	@Override
 	protected IdentityManager getIdentityManager(String realm) throws IOException {
-		AbstractConnector connector = ConnectorManager.INSTANCE.get(realm);
+		AbstractConnector connector = ConnectorManagerImpl.getInstance().get(realm);
 		if (connector == null)
 			throw new IOException("No realm connector with this name: " + realm);
 		if (!(connector instanceof IdentityManager))

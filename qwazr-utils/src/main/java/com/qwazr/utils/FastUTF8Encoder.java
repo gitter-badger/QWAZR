@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,8 +40,7 @@ public class FastUTF8Encoder {
 		return error;
 	}
 
-	final private int parse(final char c, final char[] ia, final int ip,
-			final int il) {
+	final private int parse(final char c, final char[] ia, final int ip, final int il) {
 		assert (ia[ip] == c);
 		if (Character.isHighSurrogate(c)) {
 			if (il - ip < 2) {
@@ -81,8 +80,7 @@ public class FastUTF8Encoder {
 	 *            destination limit
 	 * @return UNDERFLOW is successful, OVERFLOW/ERROR otherwise
 	 */
-	final private CoderResult encode(char[] sa, int sp, int sl, byte[] da,
-			int dp, int dl) {
+	final private CoderResult encode(char[] sa, int sp, int sl, byte[] da, int dp, int dl) {
 		lastSp = sp;
 		int dlASCII = dp + Math.min(sl - lastSp, dl - dp);
 
@@ -96,8 +94,7 @@ public class FastUTF8Encoder {
 			} else if (c < 2048) {
 				da[dp++] = (byte) (0xC0 | (c >> 6));
 				da[dp++] = (byte) (0x80 | (c & 0x3F));
-			} else if (Character.MIN_SURROGATE <= c
-					&& c <= Character.MAX_SURROGATE) {
+			} else if (Character.MIN_SURROGATE <= c && c <= Character.MAX_SURROGATE) {
 				int uc = parse((char) c, sa, lastSp, sl);
 				if (uc < 0) {
 					lastDp = dp;
@@ -119,11 +116,11 @@ public class FastUTF8Encoder {
 		return CoderResult.UNDERFLOW;
 	}
 
-	final public CoderResult encode(final char[] charArray,
-			final int charLength, final ByteBuffer byteBuffer) {
-		CoderResult res = encode(charArray, 0, charLength, byteBuffer.array(),
-				byteBuffer.position(), byteBuffer.limit());
+	final public CoderResult encode(final char[] charArray, final int charLength, final ByteBuffer byteBuffer) {
+		CoderResult res = encode(charArray, 0, charLength, byteBuffer.array(), byteBuffer.position(),
+						byteBuffer.limit());
 		byteBuffer.position(lastDp);
 		return res;
 	}
+
 }
