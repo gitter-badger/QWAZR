@@ -16,8 +16,9 @@
 package com.qwazr.connectors;
 
 import java.io.IOException;
+import java.util.Map;
 
-public interface ConnectorManager {
+public interface ConnectorManager extends Map<String, AbstractConnector> {
 
-	AbstractConnector get(String name) throws IOException;
+	<T extends AbstractConnector> T get(String name) throws IOException;
 }

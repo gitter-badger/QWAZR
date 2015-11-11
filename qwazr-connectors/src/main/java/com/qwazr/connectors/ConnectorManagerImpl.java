@@ -15,6 +15,7 @@
  **/
 package com.qwazr.connectors;
 
+import com.qwazr.utils.ReadOnlyMap;
 import com.qwazr.utils.TrackedFile;
 import com.qwazr.utils.json.JsonMapper;
 import org.slf4j.Logger;
@@ -22,11 +23,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConnectorManagerImpl implements ConnectorManager, TrackedFile.FileEventReceiver {
+public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
+				implements ConnectorManager, TrackedFile.FileEventReceiver {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConnectorManagerImpl.class);
 
@@ -47,10 +48,8 @@ public class ConnectorManagerImpl implements ConnectorManager, TrackedFile.FileE
 	private final TrackedFile trackedFile;
 
 	private final Map<String, AbstractConnector> connectors;
-	private volatile Map<String, AbstractConnector> cachedConnectors;
 
 	private ConnectorManagerImpl(File rootDirectory) throws IOException {
-		cachedConnectors = null;
 		connectors = new HashMap<>();
 		this.rootDirectory = rootDirectory;
 		connectorsFile = new File(rootDirectory, "connectors.json");
@@ -70,7 +69,7 @@ public class ConnectorManagerImpl implements ConnectorManager, TrackedFile.FileE
 				connectors.put(connector.name, connector);
 			}
 		}
-		cachedConnectors = new HashMap<>(connectors);
+		setMap(new HashMap<>(connectors));
 	}
 
 	public void unload() {
@@ -83,13 +82,11 @@ public class ConnectorManagerImpl implements ConnectorManager, TrackedFile.FileE
 			}
 		}
 		connectors.clear();
-		cachedConnectors = Collections.emptyMap();
+		setMap(new HashMap<>(connectors));
 	}
 
 	public AbstractConnector get(String name) throws IOException {
 		trackedFile.check();
-		if (cachedConnectors == null)
-			return null;
-		return cachedConnectors.get(name);
+		return super.get(name);
 	}
 }

@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,11 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import org.apache.commons.io.IOUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.Map;
+import java.util.HashMap;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
@@ -94,6 +96,14 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 		response.setCharacterEncoding(DEFAULT_CHARSET);
 		Template template = cfg.getTemplate(templatePath);
 		template.process(dataModel, response.getWriter());
+	}
+
+	public void template(String templatePath, HttpServletRequest request, HttpServletResponse response)
+					throws IOException, TemplateException {
+		Map<String, Object> variables = new HashMap<String, Object>();
+		variables.put("request", request);
+		variables.put("session", request.getSession());
+		template(templatePath, variables, response);
 	}
 
 	public String template(String templatePath, Map<String, Object> dataModel) throws TemplateException, IOException {

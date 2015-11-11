@@ -15,6 +15,7 @@
  **/
 package com.qwazr.tools;
 
+import com.qwazr.utils.ReadOnlyMap;
 import com.qwazr.utils.TrackedFile;
 import com.qwazr.utils.json.JsonMapper;
 import org.slf4j.Logger;
@@ -22,11 +23,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
-public class ToolsManagerImpl implements ToolsManager, TrackedFile.FileEventReceiver {
+public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
+				implements ToolsManager, TrackedFile.FileEventReceiver {
 
 	private static final Logger logger = LoggerFactory.getLogger(ToolsManagerImpl.class);
 
@@ -47,11 +49,9 @@ public class ToolsManagerImpl implements ToolsManager, TrackedFile.FileEventRece
 	private final TrackedFile trackedFile;
 
 	private final Map<String, AbstractTool> tools;
-	private volatile Map<String, AbstractTool> cachedTools;
 
 	private ToolsManagerImpl(File rootDirectory) throws IOException {
-		cachedTools = null;
-		tools = new HashMap<String, AbstractTool>();
+		this.tools = new HashMap<String, AbstractTool>();
 		this.rootDirectory = rootDirectory;
 		toolsFile = new File(rootDirectory, "tools.json");
 		trackedFile = new TrackedFile(this, toolsFile);
@@ -69,25 +69,27 @@ public class ToolsManagerImpl implements ToolsManager, TrackedFile.FileEventRece
 				tools.put(tool.name, tool);
 			}
 		}
-		cachedTools = new HashMap<String, AbstractTool>(tools);
+		setMap(new HashMap<String, AbstractTool>(tools));
 	}
 
 	public void unload() {
-		for (AbstractTool tool : tools.values()) {
-			try {
-				tool.unload();
-			} catch (Exception e) {
-				// This should never happen
-				logger.warn(e.getMessage(), e);
+		tools.forEach(new BiConsumer<String, AbstractTool>() {
+			@Override
+			public void accept(String name, AbstractTool tool) {
+				try {
+					tool.unload();
+				} catch (Exception e) {
+					logger.warn(e.getMessage(), e);
+				}
 			}
-		}
+		});
 		tools.clear();
-		cachedTools = Collections.EMPTY_MAP;
+		setMap(new HashMap<String, AbstractTool>(tools));
 	}
 
 	public AbstractTool get(String name) throws IOException {
 		trackedFile.check();
-		return cachedTools.get(name);
+		return super.get(name);
 	}
 
 }

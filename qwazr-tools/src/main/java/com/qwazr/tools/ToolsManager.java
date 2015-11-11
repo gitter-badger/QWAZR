@@ -16,8 +16,9 @@
 package com.qwazr.tools;
 
 import java.io.IOException;
+import java.util.Map;
 
-public interface ToolsManager {
+public interface ToolsManager extends Map<String, AbstractTool> {
 
-	AbstractTool get(String name) throws IOException;
+	<T extends AbstractTool> T get(String name) throws IOException;
 }
