@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,41 +24,32 @@ import java.io.*;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 
-public class WebappResponse implements HttpServletResponse {
+public class WebappHttpResponse implements HttpServletResponse {
 
+	private final Map<String, Object> attributes;
 	private final HttpServletResponse response;
 
-	private Map<String, Object> variables;
-
-	WebappResponse(HttpServletResponse response) {
+	WebappHttpResponse(Map<String, Object> attributes, HttpServletResponse response) {
 		this.response = response;
-		this.variables = null;
-	}
-
-	public WebappResponse(WebappResponse src) {
-		this.variables = src.variables == null ? null : new TreeMap<String, Object>(src.variables);
-		this.response = src.response;
+		this.attributes = attributes;
 	}
 
 	public Map<String, Object> getVariables() {
-		return variables;
+		return attributes;
 	}
 
-	public WebappResponse variable(String name, Object value) {
+	public WebappHttpResponse variable(String name, Object value) {
 		if (name == null)
 			return this;
-		if (variables == null)
-			variables = new TreeMap<String, Object>();
 		if (value == null)
-			variables.remove(name);
+			attributes.remove(name);
 		else
-			variables.put(name, value);
+			attributes.put(name, value);
 		return this;
 	}
 
-	public WebappResponse setVariable(String name, Object value) {
+	public WebappHttpResponse setVariable(String name, Object value) {
 		return variable(name, value);
 	}
 

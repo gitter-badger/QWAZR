@@ -15,8 +15,8 @@
  **/
 package com.qwazr.webapps.transaction;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.qwazr.connectors.ConnectorManagerImpl;
+import com.qwazr.tools.ToolsManagerImpl;
 import com.qwazr.webapps.exception.WebappException;
 import com.qwazr.webapps.transaction.body.HttpBodyInterface;
 
@@ -37,24 +37,28 @@ public class WebappTransaction {
 
 	private final ApplicationContext context;
 	private final WebappHttpRequest request;
-	private final WebappResponse response;
+	private final WebappHttpResponse response;
 
 	public WebappTransaction(HttpServletRequest request, HttpServletResponse response, HttpBodyInterface body)
-			throws IOException, URISyntaxException {
-		this.response = new WebappResponse(response);
+					throws IOException, URISyntaxException {
 		FilePath fp = new FilePath(request.getPathInfo(), false);
 		// First we try to find a sub context
-		ApplicationContext ctx = WebappManager.INSTANCE.findApplicationContext(fp, this);
+		ApplicationContext ctx = WebappManager.INSTANCE.findApplicationContext(fp);
 		if (ctx == null) {
 			// The we test the ROOT context
 			fp = new FilePath(request.getPathInfo(), true);
-			ctx = WebappManager.INSTANCE.findApplicationContext(fp, this);
+			ctx = WebappManager.INSTANCE.findApplicationContext(fp);
 			if (ctx == null)
 				throw new FileNotFoundException("No application found");
 		}
 		this.filePath = fp;
 		this.context = ctx;
 		this.request = new WebappHttpRequestImpl(context, request, body);
+		this.request.setAttribute("tools", ToolsManagerImpl.getInstance());
+		this.request.setAttribute("connectors", ConnectorManagerImpl.getInstance());
+		this.response = new WebappHttpResponse(this.request.getAttributes(), response);
+		this.response.variable("tools", ToolsManagerImpl.getInstance());
+		this.response.variable("connectors", ConnectorManagerImpl.getInstance());
 		this.response.variable("request", this.request);
 		this.response.variable("response", this.response);
 		this.response.variable("session", this.request.getSession());
@@ -68,7 +72,7 @@ public class WebappTransaction {
 		return request;
 	}
 
-	final WebappResponse getResponse() {
+	final WebappHttpResponse getResponse() {
 		return response;
 	}
 
@@ -76,9 +80,8 @@ public class WebappTransaction {
 		return filePath;
 	}
 
-	public void execute()
-			throws IOException, URISyntaxException, ScriptException, PrivilegedActionException, InterruptedException,
-			ReflectiveOperationException, ServletException {
+	public void execute() throws IOException, URISyntaxException, ScriptException, PrivilegedActionException,
+					InterruptedException, ReflectiveOperationException, ServletException {
 		String pathInfo = request.getPathInfo();
 		StaticManager staticManager = StaticManager.INSTANCE;
 		File staticFile = staticManager.findStatic(context, pathInfo);

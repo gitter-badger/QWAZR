@@ -19,13 +19,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 
-import javax.script.ScriptException;
 import javax.tools.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.*;
 
 public class FileClassCompilerLoader implements Closeable, AutoCloseable {
@@ -38,8 +40,6 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 
 	private volatile URLClassLoader classLoader;
 
-	private final File sourceRootFile;
-
 	private final String sourceRootPrefix;
 	private final int sourceRootPrefixLength;
 	private final URL[] sourceRootURLs;
@@ -48,27 +48,38 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	private final Map<String, Long> lastModifiedMap;
 	private final LockUtils.ReadWriteLock mapRwl;
 
-	public FileClassCompilerLoader(JavacDefinition javacDefinition) throws MalformedURLException, URISyntaxException {
-		sourceRootFile = new File(javacDefinition.source_root);
-		List<URL> urlList = new ArrayList<URL>();
-		if (sourceRootFile != null)
-			urlList.add(sourceRootFile.toURI().toURL());
-		this.classPath = buildClassPath(javacDefinition.classpath, urlList);
-		this.sourceRootPrefix = sourceRootFile.getAbsolutePath();
+	private FileClassCompilerLoader(Path sourceRootPath, String classPath, Collection<URL> urlList) throws IOException {
+		this.classPath = classPath;
+		this.sourceRootPrefix = sourceRootPath.toFile().getAbsolutePath();
 		this.sourceRootURLs = urlList.toArray(new URL[urlList.size()]);
 		this.sourceRootPrefixLength = sourceRootPrefix.length();
 		lastModifiedMap = new HashMap<String, Long>();
 		mapRwl = new LockUtils.ReadWriteLock();
 	}
 
+	public static FileClassCompilerLoader newInstance(JavacDefinition javacDefinition)
+					throws IOException, URISyntaxException {
+		if (javacDefinition == null)
+			throw new NullPointerException("No JavacDefinition has been given (null)");
+		if (javacDefinition.source_root == null)
+			throw new NullPointerException("No source_root has been given (null)");
+		final FileSystem fs = FileSystems.getDefault();
+		final Path sourceRootPath = fs.getPath(javacDefinition.source_root);
+		final List<URL> urlList = new ArrayList<URL>();
+		urlList.add(sourceRootPath.toUri().toURL());
+		final String classPath = buildClassPath(javacDefinition.classpath, urlList);
+		return new FileClassCompilerLoader(sourceRootPath, classPath, urlList);
+	}
+
 	private final static String buildClassPath(Collection<String> classPath, Collection<URL> urlCollection)
-			throws MalformedURLException, URISyntaxException {
-		final List<String> classPathes = new ArrayList<String>();
+					throws MalformedURLException, URISyntaxException {
+		final List<String> classPathes = new ArrayList<>();
 
 		URLClassLoader classLoader = (URLClassLoader) URLClassLoader.getSystemClassLoader();
 		if (classLoader != null && classLoader.getURLs() != null) {
 			for (URL url : classLoader.getURLs()) {
-				classPathes.add(new File(url.toURI()).getAbsolutePath());
+				String path = new File(url.toURI()).getAbsolutePath();
+				classPathes.add(path);
 				urlCollection.add(url);
 			}
 		}
@@ -89,7 +100,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 		}
 		if (classPathes.isEmpty())
 			return null;
-		return StringUtils.join(classPathes, ';');
+		return StringUtils.join(classPathes, File.pathSeparator);
 	}
 
 	private synchronized void resetClassLoader(boolean closeOnly) throws IOException {
@@ -102,12 +113,12 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	}
 
 	public <T> Class<T> loadClass(File sourceFile)
-			throws IOException, ReflectiveOperationException, InterruptedException {
+					throws IOException, ReflectiveOperationException, InterruptedException {
 		String sourcePath = sourceFile.getAbsolutePath();
 		if (!sourcePath.startsWith(sourceRootPrefix))
-			throw new IOException("The file is not in the source root: " + sourceFile + " / " + sourceRootFile);
+			throw new IOException("The file is not in the source root: " + sourceFile + " / " + sourceRootPrefix);
 		String baseName = sourcePath.substring(sourceRootPrefixLength);
-		baseName = FilenameUtils.getBaseName(StringUtils.join(StringUtils.split(baseName, '\\'), '.'));
+		baseName = FilenameUtils.getBaseName(StringUtils.join(StringUtils.split(baseName, File.separator), '.'));
 		long sourceFileLastModified = sourceFile.lastModified();
 
 		mapRwl.r.lock();
@@ -151,11 +162,11 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 			options.add("-sourcepath");
 			options.add(sourceRootPrefix);
 			JavaCompiler.CompilationTask task = compiler
-					.getTask(pw, fileManager, diagnostics, options, null, sourceFiles);
+							.getTask(pw, fileManager, diagnostics, options, null, sourceFiles);
 			if (!task.call()) {
 				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics())
 					pw.format("Error on line %d in %s%n%s%n", diagnostic.getLineNumber(),
-							diagnostic.getSource().toUri(), diagnostic.getMessage(null));
+									diagnostic.getSource().toUri(), diagnostic.getMessage(null));
 				pw.flush();
 				pw.close();
 				sw.close();

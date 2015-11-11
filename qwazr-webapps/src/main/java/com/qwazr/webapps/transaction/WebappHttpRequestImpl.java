@@ -34,6 +34,7 @@ public class WebappHttpRequestImpl implements WebappHttpRequest {
 	private final String pathInfo;
 	private final ApplicationContext context;
 	private final HttpServletRequest request;
+	private final WebappAttributes attributes;
 	private final HttpBodyInterface body;
 
 	WebappHttpRequestImpl(ApplicationContext context, HttpServletRequest request, HttpBodyInterface body) {
@@ -41,6 +42,7 @@ public class WebappHttpRequestImpl implements WebappHttpRequest {
 		this.contextPath = context.getContextPath();
 		this.pathInfo = request.getPathInfo();
 		this.request = request;
+		this.attributes = new WebappAttributes(request);
 		this.body = body;
 	}
 
@@ -49,13 +51,18 @@ public class WebappHttpRequestImpl implements WebappHttpRequest {
 	}
 
 	@Override
+	public Map<String, Object> getAttributes() {
+		return attributes;
+	}
+
+	@Override
 	public Object getAttribute(String name) {
-		return null;
+		return request.getAttribute(name);
 	}
 
 	@Override
 	public Enumeration<String> getAttributeNames() {
-		return null;
+		return request.getAttributeNames();
 	}
 
 	@Override
@@ -145,12 +152,12 @@ public class WebappHttpRequestImpl implements WebappHttpRequest {
 
 	@Override
 	public void setAttribute(String name, Object o) {
-
+		request.setAttribute(name, o);
 	}
 
 	@Override
 	public void removeAttribute(String name) {
-
+		request.removeAttribute(name);
 	}
 
 	@Override
@@ -174,6 +181,7 @@ public class WebappHttpRequestImpl implements WebappHttpRequest {
 	}
 
 	@Override
+	@Deprecated
 	public String getRealPath(String path) {
 		return null;
 	}
@@ -363,6 +371,7 @@ public class WebappHttpRequestImpl implements WebappHttpRequest {
 	}
 
 	@Override
+	@Deprecated
 	public boolean isRequestedSessionIdFromUrl() {
 		return false;
 	}

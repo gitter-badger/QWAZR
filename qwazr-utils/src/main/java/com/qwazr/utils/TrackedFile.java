@@ -15,70 +15,67 @@
  */
 package com.qwazr.utils;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TrackedFile {
 
-    private final LockUtils.ReadWriteLock rwl;
+	private final LockUtils.ReadWriteLock rwl;
 
-    private final FileEventReceiver eventReceiver;
-    private final File file;
-    private Long lastModified;
+	private final FileEventReceiver eventReceiver;
+	private final File file;
+	private Long lastModified;
 
-    public TrackedFile(FileEventReceiver eventReceiver, File file) {
-	this.rwl = new LockUtils.ReadWriteLock();
-	this.eventReceiver = eventReceiver;
-	this.file = file;
-	this.lastModified = null;
-    }
-
-    private boolean hasChanged() throws IOException {
-	if (file.exists())
-	    return (lastModified == null || file.lastModified() != lastModified);
-	else
-	    return lastModified != null;
-    }
-
-    private void applyChange() throws IOException {
-	if (file.exists()) {
-	    long newLastModified = file.lastModified();
-	    if (lastModified != null && newLastModified == lastModified)
-		return;
-	    eventReceiver.load();
-	    lastModified = newLastModified;
-	} else {
-	    if (lastModified == null)
-		return;
-	    eventReceiver.unload();
-	    lastModified = null;
+	public TrackedFile(FileEventReceiver eventReceiver, File file) {
+		this.rwl = new LockUtils.ReadWriteLock();
+		this.eventReceiver = eventReceiver;
+		this.file = file;
+		this.lastModified = null;
 	}
-    }
 
-    public void check() throws IOException {
-	rwl.r.lock();
-	try {
-	    if (!hasChanged())
-		return;
-	} finally {
-	    rwl.r.unlock();
+	private boolean hasChanged() throws IOException {
+		if (file.exists())
+			return (lastModified == null || file.lastModified() != lastModified);
+		else
+			return lastModified != null;
 	}
-	rwl.w.lock();
-	try {
-	    applyChange();
-	} finally {
-	    rwl.w.unlock();
+
+	private void applyChange() throws IOException {
+		if (file.exists()) {
+			long newLastModified = file.lastModified();
+			if (lastModified != null && newLastModified == lastModified)
+				return;
+			eventReceiver.load();
+			lastModified = newLastModified;
+		} else {
+			if (lastModified == null)
+				return;
+			eventReceiver.unload();
+			lastModified = null;
+		}
 	}
-    }
 
-    public interface FileEventReceiver {
+	public void check() throws IOException {
+		rwl.r.lock();
+		try {
+			if (!hasChanged())
+				return;
+		} finally {
+			rwl.r.unlock();
+		}
+		rwl.w.lock();
+		try {
+			applyChange();
+		} finally {
+			rwl.w.unlock();
+		}
+	}
 
-	void load() throws IOException;
+	public interface FileEventReceiver {
 
-	void unload() throws IOException;
+		void load() throws IOException;
 
-    }
+		void unload() throws IOException;
+
+	}
 }
