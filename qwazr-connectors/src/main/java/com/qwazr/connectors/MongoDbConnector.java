@@ -310,6 +310,10 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.bulkWrite(requests, options);
 		}
 
+		public BulkWriteResult bulkWrite(List<? extends WriteModel<? extends Document>> requests, boolean ordered) {
+			return collection.bulkWrite(requests, new BulkWriteOptions().ordered(ordered));
+		}
+
 		@Override
 		public void insertOne(Document document) {
 			collection.insertOne(document);
