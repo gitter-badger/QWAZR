@@ -45,9 +45,9 @@
     {
       "name": "mongo",
       "class": "com.qwazr.connectors.MongoDbConnector",
-      "server": [
+      "servers": [
         {
-          "hostame": "localhost",
+          "hostname": "localhost",
           "port": 27017
         }
       ],
