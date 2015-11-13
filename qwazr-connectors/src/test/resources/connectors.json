@@ -45,8 +45,12 @@
     {
       "name": "mongo",
       "class": "com.qwazr.connectors.MongoDbConnector",
-      "hostname": "localhost",
-      "port": 27017,
+      "server": [
+        {
+          "hostame": "localhost",
+          "port": 27017
+        }
+      ],
       "credentials": [
         {
           "database": "test",
