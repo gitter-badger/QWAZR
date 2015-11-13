@@ -80,9 +80,13 @@ public class ScriptManager {
 	private File getScriptFile(String scriptPath) throws ServerException {
 		if (StringUtils.isEmpty(scriptPath))
 			throw new ServerException(Status.NOT_ACCEPTABLE, "No path given");
-		if (StoreDataManager.INSTANCE == null)
-			throw new ServerException(Status.INTERNAL_SERVER_ERROR, "No store available: " + scriptPath);
-		File scriptFile = StoreDataManager.INSTANCE.getFile(scriptPath);
+		final File scriptFile;
+		if (scriptPath.startsWith("/")) {
+			if (StoreDataManager.INSTANCE == null)
+				throw new ServerException(Status.INTERNAL_SERVER_ERROR, "No store available: " + scriptPath);
+			scriptFile = StoreDataManager.INSTANCE.getFile(scriptPath);
+		} else
+			scriptFile = new File(scriptPath);
 		if (!scriptFile.exists())
 			throw new ServerException(Status.NOT_FOUND, "Script not found: " + scriptPath);
 		if (!scriptFile.isFile())
