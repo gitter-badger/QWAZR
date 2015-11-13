@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,8 @@ import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.connectors.AbstractConnector;
 import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.client.WebCrawlerMultiClient;
+import com.qwazr.crawler.web.client.WebCrawlerSingleClient;
+import com.qwazr.crawler.web.service.WebCrawlerServiceInterface;
 import com.qwazr.extractor.ExtractorServiceImpl;
 import com.qwazr.extractor.ExtractorServiceInterface;
 import com.qwazr.extractor.ParserManager;
@@ -60,10 +62,10 @@ public class ServicesProvider extends AbstractConnector {
 	 * Create a new WebCrawler client instance.
 	 * This API queries the cluster to get the current active node for the WebCrawler service.
 	 *
-	 * @return a new WebCrawlerMultiClient instance
+	 * @return a new WebCrawlerServiceInterface instance
 	 * @throws URISyntaxException
 	 */
-	public WebCrawlerMultiClient getNewWebCrawlerClient() throws URISyntaxException {
+	public WebCrawlerServiceInterface getNewWebCrawlerClient() throws URISyntaxException {
 		return getNewWebCrawlerClient(null);
 	}
 
@@ -75,9 +77,12 @@ public class ServicesProvider extends AbstractConnector {
 	 * @return a new WebCrawlerMultiClient instance
 	 * @throws URISyntaxException
 	 */
-	public WebCrawlerMultiClient getNewWebCrawlerClient(Integer msTimeout) throws URISyntaxException {
-		return new WebCrawlerMultiClient(ClusterManager.INSTANCE.getClusterClient()
-						.getActiveNodes(WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), msTimeout);
+	public WebCrawlerServiceInterface getNewWebCrawlerClient(Integer msTimeout) throws URISyntaxException {
+		if (ClusterManager.INSTANCE.isCluster())
+			return new WebCrawlerMultiClient(ClusterManager.INSTANCE.getClusterClient()
+							.getActiveNodes(WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), msTimeout);
+		else
+			return new WebCrawlerSingleClient(ClusterManager.INSTANCE.myAddress, msTimeout);
 	}
 
 	/**
