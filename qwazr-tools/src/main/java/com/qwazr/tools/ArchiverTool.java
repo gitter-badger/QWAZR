@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,6 +83,24 @@ public class ArchiverTool extends AbstractTool {
 			return factory.createCompressorInputStream(codec.codecName, input);
 	}
 
+	/**
+	 * Return a reader for the given file
+	 *
+	 * @param source  the source file
+	 * @param context an optional autoclosing context
+	 * @return a new reader
+	 * @throws IOException
+	 * @throws CompressorException
+	 */
+	public InputStreamReader getCompressorReader(File source, IOUtils.CloseableContext context)
+			throws IOException, CompressorException {
+		InputStream input = getCompressorNewInputStream(new BufferedInputStream(new FileInputStream(source)));
+		InputStreamReader reader = new InputStreamReader(input);
+		if (context != null)
+			context.add(reader);
+		return reader;
+	}
+
 	public void decompress(File source, File destFile) throws IOException, CompressorException {
 		if (destFile.exists())
 			throw new IOException("The file already exists: " + destFile.getPath());
@@ -131,7 +149,7 @@ public class ArchiverTool extends AbstractTool {
 	}
 
 	public void decompress_dir(File sourceDir, String sourceExtension, File destDir, String destExtension)
-					throws IOException, CompressorException {
+			throws IOException, CompressorException {
 		if (!sourceDir.exists())
 			throw new FileNotFoundException("The source directory does not exist: " + sourceDir.getPath());
 		if (!destDir.exists())
@@ -154,7 +172,7 @@ public class ArchiverTool extends AbstractTool {
 	}
 
 	public void decompress_dir(String sourcePath, String sourceExtension, String destPath, String destExtension)
-					throws IOException, CompressorException {
+			throws IOException, CompressorException {
 		decompress_dir(new File(sourcePath), sourceExtension, new File(destPath), destExtension);
 	}
 
@@ -196,7 +214,7 @@ public class ArchiverTool extends AbstractTool {
 	}
 
 	public void extract_dir(File sourceDir, String sourceExtension, File destDir, Boolean logErrorAndContinue)
-					throws IOException, ArchiveException {
+			throws IOException, ArchiveException {
 		if (logErrorAndContinue == null)
 			logErrorAndContinue = false;
 		if (!sourceDir.exists())
@@ -224,7 +242,7 @@ public class ArchiverTool extends AbstractTool {
 	}
 
 	public void extract_dir(String sourcePath, String sourceExtension, String destPath, Boolean logErrorAndContinue)
-					throws IOException, ArchiveException {
+			throws IOException, ArchiveException {
 		extract_dir(new File(sourcePath), sourceExtension, new File(destPath), logErrorAndContinue);
 	}
 
