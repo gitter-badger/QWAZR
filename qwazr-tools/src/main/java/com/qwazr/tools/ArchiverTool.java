@@ -27,10 +27,14 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorOutputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class ArchiverTool extends AbstractTool {
 
@@ -93,7 +97,7 @@ public class ArchiverTool extends AbstractTool {
 	 * @throws CompressorException
 	 */
 	public InputStreamReader getCompressorReader(File source, IOUtils.CloseableContext context)
-			throws IOException, CompressorException {
+					throws IOException, CompressorException {
 		InputStream input = getCompressorNewInputStream(new BufferedInputStream(new FileInputStream(source)));
 		InputStreamReader reader = new InputStreamReader(input);
 		if (context != null)
@@ -149,7 +153,7 @@ public class ArchiverTool extends AbstractTool {
 	}
 
 	public void decompress_dir(File sourceDir, String sourceExtension, File destDir, String destExtension)
-			throws IOException, CompressorException {
+					throws IOException, CompressorException {
 		if (!sourceDir.exists())
 			throw new FileNotFoundException("The source directory does not exist: " + sourceDir.getPath());
 		if (!destDir.exists())
@@ -172,7 +176,7 @@ public class ArchiverTool extends AbstractTool {
 	}
 
 	public void decompress_dir(String sourcePath, String sourceExtension, String destPath, String destExtension)
-			throws IOException, CompressorException {
+					throws IOException, CompressorException {
 		decompress_dir(new File(sourcePath), sourceExtension, new File(destPath), destExtension);
 	}
 
@@ -214,7 +218,7 @@ public class ArchiverTool extends AbstractTool {
 	}
 
 	public void extract_dir(File sourceDir, String sourceExtension, File destDir, Boolean logErrorAndContinue)
-			throws IOException, ArchiveException {
+					throws IOException, ArchiveException {
 		if (logErrorAndContinue == null)
 			logErrorAndContinue = false;
 		if (!sourceDir.exists())
@@ -242,7 +246,7 @@ public class ArchiverTool extends AbstractTool {
 	}
 
 	public void extract_dir(String sourcePath, String sourceExtension, String destPath, Boolean logErrorAndContinue)
-			throws IOException, ArchiveException {
+					throws IOException, ArchiveException {
 		extract_dir(new File(sourcePath), sourceExtension, new File(destPath), logErrorAndContinue);
 	}
 
@@ -313,4 +317,44 @@ public class ArchiverTool extends AbstractTool {
 		}
 	}
 
+	public void createZipArchive(Map<String, Object> sourcePaths, File zipFile) throws IOException {
+		FileOutputStream fos = new FileOutputStream(zipFile);
+		try {
+			ZipOutputStream zos = new ZipOutputStream(fos);
+			try {
+				for (Map.Entry<String, Object> entry : sourcePaths.entrySet())
+					addToZipFile(entry.getKey(), entry.getValue().toString(), zos);
+			} finally {
+				IOUtils.closeQuietly(zos);
+			}
+		} finally {
+			IOUtils.closeQuietly(fos);
+		}
+	}
+
+	public void createZipArchive(Map<String, Object> sourcePaths, String zipFilePath) throws IOException {
+		createZipArchive(sourcePaths, new File(zipFilePath));
+	}
+
+	public void addToZipFile(String entryName, String filePath, ZipOutputStream zos) throws IOException {
+
+		File srcFile = new File(filePath);
+		if (!srcFile.exists())
+			throw new FileNotFoundException("The file does not exists: " + srcFile.getPath());
+		FileInputStream fis = new FileInputStream(srcFile);
+		try {
+			ZipEntry zipEntry = new ZipEntry(entryName);
+			zos.putNextEntry(zipEntry);
+			IOUtils.copy(fis, zos);
+			zos.closeEntry();
+		} finally {
+			IOUtils.closeQuietly(fis);
+		}
+	}
+
+	public static ContentType APPLICATION_ZIP = ContentType.create("application/zip");
+
+	public ContentType getApplicationZipContentType() {
+		return APPLICATION_ZIP;
+	}
 }

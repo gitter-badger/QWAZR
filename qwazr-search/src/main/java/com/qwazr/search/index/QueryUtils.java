@@ -35,6 +35,7 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.StandardQueryConfigHandler;
+import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.postingshighlight.PostingsHighlighter;
 
@@ -45,7 +46,7 @@ import java.util.*;
 class QueryUtils {
 
 	final static SortField buildSortField(Map<String, FieldDefinition> fields, String field,
-			QueryDefinition.SortEnum sortEnum) throws ServerException {
+					QueryDefinition.SortEnum sortEnum) throws ServerException {
 
 		final boolean reverse;
 		final Object missingValue;
@@ -98,7 +99,7 @@ class QueryUtils {
 	}
 
 	final static Sort buildSort(Map<String, FieldDefinition> fields,
-			LinkedHashMap<String, QueryDefinition.SortEnum> sorts) throws ServerException {
+					LinkedHashMap<String, QueryDefinition.SortEnum> sorts) throws ServerException {
 		if (sorts.isEmpty())
 			return null;
 		final SortField[] sortFields = new SortField[sorts.size()];
@@ -129,7 +130,7 @@ class QueryUtils {
 	}
 
 	final static Query buildFacetFiltersQuery(FacetsConfig facetsConfig, List<Map<String, Set<String>>> facet_filters,
-			Query query) {
+					Query query) {
 		if (facet_filters.isEmpty())
 			return query;
 
@@ -166,41 +167,48 @@ class QueryUtils {
 		return qs;
 	}
 
-	final static private Query getBaseQueryFromMultifieldQueryParser(QueryDefinition queryDef,
-			UpdatableAnalyzer analyzer) throws ParseException {
+	final static Query buildFilteredQuery(Query query, Query filter) {
+		BooleanQuery.Builder builder = new BooleanQuery.Builder();
+		builder.add(query, BooleanClause.Occur.MUST);
+		builder.add(filter, BooleanClause.Occur.FILTER);
+		return builder.build();
+	}
 
-		if (queryDef.multi_field == null || queryDef.multi_field.isEmpty())
-			throw new ParseException("The multi_field parameters is required");
-		Set<String> fieldSet = queryDef.multi_field.keySet();
-		String[] fieldArray = fieldSet.toArray(new String[fieldSet.size()]);
+	final static private Query getMultifieldQueryParser(QueryDefinition queryDef, String[] fieldArray,
+					UpdatableAnalyzer analyzer, QueryParser.Operator operator, String queryString)
+					throws ParseException {
 		final MultiFieldQueryParser parser = new MultiFieldQueryParser(fieldArray, analyzer, queryDef.multi_field);
-
-		if (queryDef.default_operator != null) {
-			switch (queryDef.default_operator) {
-			case AND:
-				parser.setDefaultOperator(QueryParser.Operator.AND);
-				break;
-			case OR:
-				parser.setDefaultOperator(QueryParser.Operator.OR);
-				break;
-			}
-		}
+		parser.setDefaultOperator(operator);
 		if (queryDef.allow_leading_wildcard != null)
 			parser.setAllowLeadingWildcard(queryDef.allow_leading_wildcard);
 		if (queryDef.phrase_slop != null)
 			parser.setPhraseSlop(queryDef.phrase_slop);
 		if (queryDef.enable_position_increments != null)
 			parser.setEnablePositionIncrements(queryDef.enable_position_increments);
+		if (queryDef.auto_generate_phrase_query != null)
+			parser.setAutoGeneratePhraseQueries(queryDef.auto_generate_phrase_query);
+		return parser.parse(queryString);
+	}
 
-		if (queryDef.auto_generate_phrase_query)
-			parser.setAutoGeneratePhraseQueries(true);
+	final static private Query getBaseQueryFromMultifieldQueryParser(QueryDefinition queryDef,
+					UpdatableAnalyzer analyzer) throws ParseException {
 
-		// Parse the query
-		return parser.parse(getFinalQueryString(queryDef));
+		if (queryDef.multi_field == null || queryDef.multi_field.isEmpty())
+			throw new ParseException("The multi_field parameter is required");
+
+		final String queryString = getFinalQueryString(queryDef);
+		Set<String> fieldSet = queryDef.multi_field.keySet();
+		String[] fieldArray = fieldSet.toArray(new String[fieldSet.size()]);
+
+		final QueryDefinition.DefaultOperatorEnum operator = queryDef.default_operator == null ?
+						QueryDefinition.DefaultOperatorEnum.AND :
+						queryDef.default_operator;
+
+		return getMultifieldQueryParser(queryDef, fieldArray, analyzer, QueryParser.Operator.AND, queryString);
 	}
 
 	final static private Query getBaseQueryFromStandardQueryParser(QueryDefinition queryDef, UpdatableAnalyzer analyzer)
-			throws QueryNodeException {
+					throws QueryNodeException {
 		final StandardQueryParser parser = new StandardQueryParser(analyzer);
 
 		if (queryDef.multi_field != null)
@@ -227,14 +235,14 @@ class QueryUtils {
 	}
 
 	final static Query getLuceneQuery(QueryDefinition queryDef, UpdatableAnalyzer analyzer)
-			throws QueryNodeException, ParseException {
+					throws QueryNodeException, ParseException {
 
 		// Configure the QueryParser
 		QueryDefinition.QueryBuilderType queryBuilderType = queryDef.query_builder;
 		if (queryBuilderType == null)
 			queryBuilderType = queryDef.multi_field == null || queryDef.multi_field.isEmpty() ?
-					QueryDefinition.QueryBuilderType.standard_query_parser :
-					QueryDefinition.QueryBuilderType.multifield_query_parser;
+							QueryDefinition.QueryBuilderType.standard_query_parser :
+							QueryDefinition.QueryBuilderType.multifield_query_parser;
 
 		Query query = null;
 		switch (queryBuilderType) {
@@ -254,7 +262,7 @@ class QueryUtils {
 	}
 
 	final static Collection<FunctionCollector> buildFunctions(Map<String, FieldDefinition> fields,
-			Collection<QueryDefinition.Function> functions) throws ServerException {
+					Collection<QueryDefinition.Function> functions) throws ServerException {
 		if (functions == null || functions.isEmpty())
 			return null;
 		Collection<FunctionCollector> functionsCollectors = new ArrayList<FunctionCollector>();
@@ -262,16 +270,16 @@ class QueryUtils {
 			FieldDefinition fieldDef = fields.get(function.field);
 			if (fieldDef == null)
 				throw new ServerException(Response.Status.NOT_ACCEPTABLE,
-						"Cannot compute the function " + function.function + " because the field is unknown: "
-								+ function.field);
+								"Cannot compute the function " + function.function + " because the field is unknown: "
+												+ function.field);
 			functionsCollectors.add(new FunctionCollector(function, fieldDef));
 		}
 		return functionsCollectors;
 	}
 
 	final static ResultDefinition search(IndexSearcher indexSearcher, QueryDefinition queryDef,
-			UpdatableAnalyzer analyzer)
-			throws ServerException, IOException, QueryNodeException, InterruptedException, ParseException {
+					UpdatableAnalyzer analyzer)
+					throws ServerException, IOException, QueryNodeException, InterruptedException, ParseException {
 
 		Query query = getLuceneQuery(queryDef, analyzer);
 
@@ -289,7 +297,7 @@ class QueryUtils {
 		else
 			facetsCollector = null;
 		final Collection<FunctionCollector> functionCollectors = buildFunctions(analyzerContext.fields,
-				queryDef.functions);
+						queryDef.functions);
 		if (functionCollectors != null)
 			collectors.addAll(functionCollectors);
 
@@ -348,11 +356,11 @@ class QueryUtils {
 		}
 
 		return new ResultDefinition(analyzerContext.fields, timeTracker, indexSearcher, totalHits, topDocs, queryDef,
-				facetState, facets, postingsHighlightersMap, functionCollectors, query);
+						facetState, facets, postingsHighlightersMap, functionCollectors, query);
 	}
 
 	final static MoreLikeThis getMoreLikeThis(MltQueryDefinition mltQueryDef, IndexReader reader,
-			UpdatableAnalyzer analyzer) throws IOException {
+					UpdatableAnalyzer analyzer) throws IOException {
 
 		final MoreLikeThis mlt = new MoreLikeThis(reader);
 		if (mltQueryDef.boost != null)
