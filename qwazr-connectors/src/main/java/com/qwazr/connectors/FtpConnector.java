@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  **/
 package com.qwazr.connectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import org.apache.commons.net.ftp.FTPClient;
@@ -27,18 +28,14 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FtpConnector extends AbstractConnector {
-
+public class FtpConnector extends AbstractPasswordConnector {
 
 	public final String hostname = null;
 	public final String username = null;
-	public final String password = null;
 	public final Boolean ssl = null;
 	public final Integer keep_alive_timeout = null;
 
-
-	private static final Logger logger = LoggerFactory
-			.getLogger(FtpConnector.class);
+	private static final Logger logger = LoggerFactory.getLogger(FtpConnector.class);
 
 	@Override
 	public void load(File parentDir) {
@@ -48,6 +45,7 @@ public class FtpConnector extends AbstractConnector {
 	public void unload() {
 	}
 
+	@JsonIgnore
 	public FTPSession geNewSession(IOUtils.CloseableContext context) {
 		FTPSession ftpSession = new FTPSession();
 		context.add(ftpSession);
@@ -95,7 +93,6 @@ public class FtpConnector extends AbstractConnector {
 			ftp.completePendingCommand();
 		}
 
-
 		public void retrieve(FTPFile remote, File file) throws IOException {
 			retrieve(remote.getName(), file);
 		}
@@ -109,7 +106,7 @@ public class FtpConnector extends AbstractConnector {
 		}
 
 		public void sync_files(String remote_path, String local_path, Boolean downloadOnlyIfNotExists)
-				throws IOException {
+						throws IOException {
 			if (!ftp.changeWorkingDirectory(remote_path))
 				throw new IOException("Remote working directory change failed: " + hostname + "/" + remote_path);
 			File localDirectory = new File(local_path);

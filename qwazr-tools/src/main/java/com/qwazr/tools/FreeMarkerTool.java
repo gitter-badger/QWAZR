@@ -27,8 +27,8 @@ import org.apache.commons.io.IOUtils;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
@@ -76,11 +76,13 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	}
 
 	@Override
+	@JsonIgnore
 	public long getLastModified(Object templateSource) {
 		return ((File) templateSource).lastModified();
 	}
 
 	@Override
+	@JsonIgnore
 	public Reader getReader(Object templateSource, String encoding) throws IOException {
 		return new FileReader((File) templateSource);
 	}

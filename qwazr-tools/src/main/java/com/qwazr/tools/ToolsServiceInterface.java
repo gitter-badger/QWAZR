@@ -15,13 +15,24 @@
  **/
 package com.qwazr.tools;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.util.Map;
 
-public interface ToolsManager extends Map<String, AbstractTool> {
+@Path("/tools")
+public interface ToolsServiceInterface {
 
-	<T extends AbstractTool> T get(String name) throws IOException;
+	@GET
+	@Path("/")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Map<String, String> list();
 
-	ToolsServiceInterface getRemoteClient(String address, Integer msTimeOut) throws URISyntaxException;
+	@GET
+	@Path("/{tool_name}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Object get(@PathParam("tool_name") String toolName);
+
 }

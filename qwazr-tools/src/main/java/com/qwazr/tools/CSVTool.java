@@ -15,6 +15,7 @@
  **/
 package com.qwazr.tools;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import org.apache.commons.csv.CSVFormat;
@@ -47,16 +48,20 @@ public class CSVTool extends AbstractTool {
 
 	public final Format format = Format.DEFAULT;
 
-	@Override public void load(File parentDir) {
+	@Override
+	public void load(File parentDir) {
 	}
 
-	@Override public void unload() {
+	@Override
+	public void unload() {
 	}
 
+	@JsonIgnore
 	public CSVPrinter getNewPrinter(Appendable appendable, IOUtils.CloseableContext closeable) throws IOException {
 		return getNewPrinter(format.csvFormat, appendable, closeable);
 	}
 
+	@JsonIgnore
 	public CSVPrinter getNewPrinter(CSVFormat format, Appendable appendable, IOUtils.CloseableContext closeable)
 					throws IOException {
 		CSVPrinter printer = new CSVPrinter(appendable, format);
@@ -65,6 +70,7 @@ public class CSVTool extends AbstractTool {
 		return printer;
 	}
 
+	@JsonIgnore
 	public CSVParser getNewParser(CSVFormat format, File file, IOUtils.CloseableContext closeable) throws IOException {
 		FileReader fileReader = new FileReader(file);
 		if (closeable != null)
@@ -72,10 +78,12 @@ public class CSVTool extends AbstractTool {
 		return getNewParser(format, fileReader, closeable);
 	}
 
+	@JsonIgnore
 	public CSVParser getNewParser(Reader reader, IOUtils.CloseableContext closeable) throws IOException {
 		return getNewParser(format.csvFormat, reader, closeable);
 	}
 
+	@JsonIgnore
 	public CSVParser getNewParser(CSVFormat format, Reader reader, IOUtils.CloseableContext closeable)
 					throws IOException {
 		CSVParser parser = new CSVParser(reader, format);

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -90,6 +91,10 @@ public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
 	public AbstractTool get(String name) throws IOException {
 		trackedFile.check();
 		return super.get(name);
+	}
+
+	public ToolsServiceInterface getRemoteClient(String address, Integer msTimeOut) throws URISyntaxException {
+		return new ToolsServiceClient(address, msTimeOut);
 	}
 
 }

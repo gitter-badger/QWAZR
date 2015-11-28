@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class HdfsConnector extends AbstractConnector {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(HdfsConnector.class);
+	private static final Logger logger = LoggerFactory.getLogger(HdfsConnector.class);
 
 	public final String config_path = null;
 
@@ -54,19 +53,13 @@ public class HdfsConnector extends AbstractConnector {
 				for (String configFile : config_files) {
 					File file = new File(config_path, configFile);
 					if (!file.exists())
-						throw new IOException("Configuration file not found: "
-								+ file.getAbsolutePath());
-					configuration
-							.addResource(new Path(config_path, configFile));
+						throw new IOException("Configuration file not found: " + file.getAbsolutePath());
+					configuration.addResource(new Path(config_path, configFile));
 				}
 			}
-			configuration.set("fs.hdfs.impl",
-					org.apache.hadoop.hdfs.DistributedFileSystem.class
-							.getName());
-			configuration.set("fs.file.impl",
-					org.apache.hadoop.fs.LocalFileSystem.class.getName());
-			logger.info("*** HDFS configuration ***: "
-					+ configuration.toString());
+			configuration.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+			configuration.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
+			logger.info("*** HDFS configuration ***: " + configuration.toString());
 			fileSystem = FileSystem.get(configuration);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -138,8 +131,7 @@ public class HdfsConnector extends AbstractConnector {
 		}
 	}
 
-	public String readUTF(String pathString) throws IllegalArgumentException,
-			IOException {
+	public String readUTF(String pathString) throws IllegalArgumentException, IOException {
 		return readUTF(new Path(pathString));
 	}
 
@@ -156,19 +148,17 @@ public class HdfsConnector extends AbstractConnector {
 		}
 	}
 
-	public File readAsFile(String pathString, File localFile)
-			throws IllegalArgumentException, IOException {
+	public File readAsFile(String pathString, File localFile) throws IllegalArgumentException, IOException {
 		return readAsFile(new Path(pathString), localFile);
 	}
 
 	public File readAsTempFile(Path path, String fileSuffix) throws IOException {
-		File localFile = File.createTempFile("qwazr-hdfs-connector",
-				fileSuffix == null ? StringUtils.EMPTY : fileSuffix);
+		File localFile = File
+						.createTempFile("qwazr-hdfs-connector", fileSuffix == null ? StringUtils.EMPTY : fileSuffix);
 		return readAsFile(path, localFile);
 	}
 
-	public File readAsTempFile(String pathString, String fileSuffix)
-			throws IOException {
+	public File readAsTempFile(String pathString, String fileSuffix) throws IOException {
 		return readAsTempFile(new Path(pathString), fileSuffix);
 	}
 
@@ -213,8 +203,7 @@ public class HdfsConnector extends AbstractConnector {
 		return fileSystem.delete(path, recursive);
 	}
 
-	public boolean delete(String pathString, boolean recursive)
-			throws IOException {
+	public boolean delete(String pathString, boolean recursive) throws IOException {
 		return delete(new Path(pathString), recursive);
 	}
 

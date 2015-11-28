@@ -108,11 +108,11 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 		} finally {
 			endTime = System.currentTimeMillis();
 			expirationTime = endTime + 2 * 60 * 1000;
+			closeables.close();
 			if (fileReader != null)
 				IOUtils.closeQuietly(fileReader);
 			for (String semaphore : semaphores)
 				ScriptManager.INSTANCE.unregisterSemaphore(semaphore, uuid);
-			closeables.close();
 		}
 	}
 

@@ -15,13 +15,26 @@
  **/
 package com.qwazr.tools;
 
+import com.qwazr.utils.server.ServerException;
+
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public interface ToolsManager extends Map<String, AbstractTool> {
+public class ToolsServiceImpl implements ToolsServiceInterface {
 
-	<T extends AbstractTool> T get(String name) throws IOException;
+	public Map<String, String> list() {
+		Map<String, String> tools = new LinkedHashMap<>();
+		ToolsManagerImpl.getInstance().forEach((s, abstractTool) -> tools.put(s, abstractTool.getClass().getName()));
+		return tools;
+	}
 
-	ToolsServiceInterface getRemoteClient(String address, Integer msTimeOut) throws URISyntaxException;
+	public AbstractTool get(String toolName) {
+		try {
+			return ToolsManagerImpl.getInstance().get(toolName);
+		} catch (IOException e) {
+			throw ServerException.getJsonException(e);
+		}
+	}
+
 }

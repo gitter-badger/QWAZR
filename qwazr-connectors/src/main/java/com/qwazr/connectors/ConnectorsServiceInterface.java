@@ -13,15 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.tools;
+package com.qwazr.connectors;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.util.Map;
 
-public interface ToolsManager extends Map<String, AbstractTool> {
+@Path("/connectors")
+public interface ConnectorsServiceInterface {
 
-	<T extends AbstractTool> T get(String name) throws IOException;
+	@GET
+	@Path("/")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Map<String, String> list();
 
-	ToolsServiceInterface getRemoteClient(String address, Integer msTimeOut) throws URISyntaxException;
+	@GET
+	@Path("/{connector_name}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Object get(@PathParam("connector_name") String connectorName);
+
 }

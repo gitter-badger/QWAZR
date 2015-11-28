@@ -15,6 +15,8 @@
  **/
 package com.qwazr;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.connectors.AbstractConnector;
@@ -38,6 +40,7 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ServicesProvider extends AbstractConnector {
 
 	private ExecutorService executorService = null;
@@ -65,6 +68,7 @@ public class ServicesProvider extends AbstractConnector {
 	 * @return a new WebCrawlerServiceInterface instance
 	 * @throws URISyntaxException
 	 */
+	@JsonIgnore
 	public WebCrawlerServiceInterface getNewWebCrawlerClient() throws URISyntaxException {
 		return getNewWebCrawlerClient(null);
 	}
@@ -77,6 +81,7 @@ public class ServicesProvider extends AbstractConnector {
 	 * @return a new WebCrawlerMultiClient instance
 	 * @throws URISyntaxException
 	 */
+	@JsonIgnore
 	public WebCrawlerServiceInterface getNewWebCrawlerClient(Integer msTimeout) throws URISyntaxException {
 		if (ClusterManager.INSTANCE.isCluster())
 			return new WebCrawlerMultiClient(ClusterManager.INSTANCE.getClusterClient()
@@ -92,22 +97,26 @@ public class ServicesProvider extends AbstractConnector {
 	 * @return
 	 * @throws URISyntaxException
 	 */
+	@JsonIgnore
 	public ScriptMultiClient getNewScriptClient() throws URISyntaxException {
 		return getNewScriptClient(null);
 	}
 
+	@JsonIgnore
 	public ScriptMultiClient getNewScriptClient(Integer msTimeout) throws URISyntaxException {
 		return new ScriptMultiClient(executorService,
 						ClusterManager.INSTANCE.getClusterClient().getActiveNodes(JobServer.SERVICE_NAME_SCRIPT),
 						msTimeout);
 	}
 
+	@JsonIgnore
 	public ExtractorServiceInterface getNewExtractorClient() {
 		if (ParserManager.INSTANCE == null)
 			throw new RuntimeException("Extractor service not available");
 		return new ExtractorServiceImpl();
 	}
 
+	@JsonIgnore
 	public IndexServiceInterface getNewIndexClient(Boolean local, Integer msTimeout) throws URISyntaxException {
 		if (local != null && local)
 			return new IndexServiceImpl();
