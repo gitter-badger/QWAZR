@@ -21,19 +21,30 @@ import org.slf4j.LoggerFactory;
 import javax.imageio.stream.ImageInputStream;
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class IOUtils extends org.apache.commons.io.IOUtils {
 
 	private final static Logger logger = LoggerFactory.getLogger(IOUtils.class);
 
-	public static final void close(final Closeable... closeables) {
-		if (closeables == null)
+	public static final void close(final AutoCloseable autoCloseable) {
+		if (autoCloseable == null)
 			return;
-		for (Closeable closeable : closeables)
-			closeQuietly(closeable);
+		try {
+			autoCloseable.close();
+		} catch (Exception e) {
+			if (logger.isWarnEnabled())
+				logger.warn("Close failure on " + autoCloseable, e);
+		}
+	}
+
+	public static final void close(final AutoCloseable... autoCloseables) {
+		if (autoCloseables == null)
+			return;
+		for (AutoCloseable closeable : autoCloseables)
+			close(closeable);
 	}
 
 	public static final void close(List<AutoCloseable> autoCloseables) {
@@ -72,7 +83,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
-	public static final void close(final Collection<? extends Closeable> closeables) {
+	public static final void close(final Collection<? extends AutoCloseable> closeables) {
 		if (closeables == null)
 			return;
 		Closeable[] array = closeables.toArray(new Closeable[closeables.size()]);
@@ -141,37 +152,36 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 
 	public interface CloseableContext {
 
-		void add(Closeable closeable);
-
 		void add(AutoCloseable autoCloseable);
 	}
 
 	public static class CloseableList implements CloseableContext, Closeable {
 
-		private final List<Closeable> closeables;
-		private final List<AutoCloseable> autoCloseables;
+		private final LinkedHashSet<AutoCloseable> autoCloseables;
 
 		public CloseableList() {
-			closeables = new ArrayList<Closeable>();
-			autoCloseables = new ArrayList<AutoCloseable>();
+			autoCloseables = new LinkedHashSet<AutoCloseable>();
 		}
 
-		@Override
-		public void add(Closeable closeable) {
-			closeables.add(closeable);
-		}
-
-		@Override
 		public void add(AutoCloseable autoCloseable) {
-			autoCloseables.add(autoCloseable);
+			synchronized (autoCloseables) {
+				autoCloseables.add(autoCloseable);
+			}
+		}
+
+		public void close(AutoCloseable autoCloseable) {
+			IOUtils.close(autoCloseable);
+			synchronized (autoCloseables) {
+				autoCloseables.remove(autoCloseable);
+			}
 		}
 
 		@Override
 		public void close() {
-			IOUtils.close(closeables);
-			closeables.clear();
-			IOUtils.close(autoCloseables);
-			autoCloseables.clear();
+			synchronized (autoCloseables) {
+				IOUtils.close(autoCloseables);
+				autoCloseables.clear();
+			}
 		}
 
 	}
