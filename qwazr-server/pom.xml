@@ -300,7 +300,7 @@
                         </mapping>
                         <mapping>
                             <directory>/etc</directory>
-                            <configuration>true</configuration>
+                            <configuration>noreplace</configuration>
                             <sources>
                                 <source>
                                     <location>src/deb/etc/qwazr.conf</location>
@@ -315,7 +315,7 @@
                             <directory>/var/lib/qwazr</directory>
                             <username>qwazr</username>
                             <groupname>daemon</groupname>
-                            <configuration>true</configuration>
+                            <configuration>noreplace</configuration>
                             <sources>
                                 <source>
                                     <location>src/pkgs/linux/log4j.properties</location>
