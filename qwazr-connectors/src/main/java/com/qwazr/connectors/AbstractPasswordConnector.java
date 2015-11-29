@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.tools;
+package com.qwazr.connectors;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public interface ToolsManager extends Map<String, AbstractTool> {
+public abstract class AbstractPasswordConnector extends AbstractConnector {
 
-	<T extends AbstractTool> T get(String name) throws IOException;
+	protected String password = null;
 
-	ToolsServiceInterface getRemoteClient(String address, Integer msTimeOut) throws URISyntaxException;
+	/**
+	 * Obfuscated password
+	 *
+	 * @param password
+	 */
+	@JsonProperty("password")
+	final private void setPassword(String password) {
+		this.password = password;
+	}
 }

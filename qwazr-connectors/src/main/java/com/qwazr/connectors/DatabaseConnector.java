@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,18 +31,15 @@ import java.io.File;
 import java.sql.SQLException;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DatabaseConnector extends AbstractConnector {
+public class DatabaseConnector extends AbstractPasswordConnector {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(DatabaseConnector.class);
+	private static final Logger logger = LoggerFactory.getLogger(DatabaseConnector.class);
 
 	public final String driver = null;
 
 	public final String url = null;
 
 	public final String username = null;
-
-	public final String password = null;
 
 	public final ConnectionPool pool = null;
 
@@ -57,6 +54,12 @@ public class DatabaseConnector extends AbstractConnector {
 		public final Integer min_idle = null;
 
 		public final Long max_wait_millis = null;
+
+		public final Boolean abandoned_usage_tracking = null;
+
+		public final Boolean log_abandoned = null;
+
+		public final Boolean log_expired_connections = null;
 	}
 
 	@JsonIgnore
@@ -78,28 +81,36 @@ public class DatabaseConnector extends AbstractConnector {
 					cnx.setPassword(password);
 				connectionManager = cnx;
 			} else {
-				BasicDataSource ds = new BasicDataSource();
+				basicDataSource = new BasicDataSource();
 				if (driver != null)
-					ds.setDriverClassName(driver);
+					basicDataSource.setDriverClassName(driver);
 				if (url != null)
-					ds.setUrl(url);
+					basicDataSource.setUrl(url);
 				if (username != null)
-					ds.setUsername(username);
+					basicDataSource.setUsername(username);
 				if (password != null)
-					ds.setPassword(password);
+					basicDataSource.setPassword(password);
 				if (pool.initial_size != null)
-					ds.setInitialSize(pool.initial_size);
+					basicDataSource.setInitialSize(pool.initial_size);
+				if (pool.min_idle != null)
+					basicDataSource.setMinIdle(pool.min_idle);
 				if (pool.max_idle != null)
-					ds.setMaxIdle(pool.max_idle);
+					basicDataSource.setMaxIdle(pool.max_idle);
 				if (pool.max_total != null)
-					ds.setMaxTotal(pool.max_total);
+					basicDataSource.setMaxTotal(pool.max_total);
 				if (pool.max_wait_millis != null)
-					ds.setMaxWaitMillis(pool.max_wait_millis);
-				connectionManager = new DataSourceConnection(ds);
+					basicDataSource.setMaxWaitMillis(pool.max_wait_millis);
+				if (pool.log_abandoned != null)
+					basicDataSource.setLogAbandoned(pool.log_abandoned);
+				if (pool.log_expired_connections != null)
+					basicDataSource.setLogExpiredConnections(pool.log_expired_connections);
+				if (pool.abandoned_usage_tracking != null)
+					basicDataSource.setAbandonedUsageTracking(pool.abandoned_usage_tracking);
+				connectionManager = new DataSourceConnection(basicDataSource);
 
 			}
 		} catch (InstantiationException | IllegalAccessException
-				| ClassNotFoundException e) {
+						| ClassNotFoundException e) {
 			logger.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
@@ -117,19 +128,23 @@ public class DatabaseConnector extends AbstractConnector {
 		}
 	}
 
+	@JsonIgnore
 	public Transaction getConnection(CloseableContext context) throws SQLException {
 		Transaction transaction = connectionManager.getNewTransaction();
 		context.add(transaction);
 		return transaction;
 	}
 
+	@JsonIgnore
 	public Transaction getConnection(CloseableContext context, boolean autoCommit) throws SQLException {
 		Transaction transaction = connectionManager.getNewTransaction(autoCommit);
 		context.add(transaction);
 		return transaction;
 	}
 
-	public Transaction getConnection(CloseableContext context, boolean autoCommit, int transactionIsolation) throws SQLException {
+	@JsonIgnore
+	public Transaction getConnection(CloseableContext context, boolean autoCommit, int transactionIsolation)
+					throws SQLException {
 		Transaction transaction = connectionManager.getNewTransaction(autoCommit, transactionIsolation);
 		context.add(transaction);
 		return transaction;

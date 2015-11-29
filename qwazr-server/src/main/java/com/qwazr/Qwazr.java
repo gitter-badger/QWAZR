@@ -21,6 +21,7 @@ import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.connectors.AbstractConnector;
 import com.qwazr.connectors.ConnectorManagerImpl;
+import com.qwazr.connectors.ConnectorsServiceImpl;
 import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.service.WebCrawlerServiceImpl;
 import com.qwazr.database.TableServer;
@@ -38,6 +39,7 @@ import com.qwazr.store.StoreServer;
 import com.qwazr.store.data.StoreMasterDataService;
 import com.qwazr.store.schema.StoreMasterSchemaService;
 import com.qwazr.tools.ToolsManagerImpl;
+import com.qwazr.tools.ToolsServiceImpl;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.webapps.WebappManagerServiceImpl;
@@ -168,7 +170,9 @@ public class Qwazr extends AbstractServer {
 		}
 
 		ConnectorManagerImpl.load(currentDataDir);
+		services.add(ServiceEnum.connectors.name(), ConnectorsServiceImpl.class);
 		ToolsManagerImpl.load(currentDataDir);
+		services.add(ServiceEnum.tools.name(), ToolsServiceImpl.class);
 
 		// Scheduler is last, because it may immediatly execute a script
 		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {

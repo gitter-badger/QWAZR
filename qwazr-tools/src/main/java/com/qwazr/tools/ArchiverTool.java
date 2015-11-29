@@ -15,6 +15,8 @@
  **/
 package com.qwazr.tools;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.json.JsonMapper;
@@ -36,6 +38,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ArchiverTool extends AbstractTool {
 
 	private static final Logger logger = LoggerFactory.getLogger(ArchiverTool.class);
@@ -96,6 +99,7 @@ public class ArchiverTool extends AbstractTool {
 	 * @throws IOException
 	 * @throws CompressorException
 	 */
+	@JsonIgnore
 	public InputStreamReader getCompressorReader(File source, IOUtils.CloseableContext context)
 					throws IOException, CompressorException {
 		InputStream input = getCompressorNewInputStream(new BufferedInputStream(new FileInputStream(source)));
@@ -354,7 +358,8 @@ public class ArchiverTool extends AbstractTool {
 
 	public static ContentType APPLICATION_ZIP = ContentType.create("application/zip");
 
-	public ContentType getApplicationZipContentType() {
+	@JsonIgnore
+	public static ContentType getApplicationZipContentType() {
 		return APPLICATION_ZIP;
 	}
 }

@@ -15,7 +15,9 @@
  **/
 package com.qwazr.connectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.*;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.*;
@@ -41,9 +43,19 @@ public class MongoDbConnector extends AbstractConnector {
 	private MongoClient mongoClient = null;
 
 	public static class MongoDbCredential {
+
 		final public String username = null;
-		final public String password = null;
+
 		final public String database = null;
+
+		@JsonIgnore
+		private String password = null;
+
+		@JsonProperty("password")
+		private void setPassword(String password) {
+			this.password = password;
+		}
+
 	}
 
 	public static class MongoServerAddress {
@@ -91,6 +103,7 @@ public class MongoDbConnector extends AbstractConnector {
 	 * @return a MongoDatabase object
 	 * @throws IOException if any I/O error occurs
 	 */
+	@JsonIgnore
 	public MongoDatabase getDatabase(String databaseName) throws IOException {
 		if (StringUtils.isEmpty(databaseName))
 			throw new IOException("No database name.");
@@ -111,6 +124,7 @@ public class MongoDbConnector extends AbstractConnector {
 	 * @return a MongoCollection object
 	 * @throws IOException if any I/O error occurs
 	 */
+	@JsonIgnore
 	public MongoCollectionDecorator getCollection(String databaseName, String collectionName) throws IOException {
 		if (StringUtils.isEmpty(collectionName))
 			throw new IOException("No collection name.");
@@ -123,6 +137,7 @@ public class MongoDbConnector extends AbstractConnector {
 	 * @param json the JSON string
 	 * @return a Document or NULL if json is empty
 	 */
+	@JsonIgnore
 	public Document getNewDocument(String json) {
 		if (StringUtils.isEmpty(json))
 			return null;
@@ -135,6 +150,7 @@ public class MongoDbConnector extends AbstractConnector {
 	 * @param map a map
 	 * @return a Document or NULL if the MAP is null
 	 */
+	@JsonIgnore
 	public Document getNewDocument(Map<String, Object> map) {
 		if (map == null)
 			return null;
@@ -148,16 +164,19 @@ public class MongoDbConnector extends AbstractConnector {
 	 *               matches to the query filter
 	 * @return a new UpdateOptions object
 	 */
+	@JsonIgnore
 	public UpdateOptions getNewUpdateOptions(boolean upsert) {
 		UpdateOptions updateOptions = new UpdateOptions();
 		updateOptions.upsert(upsert);
 		return updateOptions;
 	}
 
+	@JsonIgnore
 	public MongoBulk getNewBulk() {
 		return new MongoBulk();
 	}
 
+	@JsonIgnore
 	public BulkWriteOptions getNewBulkWriteOptions(boolean ordered) {
 		return new BulkWriteOptions().ordered(ordered);
 	}

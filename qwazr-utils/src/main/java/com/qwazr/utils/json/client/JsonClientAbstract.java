@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
 package com.qwazr.utils.json.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.qwazr.utils.http.HttpResponseEntityException;
 import com.qwazr.utils.json.JsonHttpResponseHandler;
 import com.qwazr.utils.json.JsonMapper;
@@ -110,6 +111,25 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	 * {@inheritDoc}
 	 */
 	@Override
+	final public JsonNode execute(Request request, Object bodyObject, Integer msTimeOut, int... expectedCodes)
+					throws IOException {
+		if (logger.isDebugEnabled())
+			logger.debug(request.toString());
+		if (msTimeOut == null)
+			msTimeOut = this.msTimeOut;
+		if (bodyObject != null)
+			request = request
+							.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
+		return request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
+						.addHeader("accept", ContentType.APPLICATION_JSON.toString()).execute()
+						.handleResponse(new JsonHttpResponseHandler.JsonTreeResponse(ContentType.APPLICATION_JSON,
+										expectedCodes));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
 	final public HttpResponse execute(Request request, Object bodyObject, Integer msTimeOut) throws IOException {
 		if (logger.isDebugEnabled())
 			logger.debug(request.toString());
@@ -127,7 +147,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		return request.connectTimeout(msTimeOut).socketTimeout(msTimeOut).execute().returnResponse();
 	}
 
-	final public <T> T commonServiceRequest(Request request, Object body, Integer msTimeout, Class<T> objectClass,
+	final public <T> T commonServiceRequest(Request request, Object body, Integer msTimeOut, Class<T> objectClass,
 					int... expectedCodes) {
 		try {
 			return execute(request, body, msTimeOut, objectClass, expectedCodes);
@@ -138,10 +158,20 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		}
 	}
 
-	final public <T> T commonServiceRequest(Request request, Object body, Integer msTimeout, TypeReference<T> typeRef,
+	final public <T> T commonServiceRequest(Request request, Object body, Integer msTimeOut, TypeReference<T> typeRef,
 					int... expectedCodes) {
 		try {
 			return execute(request, body, msTimeOut, typeRef, expectedCodes);
+		} catch (HttpResponseEntityException e) {
+			throw e.getWebApplicationException();
+		} catch (IOException e) {
+			throw new WebApplicationException(e.getMessage(), e, Status.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	final public JsonNode commonServiceRequest(Request request, Object body, Integer msTimeOut, int... expectedCodes) {
+		try {
+			return execute(request, body, msTimeOut, expectedCodes);
 		} catch (HttpResponseEntityException e) {
 			throw e.getWebApplicationException();
 		} catch (IOException e) {

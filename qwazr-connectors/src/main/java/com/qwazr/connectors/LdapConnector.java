@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  **/
 package com.qwazr.connectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -39,17 +40,15 @@ import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class LdapConnector extends AbstractConnector {
+public class LdapConnector extends AbstractPasswordConnector {
 
 	private static final Logger logger = LoggerFactory.getLogger(LdapConnector.class);
 
 	public final String host = null;
 	public final Integer port = null;
 	public final String username = null;
-	public final String password = null;
 	public final String base_dn = null;
 	public final Boolean use_pool = null;
-	public final String auth_filter = null;
 
 	private LdapConnectionPool connectionPool = null;
 	private LdapConnectionConfig config = null;
@@ -72,6 +71,7 @@ public class LdapConnector extends AbstractConnector {
 		}
 	}
 
+	@JsonIgnore
 	public LdapConnection getConnection(IOUtils.CloseableContext context, Long timeOut) throws LdapException {
 		LdapConnection connection = null;
 		if (connectionPool != null)
@@ -128,6 +128,7 @@ public class LdapConnector extends AbstractConnector {
 		return count;
 	}
 
+	@JsonIgnore
 	public Entry getEntry(LdapConnection connection, String filter) throws LdapException, CursorException {
 		connection.bind();
 		EntryCursor cursor = connection.search(base_dn, filter, SearchScope.SUBTREE);

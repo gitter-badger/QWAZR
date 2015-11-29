@@ -13,15 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.tools;
+package com.qwazr.connectors;
+
+import com.qwazr.utils.server.ServerException;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-public interface ToolsManager extends Map<String, AbstractTool> {
+public class ConnectorsServiceImpl implements ConnectorsServiceInterface {
 
-	<T extends AbstractTool> T get(String name) throws IOException;
+	public Map<String, String> list() {
+		Map<String, String> tools = new LinkedHashMap<String, String>();
+		ConnectorManagerImpl.getInstance()
+						.forEach((s, abstractTool) -> tools.put(s, abstractTool.getClass().getName()));
+		return tools;
+	}
 
-	ToolsServiceInterface getRemoteClient(String address, Integer msTimeOut) throws URISyntaxException;
+	public AbstractConnector get(String connectorName) {
+		try {
+			return ConnectorManagerImpl.getInstance().get(connectorName);
+		} catch (IOException e) {
+			throw ServerException.getJsonException(e);
+		}
+	}
+
 }
