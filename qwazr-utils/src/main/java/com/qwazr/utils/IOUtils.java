@@ -153,6 +153,8 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	public interface CloseableContext {
 
 		void add(AutoCloseable autoCloseable);
+
+		void close(AutoCloseable autoCloseable);
 	}
 
 	public static class CloseableList implements CloseableContext, Closeable {
@@ -163,12 +165,14 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 			autoCloseables = new LinkedHashSet<AutoCloseable>();
 		}
 
+		@Override
 		public void add(AutoCloseable autoCloseable) {
 			synchronized (autoCloseables) {
 				autoCloseables.add(autoCloseable);
 			}
 		}
 
+		@Override
 		public void close(AutoCloseable autoCloseable) {
 			IOUtils.close(autoCloseable);
 			synchronized (autoCloseables) {
