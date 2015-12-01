@@ -29,6 +29,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +38,11 @@ import java.util.Map;
 public class XPathTool extends AbstractTool {
 
 	private final static XPathFactory xPathFactory = XPathFactory.newInstance();
-	private final static DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+	private final static DocumentBuilderFactory docFactory;
+
+	static {
+		docFactory = DocumentBuilderFactory.newInstance();
+	}
 
 	private XPath xPath;
 	private Map<String, XPathExpression> xPathMap;
@@ -57,6 +63,32 @@ public class XPathTool extends AbstractTool {
 
 	public XPathDocument readDocument(File file) throws ParserConfigurationException, SAXException, IOException {
 		return new XPathDocument(file);
+	}
+
+	public XPathDocument readDocument(String path) throws ParserConfigurationException, SAXException, IOException {
+		return new XPathDocument(new File(path));
+	}
+
+	public Collection<String> extractText(Node node) {
+		if (node == null)
+			return null;
+		ArrayList<String> list = new ArrayList<String>();
+		extractText(node, list);
+		return list;
+	}
+
+	public void extractText(Node node, Collection<String> collector) {
+		if (node == null)
+			return;
+		if (node.getNodeType() == Node.TEXT_NODE) {
+			collector.add(node.getTextContent());
+			return;
+		}
+		NodeList list = node.getChildNodes();
+		for (int i = 0; i < list.getLength(); i++) {
+			Node childNode = list.item(i);
+			extractText(childNode, collector);
+		}
 	}
 
 	@JsonIgnore
@@ -107,7 +139,13 @@ public class XPathTool extends AbstractTool {
 			return (Node) xpath(xpath_expression, object, XPathConstants.NODE);
 		}
 
+		public Node xpath_node(String xpath_expression) throws XPathExpressionException {
+			return xpath_node(xpath_expression, document);
+		}
+
 		public Node[] xpath_nodes(String xpath_expression, Object object) throws XPathExpressionException {
+			if (object == null)
+				object = document;
 			NodeList nodeList = (NodeList) xpath(xpath_expression, object, XPathConstants.NODESET);
 			if (nodeList == null)
 				return null;
@@ -117,17 +155,34 @@ public class XPathTool extends AbstractTool {
 			return nodes;
 		}
 
+		public Node[] xpath_nodes(String xpath_expression) throws XPathExpressionException {
+			return xpath_nodes(xpath_expression, document);
+		}
+
 		public String xpath_text(String xpath_expression, Object object) throws XPathExpressionException {
 			return (String) xpath(xpath_expression, object, XPathConstants.STRING);
+		}
+
+		public String xpath_text(String xpath_expression) throws XPathExpressionException {
+			return xpath_text(xpath_expression, document);
 		}
 
 		public Boolean xpath_boolean(String xpath_expression, Object object) throws XPathExpressionException {
 			return (Boolean) xpath(xpath_expression, object, XPathConstants.BOOLEAN);
 		}
 
+		public Boolean xpath_boolean(String xpath_expression) throws XPathExpressionException {
+			return xpath_boolean(xpath_expression, document);
+		}
+
 		public Number xpath_number(String xpath_expression, Object object) throws XPathExpressionException {
 			return (Number) xpath(xpath_expression, object, XPathConstants.NUMBER);
 		}
+
+		public Number xpath_number(String xpath_expression) throws XPathExpressionException {
+			return xpath_number(xpath_expression, document);
+		}
+
 	}
 
 }

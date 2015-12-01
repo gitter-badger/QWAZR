@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.Map;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -76,11 +77,6 @@ public class ArchiverTool extends AbstractTool {
 	@Override
 	public void unload() {
 		factory = null;
-	}
-
-	public File dest_file(File source, String newExtension) {
-		String newName = FilenameUtils.getBaseName(source.getName()) + '.' + newExtension;
-		return new File(source.getParent(), newName);
 	}
 
 	private InputStream getCompressorNewInputStream(InputStream input) throws IOException, CompressorException {
@@ -355,6 +351,41 @@ public class ArchiverTool extends AbstractTool {
 			IOUtils.closeQuietly(fis);
 		}
 	}
+
+	/**
+	 * Unzip a ZIP file to the passed directory
+	 *
+	 * @param zipFilePath   the path to the ZIP file
+	 * @param destDirectory the path to the directory
+	 * @throws IOException if any I/O error occured
+	 */
+	public void unzip(String zipFilePath, String destDirectory) throws IOException {
+		File destDir = new File(destDirectory);
+		if (!destDir.exists())
+			destDir.mkdir();
+		ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath));
+		try {
+			ZipEntry entry = zipIn.getNextEntry();
+			// iterates over entries in the zip file
+			while (entry != null) {
+				String filePath = destDirectory + File.separator + entry.getName();
+				if (!entry.isDirectory()) {
+					// if the entry is a file, extracts it
+					IOUtils.copy(zipIn, new File(filePath));
+				} else {
+					// if the entry is a directory, make the directory
+					File dir = new File(filePath);
+					dir.mkdir();
+				}
+				zipIn.closeEntry();
+				entry = zipIn.getNextEntry();
+			}
+		} finally {
+			zipIn.close();
+		}
+	}
+
+
 
 	public static ContentType APPLICATION_ZIP = ContentType.create("application/zip");
 

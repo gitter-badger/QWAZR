@@ -148,6 +148,21 @@ public class XMLTool extends AbstractTool {
 	}
 
 	/**
+	 * Parse an XML stream and build a DOM object
+	 *
+	 * @param input the stream to read
+	 * @return a new DOM document
+	 * @throws ParserConfigurationException if any XML error occurs
+	 * @throws IOException                  if any I/O error occurs
+	 * @throws SAXException                 if any XML error occurs
+	 */
+	public Document domParseStream(InputStream input) throws ParserConfigurationException, IOException, SAXException {
+		DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
+		docBuilder.setErrorHandler(ToolErrorHandler.INSTANCE);
+		return docBuilder.parse(input);
+	}
+
+	/**
 	 * Generate an XML string from an Object using JAXB
 	 *
 	 * @param object the object to serialize

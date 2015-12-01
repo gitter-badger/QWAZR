@@ -102,7 +102,12 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	public static final int copy(InputStream inputStream, File destFile) throws IOException {
 		FileOutputStream fos = new FileOutputStream(destFile);
 		try {
-			return copy(inputStream, fos);
+			BufferedOutputStream bos = new BufferedOutputStream(fos);
+			try {
+				return copy(inputStream, fos);
+			} finally {
+				close(bos);
+			}
 		} finally {
 			close(fos);
 		}
