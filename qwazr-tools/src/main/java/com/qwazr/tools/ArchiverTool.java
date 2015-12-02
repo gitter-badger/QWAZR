@@ -186,10 +186,7 @@ public class ArchiverTool extends AbstractTool {
 			ArchiveInputStream in = new ArchiveStreamFactory().createArchiveInputStream(is);
 			try {
 				ArchiveEntry entry;
-				for (; ; ) {
-					entry = in.getNextEntry();
-					if (entry == null)
-						break;
+				while ((entry = in.getNextEntry()) != null) {
 					if (!in.canReadEntryData(entry))
 						continue;
 					if (entry.isDirectory()) {
@@ -199,10 +196,10 @@ public class ArchiverTool extends AbstractTool {
 					if (entry instanceof ZipArchiveEntry)
 						if (((ZipArchiveEntry) entry).isUnixSymlink())
 							continue;
-					System.out.println(entry.getName());
 					File destFile = new File(destDir, entry.getName());
-					if (!destFile.getParentFile().exists())
-						destFile.getParentFile().mkdirs();
+					File parentDir = destFile.getParentFile();
+					if (!parentDir.exists())
+						parentDir.mkdirs();
 					IOUtils.copy(in, destFile);
 				}
 			} catch (IOException e) {
@@ -384,8 +381,6 @@ public class ArchiverTool extends AbstractTool {
 			zipIn.close();
 		}
 	}
-
-
 
 	public static ContentType APPLICATION_ZIP = ContentType.create("application/zip");
 
