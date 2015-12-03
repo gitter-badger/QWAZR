@@ -83,18 +83,18 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
-	public static final void close(final Collection<? extends AutoCloseable> closeables) {
-		if (closeables == null)
+	public static final void close(final Collection<? extends AutoCloseable> autoCloseables) {
+		if (autoCloseables == null)
 			return;
-		Closeable[] array = closeables.toArray(new Closeable[closeables.size()]);
+		AutoCloseable[] array = autoCloseables.toArray(new AutoCloseable[autoCloseables.size()]);
 		int i = array.length;
 		while (i > 0) {
-			Closeable closeable = array[--i];
+			AutoCloseable autoCloseable = array[--i];
 			try {
-				closeQuietly(closeable);
+				closeQuietly(autoCloseable);
 			} catch (Exception e) {
 				if (logger.isWarnEnabled())
-					logger.warn("Close failure on " + closeable, e);
+					logger.warn("Close failure on " + autoCloseable, e);
 			}
 		}
 	}
@@ -114,7 +114,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	}
 
 	public static final StringBuilder copy(InputStream inputStream, StringBuilder sb, String charsetName,
-					boolean bCloseInputStream) throws IOException {
+			boolean bCloseInputStream) throws IOException {
 		if (inputStream == null)
 			return sb;
 		if (sb == null)
