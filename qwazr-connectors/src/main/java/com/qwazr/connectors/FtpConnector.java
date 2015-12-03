@@ -18,6 +18,7 @@ package com.qwazr.connectors;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
@@ -26,6 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FtpConnector extends AbstractPasswordConnector {
@@ -105,30 +108,55 @@ public class FtpConnector extends AbstractPasswordConnector {
 			retrieve(remote, new File(local_path));
 		}
 
-		public void sync_files(String remote_path, String local_path, Boolean downloadOnlyIfNotExists)
-						throws IOException {
+		public void sync_files(ScriptObjectMirror browser, String remote_path, File localDirectory,
+						Boolean downloadOnlyIfNotExists) throws IOException {
+			final boolean file_method = browser != null ? browser.hasMember("file") : false;
+			final boolean dir_method = browser != null ? browser.hasMember("directory") : false;
 			if (!ftp.changeWorkingDirectory(remote_path))
 				throw new IOException("Remote working directory change failed: " + hostname + "/" + remote_path);
-			File localDirectory = new File(local_path);
 			if (!localDirectory.exists())
-				throw new FileNotFoundException("The destination directory does not exist: " + local_path);
+				throw new FileNotFoundException("The destination directory does not exist: " + localDirectory);
 			if (!localDirectory.isDirectory())
-				throw new IOException("The destination path is not a directory: " + local_path);
+				throw new IOException("The destination path is not a directory: " + localDirectory);
 			FTPFile[] remoteFiles = ftp.listFiles();
 			if (remoteFiles == null)
 				return;
+			final LinkedHashMap<FTPFile, File> remoteDirs = new LinkedHashMap<>();
 			for (FTPFile remoteFile : remoteFiles) {
 				if (remoteFile == null)
 					continue;
+				final String remoteName = remoteFile.getName();
+				if (remoteFile.isDirectory()) {
+					if (dir_method)
+						if (Boolean.FALSE.equals(browser.callMember("directory", remote_path + '/' + remoteName)))
+							continue;
+					File localDir = new File(localDirectory, remoteName);
+					if (!localDir.exists())
+						localDir.mkdir();
+					remoteDirs.put(remoteFile, localDir);
+					continue;
+				}
 				if (!remoteFile.isFile())
 					continue;
-				File localFile = new File(localDirectory, remoteFile.getName());
+				File localFile = new File(localDirectory, remoteName);
+				if (file_method)
+					if (Boolean.FALSE.equals(browser.callMember("file", remote_path + '/' + remoteName,
+									localFile.exists())))
+						continue;
 				if (downloadOnlyIfNotExists != null && downloadOnlyIfNotExists && localFile.exists())
 					continue;
 				if (logger.isInfoEnabled())
-					logger.info("FTP download: " + hostname + "/" + remoteFile.getName());
+					logger.info("FTP download: " + hostname + '/' + remote_path + '/' + remoteName);
 				retrieve(remoteFile, localFile);
 			}
+			for (Map.Entry<FTPFile, File> entry : remoteDirs.entrySet())
+				sync_files(browser, remote_path + '/' + entry.getKey().getName(), entry.getValue(),
+								downloadOnlyIfNotExists);
+		}
+
+		public void sync_files(ScriptObjectMirror browser, String remote_path, String local_path,
+						Boolean downloadOnlyIfNotExists) throws IOException {
+			sync_files(browser, remote_path, new File(local_path), downloadOnlyIfNotExists);
 		}
 
 		public void logout() throws IOException {
