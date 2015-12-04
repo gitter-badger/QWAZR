@@ -91,7 +91,7 @@ public class FullTest {
 	@Test
 	public void test002ListSchema() throws URISyntaxException {
 		IndexServiceInterface client = getClient();
-		Set<String> schemas = client.getSchemas(null);
+		Set<String> schemas = client.getSchemas();
 		Assert.assertNotNull(schemas);
 		Assert.assertEquals(schemas.size(), 1);
 		Assert.assertTrue(schemas.contains(SCHEMA_NAME));
@@ -138,13 +138,13 @@ public class FullTest {
 		indexStatus = client.getIndex(SCHEMA_NAME, INDEX_NAME);
 		Assert.assertNotNull(indexStatus);
 		checkAllSizes(client, 0);
-		client.deleteIndex(SCHEMA_NAME, INDEX_NAME, null);
+		client.deleteIndex(SCHEMA_NAME, INDEX_NAME);
 	}
 
 	@Test
 	public void test110CreateIndexWithSettings() throws URISyntaxException, IOException {
 		IndexServiceInterface client = getClient();
-		IndexStatus indexStatus = client.createUpdateIndex(SCHEMA_NAME, INDEX_NAME, null, INDEX_SETTINGS);
+		IndexStatus indexStatus = client.createUpdateIndex(SCHEMA_NAME, INDEX_NAME, INDEX_SETTINGS);
 		Assert.assertNotNull(indexStatus);
 		Assert.assertNotNull(indexStatus.settings);
 		Assert.assertNotNull(indexStatus.settings.similarity_class);
@@ -154,7 +154,7 @@ public class FullTest {
 	@Test
 	public void test115SetFields() throws URISyntaxException, IOException {
 		IndexServiceInterface client = getClient();
-		LinkedHashMap<String, FieldDefinition> fields = client.setFields(SCHEMA_NAME, INDEX_NAME, null, FIELDS_JSON);
+		LinkedHashMap<String, FieldDefinition> fields = client.setFields(SCHEMA_NAME, INDEX_NAME, FIELDS_JSON);
 		Assert.assertEquals(fields.size(), FIELDS_JSON.size());
 		IndexStatus indexStatus = client.getIndex(SCHEMA_NAME, INDEX_NAME);
 		Assert.assertNotNull(indexStatus.fields);
@@ -165,8 +165,8 @@ public class FullTest {
 	@Test
 	public void test120DeleteNameField() throws URISyntaxException {
 		IndexServiceInterface client = getClient();
-		client.deleteField(SCHEMA_NAME, INDEX_NAME, "name", null);
-		Map<String, FieldDefinition> fields = client.getFields(SCHEMA_NAME, INDEX_NAME, null);
+		client.deleteField(SCHEMA_NAME, INDEX_NAME, "name");
+		Map<String, FieldDefinition> fields = client.getFields(SCHEMA_NAME, INDEX_NAME);
 		Assert.assertNotNull(fields);
 		Assert.assertNull(fields.get("name"));
 	}
@@ -174,8 +174,8 @@ public class FullTest {
 	@Test
 	public void test130SetNameField() throws URISyntaxException {
 		IndexServiceInterface client = getClient();
-		client.setField(SCHEMA_NAME, INDEX_NAME, "name", null, FIELD_NAME_JSON);
-		Map<String, FieldDefinition> fields = client.getFields(SCHEMA_NAME, INDEX_NAME, null);
+		client.setField(SCHEMA_NAME, INDEX_NAME, "name", FIELD_NAME_JSON);
+		Map<String, FieldDefinition> fields = client.getFields(SCHEMA_NAME, INDEX_NAME);
 		Assert.assertNotNull(fields);
 		Assert.assertNotNull(fields.get("name"));
 	}
@@ -437,6 +437,25 @@ public class FullTest {
 		Assert.assertEquals(status, getBackups(client, 2).get(0));
 	}
 
+	private void checkAnalyzerResult(String[] term_results, List<TermDefinition> termList) {
+		Assert.assertNotNull(termList);
+		Assert.assertEquals(term_results.length, termList.size());
+		int i = 0;
+		for (String term : term_results)
+			Assert.assertEquals(term, termList.get(i++).char_term);
+	}
+
+	@Test
+	public void test600FieldAnalyzer() throws URISyntaxException {
+		final String[] term_results = { "there", "are", "few", "parts", "of", "texts" };
+		IndexServiceInterface client = getClient();
+		checkAnalyzerResult(term_results,
+						client.doAnalyzeIndex(SCHEMA_NAME, INDEX_NAME, "name", "There are few parts of texts"));
+
+		checkAnalyzerResult(term_results,
+						client.doAnalyzeQuery(SCHEMA_NAME, INDEX_NAME, "name", "There are few parts of texts"));
+	}
+
 	@Test
 	public void test700DeleteDoc() throws URISyntaxException, IOException {
 		IndexServiceInterface client = getClient();
@@ -459,7 +478,7 @@ public class FullTest {
 	@Test
 	public void test980DeleteIndex() throws URISyntaxException {
 		IndexServiceInterface client = getClient();
-		Response response = client.deleteIndex(SCHEMA_NAME, INDEX_NAME, null);
+		Response response = client.deleteIndex(SCHEMA_NAME, INDEX_NAME);
 		Assert.assertNotNull(response);
 		Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
 	}
@@ -467,7 +486,7 @@ public class FullTest {
 	@Test
 	public void test981EmptyIndex() throws URISyntaxException {
 		IndexServiceInterface client = getClient();
-		Set<String> indexes = client.getIndexes(SCHEMA_NAME, null);
+		Set<String> indexes = client.getIndexes(SCHEMA_NAME);
 		Assert.assertNotNull(indexes);
 		Assert.assertTrue(indexes.isEmpty());
 	}
@@ -475,7 +494,7 @@ public class FullTest {
 	@Test
 	public void test990DeleteSchema() throws URISyntaxException {
 		IndexServiceInterface client = getClient();
-		Response response = client.deleteSchema(SCHEMA_NAME, null);
+		Response response = client.deleteSchema(SCHEMA_NAME);
 		Assert.assertNotNull(response);
 		Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
 
@@ -484,7 +503,7 @@ public class FullTest {
 	@Test
 	public void test991EmptySchema() throws URISyntaxException {
 		IndexServiceInterface client = getClient();
-		Set<String> schemas = client.getSchemas(null);
+		Set<String> schemas = client.getSchemas();
 		Assert.assertNotNull(schemas);
 		Assert.assertTrue(schemas.isEmpty());
 	}

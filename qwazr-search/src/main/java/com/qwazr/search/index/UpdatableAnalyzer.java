@@ -15,30 +15,12 @@
  */
 package com.qwazr.search.index;
 
-import com.qwazr.utils.FileClassCompilerLoader;
-import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.server.ServerException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.DelegatingAnalyzerWrapper;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
-import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.facet.FacetsConfig;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.spans.SpanFirstQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
 
-import javax.script.ScriptException;
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.Map;
 
 final public class UpdatableAnalyzer extends DelegatingAnalyzerWrapper {
 
@@ -58,6 +40,13 @@ final public class UpdatableAnalyzer extends DelegatingAnalyzerWrapper {
 		this.analyzerMap = analyzerMap;
 	}
 
+	@Override
+	final public void close() {
+		if (analyzerMap != null)
+			analyzerMap.forEach((s, analyzer) -> analyzer.close());
+		super.close();
+	}
+
 	final AnalyzerContext getContext() {
 		return context;
 	}
@@ -68,35 +57,4 @@ final public class UpdatableAnalyzer extends DelegatingAnalyzerWrapper {
 		return analyzer == null ? defaultAnalyzer : analyzer;
 	}
 
-	public interface TermConsumer {
-
-		boolean apply(CharTermAttribute charTermAttribute, PositionIncrementAttribute positionIncrement,
-				OffsetAttribute offset);
-	}
-
-	final public void forEachTerm(String field, String queryString, TermConsumer consumer) throws IOException {
-		Objects.requireNonNull(field, "The field cannot be null");
-		Objects.requireNonNull(queryString, "The query string cannot be null");
-		final Analyzer analyzer = getWrappedAnalyzer(field);
-		final TokenStream tokenStream = analyzer.tokenStream(field, queryString);
-		try {
-			final CharTermAttribute charTermAttribute = tokenStream.hasAttribute(CharTermAttribute.class) ?
-					tokenStream.getAttribute(CharTermAttribute.class) :
-					null;
-			final PositionIncrementAttribute positionIncrementAttribute = tokenStream
-					.hasAttribute(PositionIncrementAttribute.class) ?
-					tokenStream.getAttribute(PositionIncrementAttribute.class) :
-					null;
-			final OffsetAttribute offsetAttribute = tokenStream.hasAttribute(OffsetAttribute.class) ?
-					tokenStream.getAttribute(OffsetAttribute.class) :
-					null;
-			tokenStream.reset();
-			while (tokenStream.incrementToken())
-				if (!consumer.apply(charTermAttribute, positionIncrementAttribute, offsetAttribute))
-					break;
-
-		} finally {
-			tokenStream.close();
-		}
-	}
 }

@@ -16,6 +16,7 @@
 package com.qwazr.search.index;
 
 import com.qwazr.utils.server.ServerException;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
 import org.slf4j.Logger;
@@ -73,7 +74,7 @@ public class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Set<String> getIndexes(String schema_name, Boolean local) {
+	public Set<String> getIndexes(String schema_name) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).nameSet();
@@ -81,11 +82,10 @@ public class IndexServiceImpl implements IndexServiceInterface {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
-		// TODO Local
 	}
 
 	@Override
-	public SchemaSettingsDefinition createUpdateSchema(String schema_name, Boolean local) {
+	public SchemaSettingsDefinition createUpdateSchema(String schema_name) {
 		try {
 			checkRight(null);
 			IndexManager.INSTANCE.createUpdate(schema_name, null);
@@ -94,12 +94,10 @@ public class IndexServiceImpl implements IndexServiceInterface {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
-		// TODO Local
 	}
 
 	@Override
-	public SchemaSettingsDefinition createUpdateSchema(String schema_name, Boolean local,
-			SchemaSettingsDefinition settings) {
+	public SchemaSettingsDefinition createUpdateSchema(String schema_name, SchemaSettingsDefinition settings) {
 		try {
 			checkRight(null);
 			return IndexManager.INSTANCE.createUpdate(schema_name, settings);
@@ -110,7 +108,7 @@ public class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Set<String> getSchemas(Boolean local) {
+	public Set<String> getSchemas() {
 		try {
 			checkRight(null);
 			return IndexManager.INSTANCE.nameSet();
@@ -118,11 +116,10 @@ public class IndexServiceImpl implements IndexServiceInterface {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
-		// TODO Local
 	}
 
 	@Override
-	public Response deleteSchema(String schema_name, Boolean local) {
+	public Response deleteSchema(String schema_name) {
 		try {
 			checkRight(null);
 			IndexManager.INSTANCE.delete(schema_name);
@@ -131,12 +128,10 @@ public class IndexServiceImpl implements IndexServiceInterface {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
-		// TODO Local
 	}
 
 	@Override
-	public IndexStatus createUpdateIndex(String schema_name, String index_name, Boolean local,
-			IndexSettingsDefinition settings) {
+	public IndexStatus createUpdateIndex(String schema_name, String index_name, IndexSettingsDefinition settings) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).createUpdate(index_name, settings);
@@ -144,16 +139,15 @@ public class IndexServiceImpl implements IndexServiceInterface {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
-		// TODO Local
 	}
 
 	@Override
-	public IndexStatus createUpdateIndex(String schema_name, String index_name, Boolean local) {
-		return createUpdateIndex(schema_name, index_name, local, null);
+	public IndexStatus createUpdateIndex(String schema_name, String index_name) {
+		return createUpdateIndex(schema_name, index_name, null);
 	}
 
 	@Override
-	public LinkedHashMap<String, FieldDefinition> getFields(String schema_name, String index_name, Boolean local) {
+	public LinkedHashMap<String, FieldDefinition> getFields(String schema_name, String index_name) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).get(index_name).getFields();
@@ -165,7 +159,7 @@ public class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public FieldDefinition getField(String schema_name, String index_name, String field_name, Boolean local) {
+	public FieldDefinition getField(String schema_name, String index_name, String field_name) {
 		try {
 			checkRight(schema_name);
 			Map<String, FieldDefinition> fieldMap = IndexManager.INSTANCE.get(schema_name).get(index_name).getFields();
@@ -180,8 +174,8 @@ public class IndexServiceImpl implements IndexServiceInterface {
 		}
 	}
 
-	public LinkedHashMap<String, FieldDefinition> setFields(String schema_name, String index_name, Boolean local,
-			LinkedHashMap<String, FieldDefinition> fields) {
+	public LinkedHashMap<String, FieldDefinition> setFields(String schema_name, String index_name,
+					LinkedHashMap<String, FieldDefinition> fields) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).setFields(fields);
@@ -193,9 +187,42 @@ public class IndexServiceImpl implements IndexServiceInterface {
 		}
 	}
 
+	private List<TermDefinition> doAnalyzer(String schema_name, String index_name, String field_name, String text,
+					boolean index) throws ServerException, IOException {
+		checkRight(schema_name);
+		IndexInstance indexInstance = IndexManager.INSTANCE.get(schema_name).get(index_name);
+		Analyzer analyzer = index ?
+						indexInstance.getIndexAnalyzer(field_name) :
+						indexInstance.getQueryAnalyzer(field_name);
+		if (analyzer == null)
+			throw new ServerException("No analyzer found for " + field_name);
+		return TermDefinition.buildTermList(analyzer, field_name, text);
+	}
+
 	@Override
-	public FieldDefinition setField(String schema_name, String index_name, String field_name, Boolean local,
-			FieldDefinition field) {
+	public List<TermDefinition> doAnalyzeIndex(String schema_name, String index_name, String field_name, String text) {
+		try {
+			return doAnalyzer(schema_name, index_name, field_name, text, true);
+		} catch (ServerException | IOException e) {
+			if (logger.isWarnEnabled())
+				logger.warn(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
+	}
+
+	@Override
+	public List<TermDefinition> doAnalyzeQuery(String schema_name, String index_name, String field_name, String text) {
+		try {
+			return doAnalyzer(schema_name, index_name, field_name, text, false);
+		} catch (ServerException | IOException e) {
+			if (logger.isWarnEnabled())
+				logger.warn(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
+	}
+
+	@Override
+	public FieldDefinition setField(String schema_name, String index_name, String field_name, FieldDefinition field) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).setField(field_name, field);
@@ -208,7 +235,7 @@ public class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response deleteField(String schema_name, String index_name, String field_name, Boolean local) {
+	public Response deleteField(String schema_name, String index_name, String field_name) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).deleteField(field_name);
@@ -232,7 +259,7 @@ public class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response deleteIndex(String schema_name, String index_name, Boolean local) {
+	public Response deleteIndex(String schema_name, String index_name) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).delete(index_name);
@@ -241,7 +268,6 @@ public class IndexServiceImpl implements IndexServiceInterface {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
-		// TODO Local
 	}
 
 	@Override
@@ -327,7 +353,7 @@ public class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response deleteAll(String schema_name, String index_name, Boolean local) {
+	public Response deleteAll(String schema_name, String index_name) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).deleteAll();
