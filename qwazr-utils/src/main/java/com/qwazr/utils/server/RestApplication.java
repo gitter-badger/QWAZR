@@ -20,8 +20,7 @@ import com.qwazr.utils.json.JacksonConfig;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ServletInfo;
-import org.jboss.resteasy.plugins.providers.jackson.Jackson2JsonpInterceptor;
-import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
+import org.glassfish.jersey.servlet.ServletContainer;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
@@ -42,7 +41,6 @@ public class RestApplication extends Application {
 		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(JacksonConfig.class);
 		classes.add(JacksonJsonProvider.class);
-		classes.add(Jackson2JsonpInterceptor.class);
 		return classes;
 	}
 
@@ -51,7 +49,7 @@ public class RestApplication extends Application {
 		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(this.getClass().getClassLoader())
 						.setContextPath(appPath.value()).setDeploymentName("REST");
 		List<ServletInfo> servletInfos = new ArrayList<ServletInfo>();
-		servletInfos.add(new ServletInfo("REST", HttpServletDispatcher.class)
+		servletInfos.add(new ServletInfo("REST", ServletContainer.class)
 						.addInitParam("javax.ws.rs.Application", getClass().getName()).setAsyncSupported(true)
 						.addMapping("/*"));
 		deploymentInfo.addServlets(servletInfos);

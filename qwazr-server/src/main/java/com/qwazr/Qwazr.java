@@ -87,7 +87,6 @@ public class Qwazr extends AbstractServer {
 	public static class WelcomeServiceImpl {
 
 		@GET
-		@Path("/")
 		@Produces(MediaType.APPLICATION_JSON)
 		public WelcomeStatus welcome() {
 			return new WelcomeStatus(services);

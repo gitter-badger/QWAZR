@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,125 +31,126 @@ import java.io.Closeable;
 
 public class CassandraSession implements Closeable {
 
-    private static final Logger logger = LoggerFactory.getLogger(CassandraSession.class);
+	private static final Logger logger = LoggerFactory.getLogger(CassandraSession.class);
 
-    private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
+	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
 
-    private volatile long lastUse;
+	private volatile long lastUse;
 
-    private final Cluster cluster;
-    private final String keySpace;
-    private Session session;
+	private final Cluster cluster;
+	private final String keySpace;
+	private Session session;
 
-    public CassandraSession(Cluster cluster) {
-	this(cluster, null);
-    }
-
-    public CassandraSession(Cluster cluster, String keySpace) {
-	this.cluster = cluster;
-	this.keySpace = keySpace;
-	session = null;
-	lastUse = System.currentTimeMillis();
-    }
-
-    @Override
-    public void finalize() {
-	closeNoLock();
-    }
-
-    private void closeNoLock() {
-	if (session != null) {
-	    if (!session.isClosed())
-		IOUtils.closeQuietly(session);
-	    session = null;
-	}
-    }
-
-    @Override
-    public void close() {
-	rwl.w.lock();
-	try {
-	    closeNoLock();
-	} finally {
-	    rwl.w.unlock();
-	}
-    }
-
-    public boolean isClosed() {
-	rwl.r.lock();
-	try {
-	    return session == null || session.isClosed();
-	} finally {
-	    rwl.r.unlock();
-	}
-    }
-
-    private Session checkSession() {
-	rwl.r.lock();
-	try {
-	    lastUse = System.currentTimeMillis();
-	    if (session != null && !session.isClosed())
-		return session;
-	} finally {
-	    rwl.r.unlock();
-	}
-	rwl.w.lock();
-	try {
-	    if (session != null && !session.isClosed())
-		return session;
-	    if (cluster == null || cluster.isClosed())
-		throw new DriverException("The cluster is closed");
-	    if (logger.isDebugEnabled())
-		logger.debug("Create session " + keySpace == null ? StringUtils.EMPTY : keySpace);
-	    session = keySpace == null ? cluster.connect() : cluster.connect(keySpace);
-	    return session;
-	} finally {
-	    rwl.w.unlock();
-	}
-    }
-
-    private SimpleStatement getStatement(Session session, String cql, Integer fetchSize, Object... values) {
-	SimpleStatement statement = values != null && values.length > 0 ? session.newSimpleStatement(cql, values)
-		: session.newSimpleStatement(cql);
-	if (fetchSize != null)
-	    statement.setFetchSize(fetchSize);
-	return statement;
-    }
-
-    private ResultSet executeStatement(Session session, SimpleStatement statement) {
-	try {
-	    return session.execute(statement);
-	} catch (NoHostAvailableException e1) {
-	    if (cluster == null || !cluster.isClosed())
-		throw e1;
-	    try {
-		return session.execute(statement);
-	    } catch (DriverException e2) {
-		logger.warn(e2.getMessage(), e2);
-		throw e1;
-	    }
+	public CassandraSession(Cluster cluster) {
+		this(cluster, null);
 	}
 
-    }
+	public CassandraSession(Cluster cluster, String keySpace) {
+		this.cluster = cluster;
+		this.keySpace = keySpace;
+		session = null;
+		lastUse = System.currentTimeMillis();
+	}
 
-    public ResultSet executeWithFetchSize(String cql, int fetchSize, Object... values) {
-	if (logger.isDebugEnabled())
-	    logger.debug("Execute " + cql);
-	Session session = checkSession();
-	SimpleStatement statement = getStatement(session, cql, fetchSize, values);
-	return executeStatement(session, statement);
-    }
+	@Override
+	public void finalize() {
+		closeNoLock();
+	}
 
-    public ResultSet execute(String cql, Object... values) {
-	if (logger.isDebugEnabled())
-	    logger.debug("Execute " + cql);
-	Session session = checkSession();
-	SimpleStatement statement = getStatement(session, cql, null, values);
-	return executeStatement(session, statement);
-    }
+	private void closeNoLock() {
+		if (session != null) {
+			if (!session.isClosed())
+				IOUtils.closeQuietly(session);
+			session = null;
+		}
+	}
 
-    long getLastUse() {
-	return lastUse;
-    }
+	@Override
+	public void close() {
+		rwl.w.lock();
+		try {
+			closeNoLock();
+		} finally {
+			rwl.w.unlock();
+		}
+	}
+
+	public boolean isClosed() {
+		rwl.r.lock();
+		try {
+			return session == null || session.isClosed();
+		} finally {
+			rwl.r.unlock();
+		}
+	}
+
+	private Session checkSession() {
+		rwl.r.lock();
+		try {
+			lastUse = System.currentTimeMillis();
+			if (session != null && !session.isClosed())
+				return session;
+		} finally {
+			rwl.r.unlock();
+		}
+		rwl.w.lock();
+		try {
+			if (session != null && !session.isClosed())
+				return session;
+			if (cluster == null || cluster.isClosed())
+				throw new DriverException("The cluster is closed");
+			if (logger.isDebugEnabled())
+				logger.debug("Create session " + keySpace == null ? StringUtils.EMPTY : keySpace);
+			session = keySpace == null ? cluster.connect() : cluster.connect(keySpace);
+			return session;
+		} finally {
+			rwl.w.unlock();
+		}
+	}
+
+	private SimpleStatement getStatement(Session session, String cql, Integer fetchSize, Object... values) {
+		SimpleStatement statement = values != null && values.length > 0 ?
+						session.newSimpleStatement(cql, values) :
+						session.newSimpleStatement(cql);
+		if (fetchSize != null)
+			statement.setFetchSize(fetchSize);
+		return statement;
+	}
+
+	private ResultSet executeStatement(Session session, SimpleStatement statement) {
+		try {
+			return session.execute(statement);
+		} catch (NoHostAvailableException e1) {
+			if (cluster == null || !cluster.isClosed())
+				throw e1;
+			try {
+				return session.execute(statement);
+			} catch (DriverException e2) {
+				logger.warn(e2.getMessage(), e2);
+				throw e1;
+			}
+		}
+
+	}
+
+	public ResultSet executeWithFetchSize(String cql, int fetchSize, Object... values) {
+		if (logger.isDebugEnabled())
+			logger.debug("Execute " + cql);
+		Session session = checkSession();
+		SimpleStatement statement = getStatement(session, cql, fetchSize, values);
+		return executeStatement(session, statement);
+	}
+
+	public ResultSet execute(String cql, Object... values) {
+		if (logger.isDebugEnabled())
+			logger.debug("Execute " + cql);
+		Session session = checkSession();
+		SimpleStatement statement = getStatement(session, cql, null, values);
+		return executeStatement(session, statement);
+	}
+
+	long getLastUse() {
+		return lastUse;
+	}
 
 }
