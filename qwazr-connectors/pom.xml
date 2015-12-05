@@ -46,7 +46,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>9.4-1205-jdbc42</version>
+            <version>9.4-1206-jdbc42</version>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.jtds</groupId>
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
-            <version>3.1.1</version>
+            <version>3.2.0-rc0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -72,7 +72,7 @@
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
-            <version>3.3</version>
+            <version>3.4</version>
         </dependency>
         <dependency>
             <groupId>org.apache.directory.api</groupId>

@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -207,7 +207,7 @@ public abstract class AbstractServer {
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 		Options options = new Options();
 		defineOptions(options);
-		CommandLineParser parser = new GnuParser();
+		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd = parser.parse(options, args);
 
 		// Help option
@@ -312,8 +312,8 @@ public abstract class AbstractServer {
 	private static HttpHandler addSecurity(HttpHandler handler, final IdentityManager identityManager, String realm) {
 		handler = new AuthenticationCallHandler(handler);
 		handler = new AuthenticationConstraintHandler(handler);
-		final List<AuthenticationMechanism> mechanisms = Collections
-						.<AuthenticationMechanism>singletonList(new BasicAuthenticationMechanism(realm));
+		final List<AuthenticationMechanism> mechanisms = Collections.<AuthenticationMechanism>singletonList(
+						new BasicAuthenticationMechanism(realm));
 		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;

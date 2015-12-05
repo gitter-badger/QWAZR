@@ -215,6 +215,11 @@ public class MongoDbConnector extends AbstractConnector {
 		}
 
 		@Override
+		public ReadConcern getReadConcern() {
+			return collection.getReadConcern();
+		}
+
+		@Override
 		public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(Class<NewTDocument> clazz) {
 			return collection.withDocumentClass(clazz);
 		}
@@ -232,6 +237,11 @@ public class MongoDbConnector extends AbstractConnector {
 		@Override
 		public MongoCollection<Document> withWriteConcern(WriteConcern writeConcern) {
 			return collection.withWriteConcern(writeConcern);
+		}
+
+		@Override
+		public MongoCollection<Document> withReadConcern(ReadConcern readConcern) {
+			return collection.withReadConcern(readConcern);
 		}
 
 		@Override
@@ -336,6 +346,16 @@ public class MongoDbConnector extends AbstractConnector {
 		@Override
 		public void insertOne(Document document) {
 			collection.insertOne(document);
+		}
+
+		@Override
+		public void insertOne(Document document, InsertOneOptions insertOneOptions) {
+			collection.insertOne(document, insertOneOptions);
+		}
+
+		public void insertOne(Map<String, Object> document, boolean bypassDocumentValidation) {
+			collection.insertOne(new Document(document),
+							new InsertOneOptions().bypassDocumentValidation(bypassDocumentValidation));
 		}
 
 		public void insertOne(Map<String, Object> document) {

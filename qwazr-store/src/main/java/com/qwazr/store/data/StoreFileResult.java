@@ -15,6 +15,21 @@
  */
 package com.qwazr.store.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.utils.json.JsonMapper;
+import com.qwazr.utils.server.RestApplication;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.HiddenFileFilter;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.utils.DateUtils;
+
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -24,23 +39,6 @@ import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
-
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.jboss.resteasy.util.DateUtil;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.utils.json.JsonMapper;
-import com.qwazr.utils.server.RestApplication;
 
 @JsonInclude(Include.NON_EMPTY)
 public class StoreFileResult {
@@ -133,7 +131,7 @@ public class StoreFileResult {
 	if (size != null)
 	    builder.header(QWAZR_SIZE, size);
 	if (last_modified != null)
-	    builder.header(LAST_MODIFIED, DateUtil.formatDate(last_modified));
+	    builder.header(LAST_MODIFIED, DateUtils.formatDate(last_modified));
 	return builder;
     }
 
