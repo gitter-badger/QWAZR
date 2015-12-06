@@ -16,9 +16,9 @@
 package com.qwazr.search.index;
 
 import com.datastax.driver.core.utils.UUIDs;
+import com.qwazr.search.analysis.AnalyzerContext;
 import com.qwazr.utils.FileClassCompilerLoader;
 import com.qwazr.utils.server.ServerException;
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -27,19 +27,18 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.similarities.Similarity;
 
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-class IndexUtils {
+public class IndexUtils {
 
 	final static String FIELD_ID = "$id$";
 
 	private final static void fieldCollection(final AnalyzerContext context, final Map<String, Object> document,
-			final Consumer<Field> consumer) throws IOException {
+					final Consumer<Field> consumer) throws IOException {
 		for (Map.Entry<String, Object> field : document.entrySet()) {
 			final String fieldName = field.getKey();
 			if (FIELD_ID.equals(fieldName))
@@ -56,7 +55,7 @@ class IndexUtils {
 	}
 
 	private final static Document newLuceneDocument(final AnalyzerContext context, final Map<String, Object> document)
-			throws IOException {
+					throws IOException {
 		final Document doc = new Document();
 		fieldCollection(context, document, new Consumer<Field>() {
 			@Override
@@ -69,7 +68,7 @@ class IndexUtils {
 	}
 
 	static final Object addNewLuceneDocument(final AnalyzerContext context, final Map<String, Object> document,
-			IndexWriter indexWriter) throws IOException {
+					IndexWriter indexWriter) throws IOException {
 		final Document doc = newLuceneDocument(context, document);
 		Object id = document.get(IndexUtils.FIELD_ID);
 		if (id == null)
@@ -87,7 +86,7 @@ class IndexUtils {
 	}
 
 	private static final Field[] newFieldList(final AnalyzerContext context, final Map<String, Object> document)
-			throws IOException {
+					throws IOException {
 		final Field[] fields = new Field[document.size() - 1];
 		final AtomicInteger i = new AtomicInteger();
 		fieldCollection(context, document, new Consumer<Field>() {
@@ -100,7 +99,7 @@ class IndexUtils {
 	}
 
 	static final void updateDocValues(final AnalyzerContext context, final Map<String, Object> document,
-			IndexWriter indexWriter) throws ServerException, IOException {
+					IndexWriter indexWriter) throws ServerException, IOException {
 		Object id = document.get(IndexUtils.FIELD_ID);
 		if (id == null)
 			throw new ServerException(Response.Status.BAD_REQUEST, "The field " + IndexUtils.FIELD_ID + " is missing");
@@ -108,38 +107,13 @@ class IndexUtils {
 		indexWriter.updateDocValues(termId, newFieldList(context, document));
 	}
 
-	final static Class<Analyzer> findClass(String[] classPrefixes, String analyzer) throws ClassNotFoundException {
-		ClassNotFoundException firstClassException = null;
-		for (String prefix : classPrefixes) {
-			try {
-				return (Class<Analyzer>) Class.forName(prefix + analyzer);
-			} catch (ClassNotFoundException e) {
-				if (firstClassException == null)
-					firstClassException = e;
-			}
-		}
-		throw firstClassException;
-	}
-
-	final static <T> Class<T> findClass(FileClassCompilerLoader compilerLoader, String classDef, String[] classPrefixes)
-			throws ReflectiveOperationException, InterruptedException, IOException {
-		if (compilerLoader != null && classDef.endsWith(".java"))
-			return compilerLoader.loadClass(new File(classDef));
-		return (Class<T>) findClass(classPrefixes, classDef);
-	}
-
 	final static String[] similarityClassPrefixes = { "", "com.qwazr.search.similarity.",
-			"org.apache.lucene.search.similarities." };
+					"org.apache.lucene.search.similarities." };
 
 	final static Similarity findSimilarity(FileClassCompilerLoader compilerLoader, String similarity)
-			throws InterruptedException, ReflectiveOperationException, IOException {
-		return (Similarity) findClass(compilerLoader, similarity, similarityClassPrefixes).newInstance();
+					throws InterruptedException, ReflectiveOperationException, IOException {
+		return (Similarity) FileClassCompilerLoader.findClass(compilerLoader, similarity, similarityClassPrefixes)
+						.newInstance();
 	}
 
-	final static String[] analyzerClassPrefixes = { "", "com.qwazr.search.analysis.", "org.apache.lucene.analysis." };
-
-	final static Analyzer findAnalyzer(FileClassCompilerLoader compilerLoader, String analyzer)
-			throws InterruptedException, ReflectiveOperationException, IOException {
-		return (Analyzer) findClass(compilerLoader, analyzer, analyzerClassPrefixes).newInstance();
-	}
 }

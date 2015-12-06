@@ -181,4 +181,24 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	public void close() throws IOException {
 		resetClassLoader(true);
 	}
+
+	public final static <T> Class<T> findClass(String[] classPrefixes, String suffix) throws ClassNotFoundException {
+		ClassNotFoundException firstClassException = null;
+		for (String prefix : classPrefixes) {
+			try {
+				return (Class<T>) Class.forName(prefix + suffix);
+			} catch (ClassNotFoundException e) {
+				if (firstClassException == null)
+					firstClassException = e;
+			}
+		}
+		throw firstClassException;
+	}
+
+	public final static <T> Class<T> findClass(FileClassCompilerLoader compilerLoader, String classDef,
+					String[] classPrefixes) throws ReflectiveOperationException, InterruptedException, IOException {
+		if (compilerLoader != null && classDef.endsWith(".java"))
+			return compilerLoader.loadClass(new File(classDef));
+		return (Class<T>) findClass(classPrefixes, classDef);
+	}
 }

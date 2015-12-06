@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.search.index;
+package com.qwazr.search.analysis;
 
+import com.qwazr.search.field.FieldDefinition;
+import com.qwazr.search.field.FieldUtils;
 import com.qwazr.utils.FileClassCompilerLoader;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.server.ServerException;
@@ -28,15 +30,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-class AnalyzerContext {
+public class AnalyzerContext {
 
-	final Map<String, FieldDefinition> fields;
-	final FacetsConfig facetsConfig;
-	final Map<String, Analyzer> indexAnalyzerMap;
-	final Map<String, Analyzer> queryAnalyzerMap;
+	public final Map<String, FieldDefinition> fields;
+	public final FacetsConfig facetsConfig;
+	public final Map<String, Analyzer> indexAnalyzerMap;
+	public final Map<String, Analyzer> queryAnalyzerMap;
 
-	AnalyzerContext(FileClassCompilerLoader compilerLoader, Map<String, FieldDefinition> fields)
-			throws ServerException {
+	public AnalyzerContext(FileClassCompilerLoader compilerLoader, Map<String, AnalyzerDefinition> analyzerMap,
+					Map<String, FieldDefinition> fields) throws ServerException {
 		this.fields = fields;
 		this.facetsConfig = new FacetsConfig();
 		if (fields == null || fields.size() == 0) {
@@ -57,29 +59,43 @@ class AnalyzerContext {
 			try {
 
 				final Analyzer indexAnalyzer = StringUtils.isEmpty(fieldDef.analyzer) ?
-						null :
-						IndexUtils.findAnalyzer(compilerLoader, fieldDef.analyzer);
+								null :
+								findAnalyzer(compilerLoader, analyzerMap, fieldDef.analyzer);
 				if (indexAnalyzer != null)
 					indexAnalyzerMap.put(fieldName, indexAnalyzer);
 
 				final Analyzer queryAnalyzer = StringUtils.isEmpty(fieldDef.query_analyzer) ?
-						indexAnalyzer :
-						IndexUtils.findAnalyzer(compilerLoader, fieldDef.query_analyzer);
+								indexAnalyzer :
+								findAnalyzer(compilerLoader, analyzerMap, fieldDef.query_analyzer);
 				if (queryAnalyzer != null)
 					queryAnalyzerMap.put(fieldName, queryAnalyzer);
 
 			} catch (ReflectiveOperationException | InterruptedException | IOException e) {
 				throw new ServerException(Response.Status.NOT_ACCEPTABLE,
-						"Class " + fieldDef.analyzer + " not known for the field " + fieldName, e);
+								"Class " + fieldDef.analyzer + " not known for the field " + fieldName, e);
 			}
 		}
 	}
 
-	final Field getNewLuceneField(String fieldName, Object value) throws IOException {
+	public final Field getNewLuceneField(String fieldName, Object value) throws IOException {
 		FieldDefinition fieldDef = fields == null ? null : fields.get(fieldName);
 		if (fieldDef == null)
 			throw new IOException("No field definition for the field: " + fieldName);
-		return fieldDef.newField(fieldName, value);
+		return FieldUtils.newLuceneField(fieldDef, fieldName, value);
+	}
+
+	final static String[] analyzerClassPrefixes = { "", "org.apache.lucene.analysis." };
+
+	static private Analyzer findAnalyzer(FileClassCompilerLoader compilerLoader,
+					Map<String, AnalyzerDefinition> analyzerMap, String analyzer)
+					throws InterruptedException, ReflectiveOperationException, IOException {
+		if (analyzerMap != null) {
+			AnalyzerDefinition analyzerDef = analyzerMap.get(analyzer);
+			if (analyzerDef != null)
+				return new CustomAnalyzer(analyzerDef);
+		}
+		return (Analyzer) FileClassCompilerLoader.findClass(compilerLoader, analyzer, analyzerClassPrefixes)
+						.newInstance();
 	}
 
 }
