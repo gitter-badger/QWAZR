@@ -19,10 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPReply;
-import org.apache.commons.net.ftp.FTPSClient;
+import org.apache.commons.net.ftp.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,6 +108,8 @@ public class FtpConnector extends AbstractPasswordConnector {
 
 		public void sync_files(ScriptObjectMirror browser, String remote_path, File localDirectory,
 						Boolean downloadOnlyIfNotExists) throws IOException {
+			if (!ftp.setFileType(FTP.BINARY_FILE_TYPE))
+				throw new IOException("FTP cannot be set to binary mode");
 			final boolean file_method = browser != null ? browser.hasMember("file") : false;
 			final boolean dir_method = browser != null ? browser.hasMember("directory") : false;
 			if (!ftp.changeWorkingDirectory(remote_path))
