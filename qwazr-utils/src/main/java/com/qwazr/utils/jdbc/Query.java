@@ -26,10 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -186,15 +183,24 @@ public class Query {
 		}
 	}
 
-	private static List<Row> createRowList(ResultSet resultSet, int limit) throws SQLException {
-		ResultSetMetaData rs = resultSet.getMetaData();
-		int columnCount = rs.getColumnCount();
+	private static LinkedHashMap<String, Integer> buildColumnMap(ResultSet resultSet) throws SQLException {
 		LinkedHashMap<String, Integer> columnMap = new LinkedHashMap<String, Integer>();
+		if (resultSet == null)
+			return columnMap;
+		ResultSetMetaData rs = resultSet.getMetaData();
+		if (rs == null)
+			return columnMap;
+		int columnCount = rs.getColumnCount();
 		for (int i = 0; i < columnCount; i++)
 			columnMap.put(rs.getColumnLabel(i + 1), i);
+		return columnMap;
+	}
+
+	private static List<Row> createRowList(ResultSet resultSet, int limit) throws SQLException {
+		LinkedHashMap<String, Integer> columnMap = buildColumnMap(resultSet);
 		ArrayList<Row> rows = new ArrayList<Row>();
 		while (resultSet.next() && limit-- != 0)
-			rows.add(new Row(new RowSet(columnMap, columnCount, resultSet)));
+			rows.add(new Row(columnMap, resultSet));
 		return rows;
 	}
 
@@ -202,6 +208,15 @@ public class Query {
 		moveToFirstResult();
 		List<Row> rows = createRowList(resultSet, limit);
 		return rows;
+	}
+
+	public Iterator<Row> getRowIterator() {
+		try {
+			checkResultSet();
+			return new RowIterator(buildColumnMap(resultSet), resultSet);
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
