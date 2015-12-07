@@ -49,9 +49,10 @@ public class FtpConnector extends AbstractPasswordConnector {
 	}
 
 	@JsonIgnore
-	public FTPSession geNewSession(IOUtils.CloseableContext context) {
+	public FTPSession getNewSession(IOUtils.CloseableContext context) {
 		FTPSession ftpSession = new FTPSession();
-		context.add(ftpSession);
+		if (context != null)
+			context.add(ftpSession);
 		return ftpSession;
 	}
 
