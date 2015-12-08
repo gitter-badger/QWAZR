@@ -133,6 +133,10 @@ public class FtpConnector extends AbstractPasswordConnector {
 				if (remoteFile == null)
 					continue;
 				final String remoteName = remoteFile.getName();
+				if (".".equals(remoteName))
+					continue;
+				if ("..".endsWith(remoteName))
+					continue;
 				if (remoteFile.isDirectory()) {
 					if (dir_method)
 						if (Boolean.FALSE.equals(browser.callMember("directory", remote_path + '/' + remoteName)))
