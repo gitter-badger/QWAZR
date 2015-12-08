@@ -82,7 +82,16 @@ public class FtpConnector extends AbstractPasswordConnector {
 		 * @param file   the destination file
 		 * @throws IOException
 		 */
-		public void retrieve(String remote, File file) throws IOException {
+		public void retrieve(String remote, File file, Boolean binary) throws IOException {
+			if (binary != null) {
+				if (binary) {
+					if (!ftp.setFileType(FTP.BINARY_FILE_TYPE))
+						throw new IOException("FTP cannot be set to binary mode");
+				} else {
+					if (!ftp.setFileType(FTP.ASCII_FILE_TYPE))
+						throw new IOException("FTP cannot be set to ASCII mode");
+				}
+			}
 			InputStream is = ftp.retrieveFileStream(remote);
 			if (is == null)
 				throw new FileNotFoundException("FTP file not found: " + hostname + "/" + remote);
@@ -94,22 +103,20 @@ public class FtpConnector extends AbstractPasswordConnector {
 			ftp.completePendingCommand();
 		}
 
-		public void retrieve(FTPFile remote, File file) throws IOException {
-			retrieve(remote.getName(), file);
+		public void retrieve(FTPFile remote, File file, Boolean binary) throws IOException {
+			retrieve(remote.getName(), file, binary);
 		}
 
-		public void retrieve(FTPFile remote, String local_path) throws IOException {
-			retrieve(remote.getName(), new File(local_path));
+		public void retrieve(FTPFile remote, String local_path, Boolean binary) throws IOException {
+			retrieve(remote.getName(), new File(local_path), binary);
 		}
 
-		public void retrieve(String remote, String local_path) throws IOException {
-			retrieve(remote, new File(local_path));
+		public void retrieve(String remote, String local_path, Boolean binary) throws IOException {
+			retrieve(remote, new File(local_path), binary);
 		}
 
 		public void sync_files(ScriptObjectMirror browser, String remote_path, File localDirectory,
-						Boolean downloadOnlyIfNotExists) throws IOException {
-			if (!ftp.setFileType(FTP.BINARY_FILE_TYPE))
-				throw new IOException("FTP cannot be set to binary mode");
+						Boolean downloadOnlyIfNotExists, Boolean binary) throws IOException {
 			final boolean file_method = browser != null ? browser.hasMember("file") : false;
 			final boolean dir_method = browser != null ? browser.hasMember("directory") : false;
 			if (!ftp.changeWorkingDirectory(remote_path))
@@ -147,16 +154,16 @@ public class FtpConnector extends AbstractPasswordConnector {
 					continue;
 				if (logger.isInfoEnabled())
 					logger.info("FTP download: " + hostname + '/' + remote_path + '/' + remoteName);
-				retrieve(remoteFile, localFile);
+				retrieve(remoteFile, localFile, binary);
 			}
 			for (Map.Entry<FTPFile, File> entry : remoteDirs.entrySet())
 				sync_files(browser, remote_path + '/' + entry.getKey().getName(), entry.getValue(),
-								downloadOnlyIfNotExists);
+								downloadOnlyIfNotExists, binary);
 		}
 
 		public void sync_files(ScriptObjectMirror browser, String remote_path, String local_path,
-						Boolean downloadOnlyIfNotExists) throws IOException {
-			sync_files(browser, remote_path, new File(local_path), downloadOnlyIfNotExists);
+						Boolean downloadOnlyIfNotExists, Boolean binary) throws IOException {
+			sync_files(browser, remote_path, new File(local_path), downloadOnlyIfNotExists, binary);
 		}
 
 		public void logout() throws IOException {
