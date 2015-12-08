@@ -117,7 +117,7 @@ public class HttpUtils {
 			return IOUtils.toString(entity.getContent(), encoding);
 	}
 
-	public HttpClient createHttpClient_AcceptsUntrustedCerts()
+	public static HttpClient createHttpClient_AcceptsUntrustedCerts()
 					throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
 		HttpClientBuilder b = HttpClientBuilder.create();
 

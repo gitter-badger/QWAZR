@@ -117,6 +117,7 @@ public class FtpConnector extends AbstractPasswordConnector {
 
 		public void sync_files(ScriptObjectMirror browser, String remote_path, File localDirectory,
 						Boolean downloadOnlyIfNotExists, Boolean binary) throws IOException {
+
 			final boolean file_method = browser != null ? browser.hasMember("file") : false;
 			final boolean dir_method = browser != null ? browser.hasMember("directory") : false;
 			if (!ftp.changeWorkingDirectory(remote_path))
