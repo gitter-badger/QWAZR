@@ -114,7 +114,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	}
 
 	public static final StringBuilder copy(InputStream inputStream, StringBuilder sb, String charsetName,
-			boolean bCloseInputStream) throws IOException {
+					boolean bCloseInputStream) throws IOException {
 		if (inputStream == null)
 			return sb;
 		if (sb == null)
@@ -200,7 +200,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	 *
 	 * @param file the file
 	 * @return the content of the file as a string
-	 * @throws IOException
+	 * @throws IOException if any I/O error occured
 	 */
 	public static String readFileAsString(File file) throws IOException {
 		FileReader reader = new FileReader(file);
@@ -208,6 +208,22 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 			return toString(reader);
 		} finally {
 			closeQuietly(reader);
+		}
+	}
+
+	/**
+	 * Write the string to a file
+	 *
+	 * @param content the text to write
+	 * @param file    the destination file
+	 * @throws IOException if any I/O error occured
+	 */
+	public static void writeStringAsFile(String content, File file) throws IOException {
+		FileWriter writer = new FileWriter(file);
+		try {
+			writer.write(content);
+		} finally {
+			closeQuietly(writer);
 		}
 	}
 
