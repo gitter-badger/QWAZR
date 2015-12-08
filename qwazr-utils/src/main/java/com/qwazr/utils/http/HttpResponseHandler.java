@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,14 @@
  */
 package com.qwazr.utils.http;
 
-import java.io.IOException;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.entity.ContentType;
+
+import java.io.IOException;
 
 public abstract class HttpResponseHandler<T> implements ResponseHandler<T> {
 
@@ -31,15 +31,13 @@ public abstract class HttpResponseHandler<T> implements ResponseHandler<T> {
 	protected HttpEntity httpEntity;
 	protected StatusLine statusLine;
 
-	public HttpResponseHandler(ContentType expectedContentType,
-			int... expectedCodes) {
+	public HttpResponseHandler(ContentType expectedContentType, int... expectedCodes) {
 		this.expectedContentType = expectedContentType;
 		this.expectedCodes = expectedCodes;
 	}
 
 	@Override
-	public T handleResponse(HttpResponse response)
-			throws ClientProtocolException, IOException {
+	public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
 		httpEntity = response.getEntity();
 		statusLine = response.getStatusLine();
 		if (expectedCodes != null)
