@@ -47,4 +47,10 @@ public abstract class HttpResponseHandler<T> implements ResponseHandler<T> {
 		return null;
 	}
 
+	public Integer getStatusCode() {
+		if (statusLine == null)
+			return null;
+		return statusLine.getStatusCode();
+	}
+
 }
