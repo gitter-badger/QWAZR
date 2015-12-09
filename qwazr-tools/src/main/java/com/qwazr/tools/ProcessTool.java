@@ -31,7 +31,7 @@ import java.util.Map;
 public class ProcessTool extends AbstractTool {
 
 	final public List<String> commands = null;
-	final public Map<String, String> environnment_variables = null;
+	final public Map<String, String> environment_variables = null;
 	final public String working_directory = null;
 
 	@Override
@@ -46,10 +46,17 @@ public class ProcessTool extends AbstractTool {
 					File errorFile) throws IOException {
 
 		List<String> commandsAndArgs = new ArrayList<String>();
-		if (commands != null)
+		if (commandAndArgs != null && !commandAndArgs.isEmpty())
+			commandsAndArgs.addAll(commandAndArgs);
+		else if (commands != null)
 			commandsAndArgs.addAll(commands);
+
 		// create the process builder
 		final ProcessBuilder processBuilder = new ProcessBuilder(commandsAndArgs);
+		if (environment_variables != null)
+			processBuilder.environment().putAll(environment_variables);
+		if (env != null)
+			processBuilder.environment().putAll(environment_variables);
 
 		// Set the working directory
 		final File workingDirectoryFile;
@@ -59,11 +66,13 @@ public class ProcessTool extends AbstractTool {
 			workingDirectoryFile = new File(working_directory);
 		else
 			workingDirectoryFile = null;
-		if (!workingDirectoryFile.exists())
-			throw new IOException("The path does not exist: " + workingDirectoryFile);
-		if (!workingDirectoryFile.isDirectory())
-			throw new IOException("The path is not a directory: " + workingDirectoryFile);
-		processBuilder.directory(workingDirectoryFile);
+		if (workingDirectoryFile != null) {
+			if (!workingDirectoryFile.exists())
+				throw new IOException("The path does not exist: " + workingDirectoryFile);
+			if (!workingDirectoryFile.isDirectory())
+				throw new IOException("The path is not a directory: " + workingDirectoryFile);
+			processBuilder.directory(workingDirectoryFile);
+		}
 
 		// Set IN/OUT
 		if (errorFile != null) {
