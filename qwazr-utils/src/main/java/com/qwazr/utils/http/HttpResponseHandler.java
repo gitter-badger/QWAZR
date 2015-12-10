@@ -40,7 +40,7 @@ public abstract class HttpResponseHandler<T> implements ResponseHandler<T> {
 	public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
 		httpEntity = response.getEntity();
 		statusLine = response.getStatusLine();
-		if (expectedCodes != null)
+		if (expectedCodes != null && expectedCodes.length > 0)
 			HttpUtils.checkStatusCodes(response, expectedCodes);
 		if (expectedContentType != null)
 			HttpUtils.checkIsEntity(response, expectedContentType);
@@ -51,6 +51,12 @@ public abstract class HttpResponseHandler<T> implements ResponseHandler<T> {
 		if (statusLine == null)
 			return null;
 		return statusLine.getStatusCode();
+	}
+
+	public ContentType getContentType() {
+		if (httpEntity == null)
+			return null;
+		return ContentType.get(httpEntity);
 	}
 
 }
