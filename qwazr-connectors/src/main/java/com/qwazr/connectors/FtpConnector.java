@@ -33,7 +33,10 @@ public class FtpConnector extends AbstractPasswordConnector {
 	public final String hostname = null;
 	public final String username = null;
 	public final Boolean ssl = null;
+	public final Integer connect_time_out = null;
+	public final Integer data_timeout = null;
 	public final Integer keep_alive_timeout = null;
+	public final Integer control_keep_alive_timeout = null;
 
 	private static final Logger logger = LoggerFactory.getLogger(FtpConnector.class);
 
@@ -64,14 +67,20 @@ public class FtpConnector extends AbstractPasswordConnector {
 		public FTPClient connect() throws IOException {
 			if (ftp.isConnected())
 				return ftp;
+			if (keep_alive_timeout != null)
+				ftp.setControlKeepAliveTimeout(keep_alive_timeout);
+			if (control_keep_alive_timeout != null)
+				ftp.setControlKeepAliveReplyTimeout(control_keep_alive_timeout);
+			if (data_timeout != null)
+				ftp.setDataTimeout(data_timeout);
+			if (connect_time_out != null)
+				ftp.setConnectTimeout(connect_time_out);
 			ftp.connect(hostname);
 			int reply = ftp.getReplyCode();
 			if (!FTPReply.isPositiveCompletion(reply))
 				throw new IOException("FTP server returned an error: " + reply);
 			if (!ftp.login(username, password))
 				throw new IOException("FTP login failed: " + ftp.getReplyCode());
-			if (keep_alive_timeout != null)
-				ftp.setControlKeepAliveTimeout(keep_alive_timeout);
 			return ftp;
 		}
 
