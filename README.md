@@ -23,15 +23,16 @@ This project is a work in progress. The current version of QWAZR (1.0) comes wit
 - [Database](qwazr-database): A key/value database based on LevelDB.
 
 Getting started
----------------------
+---------------
 
 Here is two examples of QWAZR applications which can be used as tutorials. By running one of this 5 minutes tutorials you will create a small web site, a REST/JSON API connected to a MongoDB database.
 
 - [Javascript example](https://github.com/qwazr/qwazr-javascript-example)
 - [Java example](https://github.com/qwazr/qwazr-java-example)
+- Instructions how to [install QWAZR on Linux](src/qwazr-server/src/doc/linux-package-installation.md)
 
 Our roadmap ?
----------------------
+-------------
 
 #### Multi-master clustering
 
@@ -65,7 +66,7 @@ There are many ways to contribute to the project:
 - We are currently writing the documentation on this wiki pages. You may suggest subjects, tutorials, etc.
 
 Question & Contact
----------------------
+------------------
 
 We support QWAZR on StackOverflow. We monitor and answer questions with the tag "qwazr":
 [Ask a question](http://stackoverflow.com/questions/ask?tags=qwazr).
