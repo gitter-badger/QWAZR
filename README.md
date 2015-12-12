@@ -29,7 +29,7 @@ Here is two examples of QWAZR applications which can be used as tutorials. By ru
 
 - [Javascript example](https://github.com/qwazr/qwazr-javascript-example)
 - [Java example](https://github.com/qwazr/qwazr-java-example)
-- Instructions how to [install QWAZR on Linux](src/qwazr-server/src/doc/linux-package-installation.md)
+- Instructions how to [install QWAZR on Linux](qwazr-server/src/doc/linux-package-installation.md)
 
 Our roadmap ?
 -------------
