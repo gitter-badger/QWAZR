@@ -33,7 +33,7 @@ public class JsonHttpResponseHandler {
 		}
 
 		@Override
-		public JsonNode handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+		public JsonNode handleResponse(HttpResponse response) throws IOException {
 			super.handleResponse(response);
 			return JsonMapper.MAPPER.readTree(httpEntity.getContent());
 		}
@@ -49,7 +49,7 @@ public class JsonHttpResponseHandler {
 		}
 
 		@Override
-		public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+		public T handleResponse(HttpResponse response) throws IOException {
 			super.handleResponse(response);
 			return JsonMapper.MAPPER.readValue(httpEntity.getContent(), jsonClass);
 		}
@@ -66,7 +66,7 @@ public class JsonHttpResponseHandler {
 		}
 
 		@Override
-		public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+		public T handleResponse(HttpResponse response) throws IOException {
 			super.handleResponse(response);
 			return JsonMapper.MAPPER.readValue(httpEntity.getContent(), typeReference);
 		}

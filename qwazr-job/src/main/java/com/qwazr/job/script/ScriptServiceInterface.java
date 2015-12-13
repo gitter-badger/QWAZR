@@ -30,49 +30,43 @@ public interface ScriptServiceInterface {
 	@GET
 	@Path("/run/{script_path : .+}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public ScriptRunStatus runScript(@PathParam("script_path") String scriptPath);
+	ScriptRunStatus runScript(@PathParam("script_path") String scriptPath);
 
 	@POST
 	@Path("/run/{script_path : .+}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public ScriptRunStatus runScriptVariables(
-			@PathParam("script_path") String scriptPath,
-			Map<String, String> variables);
+	ScriptRunStatus runScriptVariables(@PathParam("script_path") String scriptPath, Map<String, String> variables);
 
 	@GET
 	@Path("/status")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Map<String, ScriptRunStatus> getRunsStatus(
-			@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	Map<String, ScriptRunStatus> getRunsStatus(@QueryParam("local") Boolean local,
+					@QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/status/{run_id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public ScriptRunStatus getRunStatus(@PathParam("run_id") String run_id);
+	ScriptRunStatus getRunStatus(@PathParam("run_id") String run_id);
 
 	@GET
 	@Path("/status/{run_id}/out")
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getRunOut(@PathParam("run_id") String run_id);
+	String getRunOut(@PathParam("run_id") String run_id);
 
 	@GET
 	@Path("/status/{run_id}/err")
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getRunErr(@PathParam("run_id") String run_id);
+	String getRunErr(@PathParam("run_id") String run_id);
 
 	@GET
 	@Path("/semaphores")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Set<String> getSemaphores(@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	Set<String> getSemaphores(@QueryParam("local") Boolean local, @QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/semaphores/{semaphore_id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Set<String> getSemaphoreOwners(
-			@PathParam("semaphore_id") String semaphore_id,
-			@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	Set<String> getSemaphoreOwners(@PathParam("semaphore_id") String semaphore_id, @QueryParam("local") Boolean local,
+					@QueryParam("timeout") Integer msTimeout);
 }

@@ -22,7 +22,7 @@ import java.util.Set;
 
 public class ServerConfiguration {
 
-	public static enum ServiceEnum {
+	public enum ServiceEnum {
 
 		webcrawler,
 

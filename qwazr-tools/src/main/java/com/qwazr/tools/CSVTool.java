@@ -41,7 +41,7 @@ public class CSVTool extends AbstractTool {
 
 		private final CSVFormat csvFormat;
 
-		private Format(CSVFormat csvFormat) {
+		Format(CSVFormat csvFormat) {
 			this.csvFormat = csvFormat;
 		}
 	}

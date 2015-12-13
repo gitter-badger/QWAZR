@@ -36,33 +36,29 @@ import javax.ws.rs.core.Response;
 @Path("/schedulers")
 public interface SchedulerServiceInterface {
 
-	public enum ActionEnum {
+	enum ActionEnum {
 		enable, disable, run
 	}
 
 	@GET
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
-	public TreeMap<String, String> list();
+	TreeMap<String, String> list();
 
 	@GET
 	@Path("/{scheduler_name}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public SchedulerStatus get(
-			@PathParam("scheduler_name") String scheduler_name,
-			@QueryParam("action") ActionEnum action);
+	SchedulerStatus get(@PathParam("scheduler_name") String scheduler_name, @QueryParam("action") ActionEnum action);
 
 	@DELETE
 	@Path("/{scheduler_name}")
-	public Response delete(@PathParam("scheduler_name") String scheduler_name);
+	Response delete(@PathParam("scheduler_name") String scheduler_name);
 
 	@POST
 	@PUT
 	@Path("/{scheduler_name}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public SchedulerDefinition set(
-			@PathParam("scheduler_name") String scheduler_name,
-			SchedulerDefinition scheduler);
+	SchedulerDefinition set(@PathParam("scheduler_name") String scheduler_name, SchedulerDefinition scheduler);
 
 }

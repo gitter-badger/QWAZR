@@ -44,7 +44,7 @@ public class DirectoryJsonManager<T> {
 	private final Class<T> instanceClass;
 
 	protected DirectoryJsonManager(File directory, Class<T> instanceClass)
-					throws JsonGenerationException, JsonMappingException, JsonParseException, IOException,
+					throws IOException,
 					ServerException {
 		this.instanceClass = instanceClass;
 		this.directory = directory;
@@ -56,7 +56,7 @@ public class DirectoryJsonManager<T> {
 		return new File(directory, name + ".json");
 	}
 
-	protected void load() throws JsonGenerationException, JsonMappingException, JsonParseException, IOException,
+	protected void load() throws IOException,
 					ServerException {
 		try {
 			File[] files = directory.listFiles(JsonFileFilter.INSTANCE);
@@ -104,7 +104,7 @@ public class DirectoryJsonManager<T> {
 	}
 
 	protected void set(String name, T instance)
-					throws JsonGenerationException, JsonMappingException, IOException, ServerException {
+					throws IOException, ServerException {
 		if (instance == null)
 			return;
 		if (StringUtils.isEmpty(name))

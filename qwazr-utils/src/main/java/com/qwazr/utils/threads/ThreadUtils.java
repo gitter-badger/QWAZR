@@ -56,7 +56,7 @@ public class ThreadUtils {
 		}
 	}
 
-	public static interface WaitInterface {
+	public interface WaitInterface {
 
 		boolean done();
 

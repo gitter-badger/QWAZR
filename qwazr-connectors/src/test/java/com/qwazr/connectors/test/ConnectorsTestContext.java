@@ -26,7 +26,7 @@ import java.io.IOException;
 public class ConnectorsTestContext {
 
 	static synchronized ConnectorManager getConnectorManager()
-					throws JsonParseException, JsonMappingException, IOException {
+					throws IOException {
 		if (ConnectorManagerImpl.getInstance() != null)
 			return ConnectorManagerImpl.getInstance();
 		ConnectorManagerImpl.load(new File("src/test/resources"));

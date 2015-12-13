@@ -208,7 +208,7 @@ public class Qwazr extends AbstractServer {
 			Qwazr server = new Qwazr();
 			server.start(args);
 			// Register the services
-			ClusterManager.INSTANCE.registerMe(server.services.keySet());
+			ClusterManager.INSTANCE.registerMe(services.keySet());
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);

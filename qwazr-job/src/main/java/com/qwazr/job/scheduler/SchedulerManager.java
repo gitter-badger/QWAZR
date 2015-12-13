@@ -15,8 +15,6 @@
  **/
 package com.qwazr.job.scheduler;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.job.JobServer;
 import com.qwazr.job.script.ScriptManager;
@@ -129,7 +127,7 @@ public class SchedulerManager {
     }
 
     SchedulerDefinition setScheduler(String scheduler_name, SchedulerDefinition scheduler)
-	    throws JsonGenerationException, JsonMappingException, IOException, SchedulerException {
+	    throws IOException, SchedulerException {
 	File schedulerFile = new File(schedulersDirectory, scheduler_name);
 	JsonMapper.MAPPER.writeValue(schedulerFile, scheduler);
 	checkSchedulerCron(scheduler_name, scheduler);

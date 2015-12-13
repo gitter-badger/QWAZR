@@ -28,11 +28,11 @@ public interface ConnectorsServiceInterface {
 	@GET
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Map<String, String> list();
+	Map<String, String> list();
 
 	@GET
 	@Path("/{connector_name}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Object get(@PathParam("connector_name") String connectorName);
+	Object get(@PathParam("connector_name") String connectorName);
 
 }

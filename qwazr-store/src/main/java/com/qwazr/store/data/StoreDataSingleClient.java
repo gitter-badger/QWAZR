@@ -39,7 +39,7 @@ import com.qwazr.utils.json.client.JsonClientAbstract;
 public class StoreDataSingleClient extends JsonClientAbstract implements
 		StoreDataServiceInterface {
 
-	public static enum PrefixPath {
+	public enum PrefixPath {
 
 		name("/store/"), data("/store_local/");
 

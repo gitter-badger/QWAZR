@@ -464,7 +464,7 @@ public class GraphInstance {
 		nodeScoreMap.remove(id);
 
 	// Sort the result in descending order
-	NodeScore[] nodeScoreArray = (NodeScore[]) nodeScoreMap.values().toArray(new NodeScore[nodeScoreMap.size()]);
+	NodeScore[] nodeScoreArray = nodeScoreMap.values().toArray(new NodeScore[nodeScoreMap.size()]);
 	Arrays.sort(nodeScoreArray);
 	for (int i = request.getStartOrDefault(); i < request.getRowsOrDefault() && i < nodeScoreArray.length; i++)
 	    resultList.add(new GraphNodeResult().set(nodeScoreArray[i]));

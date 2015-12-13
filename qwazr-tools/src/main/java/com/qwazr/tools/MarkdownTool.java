@@ -52,7 +52,7 @@ public class MarkdownTool extends AbstractTool {
 
 		private final int value;
 
-		private ExtensionEnum(int value) {
+		ExtensionEnum(int value) {
 			this.value = value;
 		}
 	}
