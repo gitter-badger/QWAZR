@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,12 +52,12 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 	private final Set<String> semaphores;
 	private final IOUtils.CloseableList closeables;
 
-	private final Map<String, ? extends Object> bindings;
+	private final Map<String, ?> bindings;
 	private final ScriptEngine scriptEngine;
 	private final File scriptFile;
 
-	ScriptRunThread(ScriptEngine scriptEngine, File scriptFile, Map<String, ? extends Object> bindings,
-					ConnectorManager connectors, ToolsManager tools) {
+	ScriptRunThread(ScriptEngine scriptEngine, File scriptFile, Map<String, ?> bindings, ConnectorManager connectors,
+					ToolsManager tools) {
 		uuid = UUIDs.timeBased().toString();
 		state = ScriptState.ready;
 		startTime = null;

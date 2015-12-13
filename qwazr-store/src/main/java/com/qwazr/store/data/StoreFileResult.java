@@ -110,13 +110,11 @@ public class StoreFileResult {
 	size = type == Type.FILE ? file.length() : null;
     }
 
-    public static enum Type {
+    public enum Type {
 	FILE, DIRECTORY, UNKNOWN
     }
 
-    ;
-
-    void free() {
+	void free() {
 	if (inputStream != null)
 	    IOUtils.closeQuietly(inputStream);
     }

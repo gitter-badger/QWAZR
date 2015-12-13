@@ -30,7 +30,7 @@ public class StringHttpResponseHandler extends HttpResponseHandler<String> {
 		super(expectedContentType, expectedCodes);
 	}
 
-	public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+	public String handleResponse(HttpResponse response) throws IOException {
 		super.handleResponse(response);
 		return EntityUtils.toString(httpEntity, CharsetUtils.CharsetUTF8);
 	}

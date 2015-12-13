@@ -100,12 +100,11 @@ public class ScriptManager {
 		try {
 			return IOUtils.toString(fileReader);
 		} finally {
-			if (fileReader != null)
-				IOUtils.closeQuietly(fileReader);
+			IOUtils.closeQuietly(fileReader);
 		}
 	}
 
-	private ScriptRunThread getNewScriptRunThread(String scriptPath, Map<String, ? extends Object> objects)
+	private ScriptRunThread getNewScriptRunThread(String scriptPath, Map<String, ?> objects)
 					throws ServerException, IOException {
 		ScriptRunThread scriptRunThread = new ScriptRunThread(scriptEngine, getScriptFile(scriptPath), objects,
 						ConnectorManagerImpl.getInstance(), ToolsManagerImpl.getInstance());
@@ -122,8 +121,7 @@ public class ScriptManager {
 		return scriptRunThread;
 	}
 
-	public ScriptRunStatus runAsync(String scriptPath, Map<String, ? extends Object> objects)
-					throws ServerException, IOException {
+	public ScriptRunStatus runAsync(String scriptPath, Map<String, ?> objects) throws ServerException, IOException {
 		if (logger.isInfoEnabled())
 			logger.info("Run async: " + scriptPath);
 		ScriptRunThread scriptRunThread = getNewScriptRunThread(scriptPath, objects);
@@ -137,7 +135,7 @@ public class ScriptManager {
 			return;
 		runsMapLock.w.lock();
 		try {
-			runsMap.put(scriptRunThread.getUUID().toString(), scriptRunThread);
+			runsMap.put(scriptRunThread.getUUID(), scriptRunThread);
 		} finally {
 			runsMapLock.w.unlock();
 		}
@@ -150,7 +148,7 @@ public class ScriptManager {
 			long currentTime = System.currentTimeMillis();
 			for (ScriptRunThread scriptRunThread : runsMap.values())
 				if (scriptRunThread.hasExpired(currentTime))
-					uuidsToDelete.add(scriptRunThread.getUUID().toString());
+					uuidsToDelete.add(scriptRunThread.getUUID());
 			for (String uuid : uuidsToDelete)
 				runsMap.remove(uuid);
 			if (logger.isInfoEnabled())

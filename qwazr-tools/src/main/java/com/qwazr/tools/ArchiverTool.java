@@ -57,7 +57,7 @@ public class ArchiverTool extends AbstractTool {
 
 		private final String codecName;
 
-		private CodecType(String codecName) {
+		CodecType(String codecName) {
 			this.codecName = codecName;
 		}
 	}

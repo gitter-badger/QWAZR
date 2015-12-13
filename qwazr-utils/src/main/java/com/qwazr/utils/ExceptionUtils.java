@@ -63,7 +63,7 @@ public class ExceptionUtils extends org.apache.commons.lang3.exception.Exception
 	if (exceptionClass.isInstance(exception))
 	    throw (T) exception;
 	try {
-	    return (T) exceptionClass.getConstructor(Exception.class).newInstance(exception);
+	    return exceptionClass.getConstructor(Exception.class).newInstance(exception);
 	} catch (InstantiationException e) {
 	    throw new RuntimeException(e);
 	} catch (IllegalAccessException e) {

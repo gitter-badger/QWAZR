@@ -46,8 +46,8 @@ public class GraphDefinition {
 		this.edge_types = graphDef.edge_types;
 	}
 
-	public static enum PropertyTypeEnum {
-		indexed, stored, boost;
+	public enum PropertyTypeEnum {
+		indexed, stored, boost
 	}
 
 	@XmlTransient

@@ -37,7 +37,7 @@ public abstract class HttpResponseHandler<T> implements ResponseHandler<T> {
 	}
 
 	@Override
-	public T handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+	public T handleResponse(HttpResponse response) throws IOException {
 		httpEntity = response.getEntity();
 		statusLine = response.getStatusLine();
 		if (expectedCodes != null && expectedCodes.length > 0)

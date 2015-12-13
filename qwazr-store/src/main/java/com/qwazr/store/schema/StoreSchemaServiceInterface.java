@@ -33,7 +33,7 @@ import com.qwazr.utils.server.RestApplication;
 
 public interface StoreSchemaServiceInterface {
 
-	public final static TypeReference<TreeSet<String>> SetStringTypeRef = new TypeReference<TreeSet<String>>() {
+	TypeReference<TreeSet<String>> SetStringTypeRef = new TypeReference<TreeSet<String>>() {
 	};
 
 	@GET
@@ -45,53 +45,40 @@ public interface StoreSchemaServiceInterface {
 	@GET
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreSchemaDefinition getSchema(
-			@PathParam("schema_name") String schemaName,
-			@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	StoreSchemaDefinition getSchema(@PathParam("schema_name") String schemaName, @QueryParam("local") Boolean local,
+					@QueryParam("timeout") Integer msTimeout);
 
 	@POST
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreSchemaDefinition createSchema(
-			@PathParam("schema_name") String schemaName,
-			StoreSchemaDefinition schemaDef,
-			@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	StoreSchemaDefinition createSchema(@PathParam("schema_name") String schemaName, StoreSchemaDefinition schemaDef,
+					@QueryParam("local") Boolean local, @QueryParam("timeout") Integer msTimeout);
 
 	@DELETE
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreSchemaDefinition deleteSchema(
-			@PathParam("schema_name") String schemaName,
-			@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	StoreSchemaDefinition deleteSchema(@PathParam("schema_name") String schemaName, @QueryParam("local") Boolean local,
+					@QueryParam("timeout") Integer msTimeout);
 
-	public final static TypeReference<TreeMap<String, StoreSchemaRepairStatus>> MapStringRepairTypeRef = new TypeReference<TreeMap<String, StoreSchemaRepairStatus>>() {
+	TypeReference<TreeMap<String, StoreSchemaRepairStatus>> MapStringRepairTypeRef = new TypeReference<TreeMap<String, StoreSchemaRepairStatus>>() {
 	};
 
 	@GET
 	@Path("/{schema_name}/repair")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public Map<String, StoreSchemaRepairStatus> getRepairStatus(
-			@PathParam("schema_name") String schemaName,
-			@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	Map<String, StoreSchemaRepairStatus> getRepairStatus(@PathParam("schema_name") String schemaName,
+					@QueryParam("local") Boolean local, @QueryParam("timeout") Integer msTimeout);
 
 	@POST
 	@Path("/{schema_name}/repair")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreSchemaRepairStatus startRepair(
-			@PathParam("schema_name") String schemaName,
-			@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	StoreSchemaRepairStatus startRepair(@PathParam("schema_name") String schemaName, @QueryParam("local") Boolean local,
+					@QueryParam("timeout") Integer msTimeout);
 
 	@DELETE
 	@Path("/{schema_name}/repair")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public Map<String, StoreSchemaRepairStatus> stopRepair(
-			@PathParam("schema_name") String schemaName,
-			@QueryParam("local") Boolean local,
-			@QueryParam("timeout") Integer msTimeout);
+	Map<String, StoreSchemaRepairStatus> stopRepair(@PathParam("schema_name") String schemaName,
+					@QueryParam("local") Boolean local, @QueryParam("timeout") Integer msTimeout);
 
 }

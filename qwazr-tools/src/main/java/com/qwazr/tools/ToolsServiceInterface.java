@@ -28,11 +28,11 @@ public interface ToolsServiceInterface {
 	@GET
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Map<String, String> list();
+	Map<String, String> list();
 
 	@GET
 	@Path("/{tool_name}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Object get(@PathParam("tool_name") String toolName);
+	Object get(@PathParam("tool_name") String toolName);
 
 }

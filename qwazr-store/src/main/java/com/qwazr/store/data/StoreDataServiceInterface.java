@@ -40,62 +40,61 @@ public interface StoreDataServiceInterface {
 	@GET
 	@Path("/{schema_name}/{path : .+}")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getFile(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
+	Response getFile(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
 					@QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/{schema_name}")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	public Response getFile(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
+	Response getFile(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/{schema_name}/{path : .+}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreFileResult getDirectory(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
+	StoreFileResult getDirectory(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
 					@QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public StoreFileResult getDirectory(@PathParam("schema_name") String schemaName,
-					@QueryParam("timeout") Integer msTimeout);
+	StoreFileResult getDirectory(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
 
 	@HEAD
 	@Path("/{schema_name}/{path : .+}")
-	public Response headFile(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
+	Response headFile(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
 					@QueryParam("timeout") Integer msTimeout);
 
 	@HEAD
 	@Path("/{schema_name}")
-	public Response headFile(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
+	Response headFile(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
 
 	@PUT
 	@POST
 	@Path("/{schema_name}/{path : .+}")
 	@Produces(MediaType.TEXT_PLAIN)
-	public Response putFile(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
+	Response putFile(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
 					InputStream inputStream, @QueryParam("last_modified") Long lastModified,
 					@QueryParam("timeout") Integer msTimeout, @QueryParam("target") Integer target);
 
 	@DELETE
 	@Path("/{schema_name}/{path : .+}")
 	@Produces(MediaType.TEXT_PLAIN)
-	public Response deleteFile(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
+	Response deleteFile(@PathParam("schema_name") String schemaName, @PathParam("path") String path,
 					@QueryParam("timeout") Integer msTimeout);
 
 	@POST
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public Response createSchema(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
+	Response createSchema(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
 
 	@DELETE
 	@Path("/{schema_name}")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public Response deleteSchema(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
+	Response deleteSchema(@PathParam("schema_name") String schemaName, @QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/")
 	@Produces(RestApplication.APPLICATION_JSON_UTF8)
-	public Set<String> getSchemas(@QueryParam("timeout") Integer msTimeout);
+	Set<String> getSchemas(@QueryParam("timeout") Integer msTimeout);
 
 }

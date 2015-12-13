@@ -266,7 +266,7 @@ public class Query {
 	public <T> List<T> getResultList(Class<T> beanClass) throws Exception {
 		@SuppressWarnings("unchecked") List<T> resultList = (List<T>) resultListMap.get(beanClass);
 		if (resultList != null)
-			return (List<T>) resultList;
+			return resultList;
 		checkResultSet();
 		resultList = createBeanList(beanClass);
 		resultListMap.put(beanClass, resultList);
