@@ -20,16 +20,17 @@ import java.util.Map;
 
 public class TimeTracker {
 
+	private final long start_time;
 	private long time;
 
-	private final Map<String, Long> timerMap;
+	private final LinkedHashMap<String, Long> timerMap;
 
 	/**
 	 * Initiate the time tracker and collect the starting time.
 	 */
 	public TimeTracker() {
 		timerMap = new LinkedHashMap<String, Long>();
-		time = System.currentTimeMillis();
+		start_time = time = System.currentTimeMillis();
 	}
 
 	/**
@@ -46,9 +47,11 @@ public class TimeTracker {
 	/**
 	 * @return the backed map
 	 */
-	public Map<String, Long> getMap() {
+	public LinkedHashMap<String, Long> getMap() {
 		return timerMap;
 	}
 
-
+	public long getTotalTime() {
+		return time - start_time;
+	}
 }
