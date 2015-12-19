@@ -48,12 +48,22 @@ public class MarkdownTool extends AbstractTool {
 		wikilinks(Extensions.WIKILINKS),
 		strikethrough(Extensions.STRIKETHROUGH),
 		anchorlinks(Extensions.ANCHORLINKS),
-		all(Extensions.ALL);
+		all(Extensions.ALL),
+		suppress_html_blocks(Extensions.SUPPRESS_HTML_BLOCKS),
+		suppress_inline_html(Extensions.SUPPRESS_INLINE_HTML),
+		suppress_all_html(Extensions.SUPPRESS_ALL_HTML),
+		atxheaderspace(Extensions.ATXHEADERSPACE),
+		forcelistitempara(Extensions.FORCELISTITEMPARA),
+		relaxedhrules(Extensions.RELAXEDHRULES),
+		tasklistitems(Extensions.TASKLISTITEMS),
+		extanchorlinks(Extensions.EXTANCHORLINKS),
+		all_optionals(Extensions.ALL_OPTIONALS),
+		all_with_optionals(Extensions.ALL_WITH_OPTIONALS);
 
-		private final int value;
+		private final int ext;
 
-		ExtensionEnum(int value) {
-			this.value = value;
+		ExtensionEnum(int ext) {
+			this.ext = ext;
 		}
 	}
 
@@ -65,7 +75,7 @@ public class MarkdownTool extends AbstractTool {
 		int extensionsValue = 0;
 		if (extensions != null)
 			for (ExtensionEnum extensionEnum : extensions)
-				extensionsValue |= extensionEnum.value;
+				extensionsValue |= extensionEnum.ext;
 		pegDownProcessor = new PegDownProcessor(extensionsValue);
 	}
 
@@ -78,10 +88,14 @@ public class MarkdownTool extends AbstractTool {
 	}
 
 	public String toHtml(File file) throws IOException {
-		return pegDownProcessor.markdownToHtml(FileUtils.readFileToString(file, "UTF-8"));
+		synchronized (pegDownProcessor) {
+			return pegDownProcessor.markdownToHtml(FileUtils.readFileToString(file, "UTF-8"));
+		}
 	}
 
 	public String toHtml(File file, String encoding) throws IOException {
-		return pegDownProcessor.markdownToHtml(FileUtils.readFileToString(file, encoding));
+		synchronized (pegDownProcessor) {
+			return pegDownProcessor.markdownToHtml(FileUtils.readFileToString(file, encoding));
+		}
 	}
 }

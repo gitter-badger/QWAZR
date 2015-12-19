@@ -19,14 +19,26 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 
 import java.io.*;
+import java.util.Objects;
 import java.util.Properties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PropertiesTool extends AbstractTool {
 
+	final public String path = null;
+
+	final public Properties properties = new Properties();
+
+	private boolean isXML;
+	private volatile File propertiesFile;
+	private volatile long lastModified;
+	private volatile String comments;
+
 	@Override
 	public void load(File parentDir) {
-
+		propertiesFile = path != null ? new File(path) : null;
+		isXML = propertiesFile == null ? false : propertiesFile.getName().endsWith(".xml");
+		comments = null;
 	}
 
 	@Override
@@ -34,54 +46,107 @@ public class PropertiesTool extends AbstractTool {
 
 	}
 
+	private Properties checkProperties() throws IOException {
+		if (propertiesFile == null)
+			return properties;
+		synchronized (properties) {
+			final long lastMod = propertiesFile.lastModified();
+			if (propertiesFile.exists() && lastMod == lastModified)
+				return properties;
+			if (isXML)
+				loadFromXML();
+			else
+				loadFromText();
+			lastModified = lastMod;
+			return properties;
+		}
+	}
+
+	/**
+	 * Get the current value for the given key
+	 *
+	 * @param key
+	 * @return the value of the key
+	 * @throws IOException
+	 */
+	public String get(String key) throws IOException {
+		return checkProperties().getProperty(key);
+	}
+
+	/**
+	 * Get the current value for the given key
+	 *
+	 * @param key
+	 * @param defaultValue
+	 * @return
+	 * @throws IOException
+	 */
+	public String get(String key, String defaultValue) throws IOException {
+		return checkProperties().getProperty(key, defaultValue);
+	}
+
+	/**
+	 * Set the value for the given key
+	 *
+	 * @param key
+	 * @param value
+	 * @throws IOException
+	 */
+	public void set(String key, String value) throws IOException {
+		checkProperties().setProperty(key, value);
+	}
+
+	public Properties getProperties() {
+		synchronized (properties) {
+			return properties;
+		}
+	}
+
+	public void save(String comments) throws IOException {
+		Objects.requireNonNull(propertiesFile, "The property file cannot be saved The path is missing.");
+		if (isXML)
+			storeToXML();
+		else
+			storeToText();
+	}
+
 	/**
 	 * Load the properties from a file in TEXT format.
 	 *
-	 * @param path the path to the property file
-	 * @return a new Properties instance
 	 * @throws IOException if any I/O error occurs
 	 */
-	public Properties loadFromText(String path) throws IOException {
-		Properties properties = new Properties();
-		FileInputStream fis = new FileInputStream(path);
+	private void loadFromText() throws IOException {
+		FileInputStream fis = new FileInputStream(propertiesFile);
 		try {
 			properties.load(fis);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
-		return properties;
 	}
 
 	/**
 	 * Load the properties from a file in XML format.
 	 *
-	 * @param path the path to the property file
-	 * @return a new Properties instance
 	 * @throws IOException if any I/O error occurs
 	 */
-	public Properties loadFromXML(String path) throws IOException {
-		Properties properties = new Properties();
-		FileInputStream fis = new FileInputStream(path);
+	private void loadFromXML() throws IOException {
+		FileInputStream fis = new FileInputStream(propertiesFile);
 		try {
 			properties.loadFromXML(fis);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
-		return properties;
 	}
 
 	/**
 	 * Store the properties to a file in TEXT format.
 	 *
-	 * @param properties the properties to store
-	 * @param path       the path to the destination file
-	 * @param comment    an optional comment
 	 * @throws IOException if any I/O error occurs
 	 */
-	public void storeToText(Properties properties, String path, String comment) throws IOException {
-		FileWriter fw = new FileWriter(path);
+	private void storeToText() throws IOException {
+		FileWriter fw = new FileWriter(propertiesFile);
 		try {
-			properties.store(fw, comment);
+			properties.store(fw, comments);
 		} finally {
 			IOUtils.closeQuietly(fw);
 		}
@@ -90,16 +155,12 @@ public class PropertiesTool extends AbstractTool {
 	/**
 	 * Stores the properties to a file in XML format.
 	 *
-	 * @param properties the properties to store
-	 * @param path       the path to the destination file
-	 * @param comment    an optional comment
-	 * @param encoding   The charset to use
 	 * @throws IOException if any I/O error occurs
 	 */
-	public void storeToXML(Properties properties, String path, String comment, String encoding) throws IOException {
-		FileOutputStream fos = new FileOutputStream(path);
+	private void storeToXML() throws IOException {
+		FileOutputStream fos = new FileOutputStream(propertiesFile);
 		try {
-			properties.storeToXML(fos, comment, encoding);
+			properties.storeToXML(fos, comments, "UTF-8");
 		} finally {
 			IOUtils.closeQuietly(fos);
 		}
