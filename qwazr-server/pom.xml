@@ -230,9 +230,9 @@
                                 <data>
                                     <type>template</type>
                                     <paths>
-                                        <path>/var/lib/${project.artifactId}</path>
-                                        <path>/var/log/${project.artifactId}</path>
-                                        <path>/var/run/${project.artifactId}</path>
+                                        <path>/var/lib/qwazr</path>
+                                        <path>/var/log/qwazr</path>
+                                        <path>/var/run/qwazr</path>
                                     </paths>
                                     <mapper>
                                         <type>perm</type>
