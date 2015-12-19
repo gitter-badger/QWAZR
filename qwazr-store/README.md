@@ -84,13 +84,3 @@ curl -X DELETE "http://localhost:9091/store/my_schema/my_subdir/my_file.png"
 ```
 
 After deleting a file, if the parent directory is empty, it is automatically deleted.
-
-
-
-- - -
-
-QWAZR is a an application server dedicated to distributed projects.
-The server provides a set of JSON web services which manages distributed jobs and
-web applications written in Javascript or Java.
-
-The main [documentation of QWAZR is available here](https://github.com/qwazr/QWAZR/wiki).

@@ -1,8 +1,5 @@
-QWAZR
-=====
-
-Welcome to QWAZR !
-------------------
+Welcome to QWAZR
+----------------
 
 QWAZR is a an **application server** dedicated to scalable, failover, distributed projects. It can be used to create a web application or a **microservice** written in Java and/or Javascript.
 
@@ -27,12 +24,12 @@ Getting started
 
 Here is two examples of QWAZR applications which can be used as tutorials. By running one of this 5 minutes tutorials you will create a small web site, a REST/JSON API connected to a MongoDB database.
 
-- [Javascript example](https://github.com/qwazr/qwazr-javascript-example)
-- [Java example](https://github.com/qwazr/qwazr-java-example)
+- [Javascript example](../qwazr-javascript-example)
+- [Java example](../qwazr-java-example)
 - Instructions how to [install QWAZR on Linux](qwazr-server/src/doc/linux-package-installation.md)
 
-Our roadmap ?
--------------
+Our roadmap
+-----------
 
 #### Multi-master clustering
 
