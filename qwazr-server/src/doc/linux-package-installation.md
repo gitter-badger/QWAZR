@@ -6,12 +6,14 @@ This document describes installing QWAZR on a GNU/Linux operating system.
 Downloading
 -----------
 
-Pre-releases (nightly builds) are available there: [download link](http://download.qwazr.com)
+Pre-releases (nightly builds) are available there:
+[download link](http://download.qwazr.com)
+
 
 Each build contains the following archives:
-- qwazr-1.0.0-1.noarch.rpm: package for CentOS, Fedora, RedHat
-- qwazr-1.0.0-SNAPSHOT.deb: package for Ubuntu and Debian
-- qwazr-1.0.0-SNAPSHOT-exec.jar: Executable JAR
+- qwazr-server-1.0.1-1.noarch.rpm: package for CentOS, Fedora, RedHat
+- qwazr-server-1.0.1-SNAPSHOT.deb: package for Ubuntu and Debian
+- qwazr-server-1.0.1-SNAPSHOT-exec.jar: Executable JAR
 
 Installation
 ------------
@@ -21,19 +23,20 @@ Java™ 1.8 must be installed.
 On a RPM-based distribution:
 
 ```shell
-    rpm -ivh qwazr-1.0.0-1.noarch.rpm
+rpm -ivh qwazr-server-1.0.1-1.noarch.rpm
 ```
 
 On a Debian/Ubuntu-based distribution:
 
 ```shell
-    dpkg -i qwazr-1.0.0-SNAPSHOT.deb
+dpkg -i qwazr-server-1.0.1-SNAPSHOT.deb
 ```
 
 What gets installed
 -------------------
 
-A user named **qwazr** is created. The daemon will be executed by this user. You should never start **qwazr** as a root user.
+A user named **qwazr** is created. The daemon will be executed by this user.
+You should never start **qwazr** as a root user.
 
 The following files and directories are created:
 - /etc/init.d/qwazr : the init script,
@@ -45,7 +48,10 @@ The following files and directories are created:
 Configuration
 -------------
 
-This configuration file is located in /etc/qwazr.conf. Refer to the embedded comments to get the latest information. You can specify within the IP address and TCP ports that the server will listen to.
+This configuration file is located in /etc/qwazr.conf.
+
+Refer to the embedded comments to get the latest information.
+You can specify within the IP address and TCP ports that the server will listen to.
 
 The server uses two TCP ports with the following default value:
 - 9091 is used for the web service,
@@ -77,7 +83,8 @@ JAVA_OPTS="-Xms1G -Xmx1G -XX:+UseG1GC \
 Start & stop
 ------------
 
-The init.d script has been installed in /etc/init.d/qwazr. Usually, you will use the **service** command to manage qwazr.
+The init.d script has been installed in /etc/init.d/qwazr.
+Usually, you will use the **service** command to manage qwazr.
 
 ```shell
     service qwazr start
