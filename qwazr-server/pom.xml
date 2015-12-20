@@ -237,7 +237,7 @@
                                     <conffile>true</conffile>
                                     <mapper>
                                         <type>perm</type>
-                                        <prefix>/var/lib/${project.artifactId}</prefix>
+                                        <prefix>/var/lib/qwazr</prefix>
                                     </mapper>
                                 </data>
                             </dataSet>
