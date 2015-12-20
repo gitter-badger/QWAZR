@@ -21,8 +21,8 @@
         </license>
     </licenses>
     <organization>
-        <name>Emmanuel Keller</name>
-        <url>http://www.qwazr.com</url>
+        <name>QWAZR SAS / Emmanuel Keller</name>
+        <url>https://www.qwazr.com</url>
     </organization>
     <scm>
         <connection>scm:git:git@github.com:qwazr/QWAZR.git</connection>
