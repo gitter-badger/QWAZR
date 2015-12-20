@@ -110,8 +110,8 @@ public class CassandraSession implements Closeable {
 
 	private SimpleStatement getStatement(Session session, String cql, Integer fetchSize, Object... values) {
 		SimpleStatement statement = values != null && values.length > 0 ?
-						session.newSimpleStatement(cql, values) :
-						session.newSimpleStatement(cql);
+						new SimpleStatement(cql, values) :
+						new SimpleStatement(cql);
 		if (fetchSize != null)
 			statement.setFetchSize(fetchSize);
 		return statement;
