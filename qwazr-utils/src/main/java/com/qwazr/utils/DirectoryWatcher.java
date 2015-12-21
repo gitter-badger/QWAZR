@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,9 @@
  * limitations under the License.
  **/
 package com.qwazr.utils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -24,6 +27,8 @@ import java.util.HashSet;
 import java.util.function.Consumer;
 
 public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
+
+	private final static Logger logger = LoggerFactory.getLogger(DirectoryWatcher.class);
 
 	private final Path rootPath;
 	private final WatchService watcher;
@@ -55,8 +60,10 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 	 */
 	public static DirectoryWatcher register(Path rootPath, Consumer<Path> consumer) throws IOException {
 		synchronized (watchers) {
+
 			DirectoryWatcher watcher = watchers.get(rootPath);
 			if (watcher == null) {
+				logger.info("New directory watcher: " + rootPath);
 				watcher = new DirectoryWatcher(rootPath);
 				watchers.put(rootPath, watcher);
 			}
@@ -86,13 +93,13 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 	}
 
 	final public static void registerDirectory(Path rootPath, WatchService watcher, HashMap<WatchKey, Path> keys)
-					throws IOException {
+			throws IOException {
 		Files.walkFileTree(rootPath, new SimpleFileVisitor<Path>() {
 			@Override
 			final public FileVisitResult preVisitDirectory(Path file, BasicFileAttributes attrs) throws IOException {
 				if (attrs.isDirectory()) {
 					keys.put(file.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
-									StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY), file);
+							StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY), file);
 				}
 				return FileVisitResult.CONTINUE;
 			}
@@ -136,6 +143,8 @@ public class DirectoryWatcher implements Runnable, Closeable, AutoCloseable {
 			}
 		} catch (IOException | InterruptedException e) {
 			exception = e;
+			if (logger.isWarnEnabled())
+				logger.warn("Directory watcher ends: " + rootPath, e);
 		}
 	}
 

@@ -61,10 +61,14 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Qwazr extends AbstractServer {
 
 	static final Logger logger = LoggerFactory.getLogger(Qwazr.class);
+
+	private final ExecutorService executorService;
 
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 
@@ -81,6 +85,7 @@ public class Qwazr extends AbstractServer {
 
 	private Qwazr() {
 		super(serverDefinition);
+		executorService = Executors.newCachedThreadPool();
 	}
 
 	@Path("/")
@@ -133,7 +138,7 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
-			WebappServer.load(currentDataDir);
+			WebappServer.load(executorService, currentDataDir);
 			services.add(ServiceEnum.webapps.name(), WebappManagerServiceImpl.class);
 		}
 
@@ -148,7 +153,7 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.search.isActive(serverConfiguration)) {
-			SearchServer.loadIndexManager(currentDataDir);
+			SearchServer.loadIndexManager(executorService, currentDataDir);
 			services.add(ServiceEnum.search.name(), IndexServiceImpl.class);
 		}
 
