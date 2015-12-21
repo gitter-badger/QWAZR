@@ -116,7 +116,18 @@ public class PropertiesTool extends AbstractTool {
 	 * @throws IOException if any I/O error occurs
 	 */
 	private void loadFromText() throws IOException {
-		FileInputStream fis = new FileInputStream(propertiesFile);
+		loadFromText(properties, propertiesFile);
+	}
+
+	/**
+	 * Load the properties
+	 *
+	 * @param properties
+	 * @param file
+	 * @throws IOException
+	 */
+	private static void loadFromText(Properties properties, File file) throws IOException {
+		FileInputStream fis = new FileInputStream(file);
 		try {
 			properties.load(fis);
 		} finally {
@@ -125,17 +136,45 @@ public class PropertiesTool extends AbstractTool {
 	}
 
 	/**
+	 * Load the properties from a TEXT file
+	 *
+	 * @param path the path to the TEXT file
+	 * @return a new Properties object
+	 */
+	public Properties loadFromText(String path) throws IOException {
+		Properties properties = new Properties();
+		loadFromText(properties, new File(path));
+		return properties;
+	}
+
+	/**
 	 * Load the properties from a file in XML format.
 	 *
 	 * @throws IOException if any I/O error occurs
 	 */
 	private void loadFromXML() throws IOException {
-		FileInputStream fis = new FileInputStream(propertiesFile);
+		loadFromXML(properties, propertiesFile);
+	}
+
+	private static void loadFromXML(Properties properties, File file) throws IOException {
+		FileInputStream fis = new FileInputStream(file);
 		try {
 			properties.loadFromXML(fis);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
+	}
+
+	/**
+	 * Load Properties from an XML file
+	 *
+	 * @param path the path to the XML file
+	 * @return a new Properties object
+	 */
+	public Properties loadFromXML(String path) throws IOException {
+		Properties properties = new Properties();
+		loadFromXML(properties, new File(path));
+		return properties;
 	}
 
 	/**
