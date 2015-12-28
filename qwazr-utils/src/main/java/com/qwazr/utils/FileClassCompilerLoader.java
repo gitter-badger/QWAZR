@@ -33,7 +33,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 
 public class FileClassCompilerLoader implements Closeable, AutoCloseable {
@@ -62,7 +61,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	private final DirectoryWatcher directorWatcher;
 
 	private FileClassCompilerLoader(ExecutorService executorService, Path sourceRootPath, Path classesRootPath,
-			String classPath, Collection<URL> urlList) throws IOException {
+					String classPath, Collection<URL> urlList) throws IOException {
 		this.classPath = classPath;
 		this.sourceRootPrefix = sourceRootPath.toFile().getAbsolutePath();
 		this.classesRootFile = sourceRootPath != null ? classesRootPath.toFile() : null;
@@ -91,7 +90,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	}
 
 	public static FileClassCompilerLoader newInstance(ExecutorService executorService, JavacDefinition javacDefinition)
-			throws IOException, URISyntaxException {
+					throws IOException, URISyntaxException {
 		if (javacDefinition == null)
 			throw new NullPointerException("No JavacDefinition has been given (null)");
 		if (javacDefinition.source_root == null)
@@ -106,7 +105,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	}
 
 	private final static String buildClassPath(Collection<String> classPath, Collection<URL> urlCollection)
-			throws MalformedURLException, URISyntaxException {
+					throws MalformedURLException, URISyntaxException {
 		final List<String> classPathes = new ArrayList<>();
 
 		URLClassLoader classLoader = (URLClassLoader) URLClassLoader.getSystemClassLoader();
@@ -154,8 +153,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 		return FilenameUtils.getBaseName(StringUtils.join(StringUtils.split(baseName, File.separator), '.'));
 	}
 
-	public <T> Class<T> loadClass(File sourceFile)
-			throws IOException, ReflectiveOperationException, InterruptedException {
+	public <T> Class<T> loadClass(File sourceFile) throws IOException, ReflectiveOperationException {
 
 		final long sourceFileLastModified = sourceFile.lastModified();
 		mapRwl.r.lock();
@@ -210,11 +208,11 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 			options.add("-sourcepath");
 			options.add(sourceRootPrefix);
 			JavaCompiler.CompilationTask task = compiler
-					.getTask(pw, fileManager, diagnostics, options, null, sourceFiles);
+							.getTask(pw, fileManager, diagnostics, options, null, sourceFiles);
 			if (!task.call()) {
 				for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics())
 					pw.format("Error on line %d in %s%n%s%n", diagnostic.getLineNumber(),
-							diagnostic.getSource().toUri(), diagnostic.getMessage(null));
+									diagnostic.getSource().toUri(), diagnostic.getMessage(null));
 				pw.flush();
 				pw.close();
 				sw.close();
@@ -245,9 +243,11 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 	}
 
 	public final static <T> Class<T> findClass(FileClassCompilerLoader compilerLoader, String classDef,
-			String[] classPrefixes) throws ReflectiveOperationException, InterruptedException, IOException {
+					String[] classPrefixes) throws ReflectiveOperationException, IOException {
 		if (compilerLoader != null && classDef.endsWith(".java"))
 			return compilerLoader.loadClass(new File(classDef));
+		if (classPrefixes == null)
+			return null;
 		return (Class<T>) findClass(classPrefixes, classDef);
 	}
 }
