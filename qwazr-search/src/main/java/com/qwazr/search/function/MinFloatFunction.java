@@ -13,36 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.search.query;
+package com.qwazr.search.function;
 
 import com.qwazr.search.index.QueryContext;
+import org.apache.lucene.queries.function.ValueSource;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
-import org.apache.lucene.search.Query;
 
 import java.io.IOException;
+import java.util.Objects;
 
-public class SpanFirstQuery extends AbstractQuery {
+public class MinFloatFunction extends AbstractValueSource {
 
-	final public AbstractSpanQuery spanQuery;
-	final public Integer end;
+	public final AbstractValueSource[] sources;
 
-	public SpanFirstQuery() {
-		super(null);
-		spanQuery = null;
-		end = null;
-	}
-
-	SpanFirstQuery(Float boost, AbstractSpanQuery spanQuery, Integer end) {
-		super(boost);
-		this.spanQuery = spanQuery;
-		this.end = end;
+	public MinFloatFunction() {
+		sources = null;
 	}
 
 	@Override
-	final protected Query getQuery(QueryContext queryContext)
-		throws IOException, ParseException, QueryNodeException, ReflectiveOperationException {
-		return new org.apache.lucene.search.spans.SpanFirstQuery(spanQuery.getQuery(queryContext),
-			end == null ? 0 : end);
+	public ValueSource getValueSource(QueryContext queryContext)
+		throws ParseException, IOException, QueryNodeException, ReflectiveOperationException {
+		Objects.requireNonNull(sources, "The array of value source is missing (sources)");
+		return new org.apache.lucene.queries.function.valuesource.MinFloatFunction(
+			AbstractValueSource.getValueSourceArray(queryContext, sources));
 	}
 }

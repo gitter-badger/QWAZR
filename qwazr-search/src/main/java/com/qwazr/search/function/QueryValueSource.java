@@ -13,36 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.search.query;
+package com.qwazr.search.function;
 
 import com.qwazr.search.index.QueryContext;
+import com.qwazr.search.query.AbstractQuery;
+import org.apache.lucene.queries.function.ValueSource;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
-import org.apache.lucene.search.Query;
 
 import java.io.IOException;
+import java.util.Objects;
 
-public class SpanFirstQuery extends AbstractQuery {
+public class QueryValueSource extends AbstractValueSource {
 
-	final public AbstractSpanQuery spanQuery;
-	final public Integer end;
+	final public AbstractQuery query;
+	final public Float defVal;
 
-	public SpanFirstQuery() {
-		super(null);
-		spanQuery = null;
-		end = null;
-	}
-
-	SpanFirstQuery(Float boost, AbstractSpanQuery spanQuery, Integer end) {
-		super(boost);
-		this.spanQuery = spanQuery;
-		this.end = end;
+	public QueryValueSource() {
+		query = null;
+		defVal = null;
 	}
 
 	@Override
-	final protected Query getQuery(QueryContext queryContext)
-		throws IOException, ParseException, QueryNodeException, ReflectiveOperationException {
-		return new org.apache.lucene.search.spans.SpanFirstQuery(spanQuery.getQuery(queryContext),
-			end == null ? 0 : end);
+	public ValueSource getValueSource(QueryContext queryContext)
+		throws ParseException, IOException, QueryNodeException, ReflectiveOperationException {
+		Objects.requireNonNull(query, "The query is missing");
+		Objects.requireNonNull(defVal, "The default value is missing (defVal");
+		return new org.apache.lucene.queries.function.valuesource.QueryValueSource(query.getBoostedQuery(queryContext),
+			defVal);
 	}
 }

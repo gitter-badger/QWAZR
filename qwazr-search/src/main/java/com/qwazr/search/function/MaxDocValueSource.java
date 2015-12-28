@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.qwazr.search.query;
+package com.qwazr.search.function;
 
 import com.qwazr.search.index.QueryContext;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
-import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.queries.function.ValueSource;
 
-import java.io.IOException;
+public class MaxDocValueSource extends AbstractValueSource {
 
-public abstract class AbstractSpanQuery extends AbstractQuery {
-
-	protected AbstractSpanQuery(Float boost) {
-		super(boost);
+	public MaxDocValueSource() {
 	}
 
-	protected abstract SpanQuery getQuery(QueryContext queryContext)
-		throws IOException, ParseException, QueryNodeException, ReflectiveOperationException;
+	@Override
+	public ValueSource getValueSource(QueryContext queryContext) {
+		return new org.apache.lucene.queries.function.valuesource.MaxDocValueSource();
+	}
 }
