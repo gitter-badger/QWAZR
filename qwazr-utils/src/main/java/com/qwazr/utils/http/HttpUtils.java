@@ -23,15 +23,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.TrustStrategy;
 
@@ -122,7 +117,6 @@ public class HttpUtils {
 		HttpClientBuilder b = HttpClientBuilder.create();
 
 		// setup a Trust Strategy that allows all certificates.
-		//
 		SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
 			public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
 				return true;
@@ -139,14 +133,7 @@ public class HttpUtils {
 		//      -- and create a Registry, to register it.
 		//
 		SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
-		Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-						.register("http", PlainConnectionSocketFactory.getSocketFactory())
-						.register("https", sslSocketFactory).build();
-
-		// now, we create connection-manager using our Registry.
-		//      -- allows multi-threaded use
-		PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-		b.setConnectionManager(connMgr);
+		b.setSSLSocketFactory(sslSocketFactory);
 
 		// finally, build the HttpClient;
 		//      -- done!
