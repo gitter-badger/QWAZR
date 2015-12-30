@@ -99,7 +99,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 		final Path sourceRootPath = fs.getPath(javacDefinition.source_root);
 		final Path classesRootPath = fs.getPath(javacDefinition.classes_root);
 		final List<URL> urlList = new ArrayList<URL>();
-		urlList.add(sourceRootPath.toUri().toURL());
+		urlList.add(classesRootPath.toUri().toURL());
 		final String classPath = buildClassPath(javacDefinition.classpath, urlList);
 		return new FileClassCompilerLoader(executorService, sourceRootPath, classesRootPath, classPath, urlList);
 	}
@@ -149,8 +149,9 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 		final String sourcePath = sourceFile.getAbsolutePath();
 		if (!sourcePath.startsWith(sourceRootPrefix))
 			throw new IOException("The file is not in the source root: " + sourceFile + " / " + sourceRootPrefix);
-		final String baseName = sourcePath.substring(sourceRootPrefixLength);
-		return FilenameUtils.getBaseName(StringUtils.join(StringUtils.split(baseName, File.separator), '.'));
+		final String baseName = FilenameUtils.removeExtension(sourcePath.substring(sourceRootPrefixLength));
+		final String className = StringUtils.join(StringUtils.split(baseName, File.separator), '.');
+		return className;
 	}
 
 	public <T> Class<T> loadClass(File sourceFile) throws IOException, ReflectiveOperationException {
@@ -247,7 +248,7 @@ public class FileClassCompilerLoader implements Closeable, AutoCloseable {
 		if (compilerLoader != null && classDef.endsWith(".java"))
 			return compilerLoader.loadClass(new File(classDef));
 		if (classPrefixes == null)
-			return null;
+			return (Class<T>) Class.forName(classDef);
 		return (Class<T>) findClass(classPrefixes, classDef);
 	}
 }
