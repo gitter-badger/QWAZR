@@ -46,7 +46,7 @@ public class FullTest {
 
 	private static volatile boolean started;
 
-	public static final String BASE_URL = "http://localhost:9091/graph";
+	public static final String BASE_URL = "http://localhost:9093/graph";
 	public static final String TEST_BASE = "graph-test";
 	public static final int PRODUCT_NUMBER = 1000;
 	public static final int VISIT_NUMBER = 1000;
