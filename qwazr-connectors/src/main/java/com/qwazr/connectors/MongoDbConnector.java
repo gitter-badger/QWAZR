@@ -189,179 +189,300 @@ public class MongoDbConnector extends AbstractConnector {
 			this.collection = collection;
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public MongoNamespace getNamespace() {
 			return collection.getNamespace();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public Class<Document> getDocumentClass() {
 			return collection.getDocumentClass();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public CodecRegistry getCodecRegistry() {
 			return collection.getCodecRegistry();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public ReadPreference getReadPreference() {
 			return collection.getReadPreference();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public WriteConcern getWriteConcern() {
 			return collection.getWriteConcern();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public ReadConcern getReadConcern() {
 			return collection.getReadConcern();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(Class<NewTDocument> clazz) {
 			return collection.withDocumentClass(clazz);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public MongoCollection<Document> withCodecRegistry(CodecRegistry codecRegistry) {
 			return collection.withCodecRegistry(codecRegistry);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public MongoCollection<Document> withReadPreference(ReadPreference readPreference) {
 			return collection.withReadPreference(readPreference);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public MongoCollection<Document> withWriteConcern(WriteConcern writeConcern) {
 			return collection.withWriteConcern(writeConcern);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public MongoCollection<Document> withReadConcern(ReadConcern readConcern) {
 			return collection.withReadConcern(readConcern);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public long count() {
 			return collection.count();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public long count(Bson filter) {
 			return collection.count(filter);
 		}
 
+		/**
+		 * @param filter An object described as a Map
+		 * @see MongoCollection#count(Bson)
+		 */
 		public long count(Map<String, Object> filter) {
 			return collection.count(new Document(filter));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public long count(Bson filter, CountOptions options) {
 			return collection.count(filter, options);
 		}
 
+		/**
+		 * @return a new CountOptions instance
+		 * @see CountOptions
+		 */
 		public CountOptions getNewCountOption() {
 			return new CountOptions();
 		}
 
+		/**
+		 * @param filter  the query filter
+		 * @param options the options describing the count
+		 * @return the number of documents in the collection
+		 * @see MongoCollection#count(Bson, CountOptions)
+		 */
 		public long count(Map<String, Object> filter, CountOptions options) {
 			return collection.count(new Document(filter), options);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public <TResult> DistinctIterable<TResult> distinct(String fieldName, Class<TResult> tResultClass) {
 			return collection.distinct(fieldName, tResultClass);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public <TResult> DistinctIterable<TResult> distinct(String fieldName, Bson filter,
 						Class<TResult> tResultClass) {
 			return collection.distinct(fieldName, filter, tResultClass);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public FindIterable<Document> find() {
 			return collection.find();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public <TResult> FindIterable<TResult> find(Class<TResult> tResultClass) {
 			return collection.find(tResultClass);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public FindIterable<Document> find(Bson filter) {
 			return collection.find(filter);
 		}
 
+		/**
+		 * @param filter the query filter
+		 * @return the find iterable interface
+		 * @see MongoCollection#find(Bson)
+		 */
 		public FindIterable<Document> find(Map<String, Object> filter) {
 			return collection.find(new Document(filter));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public <TResult> FindIterable<TResult> find(Bson filter, Class<TResult> tResultClass) {
 			return collection.find(filter, tResultClass);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public AggregateIterable<Document> aggregate(List<? extends Bson> pipeline) {
 			return collection.aggregate(pipeline);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public <TResult> AggregateIterable<TResult> aggregate(List<? extends Bson> pipeline,
 						Class<TResult> tResultClass) {
 			return collection.aggregate(pipeline, tResultClass);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public MapReduceIterable<Document> mapReduce(String mapFunction, String reduceFunction) {
 			return collection.mapReduce(mapFunction, reduceFunction);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public <TResult> MapReduceIterable<TResult> mapReduce(String mapFunction, String reduceFunction,
 						Class<TResult> tResultClass) {
 			return collection.mapReduce(mapFunction, reduceFunction, tResultClass);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public BulkWriteResult bulkWrite(List<? extends WriteModel<? extends Document>> requests) {
 			return collection.bulkWrite(requests);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public BulkWriteResult bulkWrite(List<? extends WriteModel<? extends Document>> requests,
 						BulkWriteOptions options) {
 			return collection.bulkWrite(requests, options);
 		}
 
+		/**
+		 * @param requests the writes to execute
+		 * @param ordered
+		 * @return the result of the bulk write
+		 * @see MongoCollection#bulkWrite(List, BulkWriteOptions)
+		 */
 		public BulkWriteResult bulkWrite(List<? extends WriteModel<? extends Document>> requests, boolean ordered) {
 			return collection.bulkWrite(requests, new BulkWriteOptions().ordered(ordered));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void insertOne(Document document) {
 			collection.insertOne(document);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void insertOne(Document document, InsertOneOptions insertOneOptions) {
 			collection.insertOne(document, insertOneOptions);
 		}
 
+		/**
+		 * @param document                 the document to insert
+		 * @param bypassDocumentValidation
+		 * @see MongoCollection#insertOne(Object, InsertOneOptions)
+		 */
 		public void insertOne(Map<String, Object> document, boolean bypassDocumentValidation) {
 			collection.insertOne(new Document(document),
 							new InsertOneOptions().bypassDocumentValidation(bypassDocumentValidation));
 		}
 
+		/**
+		 * @param document the document to insert
+		 * @see MongoCollection#insertOne(Object)
+		 */
 		public void insertOne(Map<String, Object> document) {
 			collection.insertOne(new Document(document));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void insertMany(List<? extends Document> tDocuments) {
 			collection.insertMany(tDocuments);
@@ -375,14 +496,26 @@ public class MongoDbConnector extends AbstractConnector {
 			return list;
 		}
 
+		/**
+		 * @param documents the documents to insert
+		 * @throws ScriptException
+		 * @see MongoCollection#insertMany(List)
+		 */
 		public void insertMany(ScriptObjectMirror documents) throws ScriptException {
 			collection.insertMany(getNewDocumentList(documents));
 		}
 
+		/**
+		 * @return a new InsertManyOptions instance
+		 * @see InsertManyOptions
+		 */
 		public InsertManyOptions getNewInsertManyOptions() {
 			return new InsertManyOptions();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void insertMany(List<? extends Document> documents, InsertManyOptions options) {
 			collection.insertMany(documents, options);
@@ -392,6 +525,9 @@ public class MongoDbConnector extends AbstractConnector {
 			collection.insertMany(getNewDocumentList(documents), options);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public DeleteResult deleteOne(Bson filter) {
 			return collection.deleteOne(filter);
@@ -401,6 +537,9 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.deleteOne(new Document(filter));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public DeleteResult deleteMany(Bson filter) {
 			return collection.deleteMany(filter);
@@ -410,6 +549,9 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.deleteMany(new Document(filter));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public UpdateResult replaceOne(Bson filter, Document replacement) {
 			return collection.replaceOne(filter, replacement);
@@ -419,6 +561,9 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.replaceOne(new Document(filter), new Document(replacement));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public UpdateResult replaceOne(Bson filter, Document replacement, UpdateOptions updateOptions) {
 			return collection.replaceOne(filter, replacement, updateOptions);
@@ -429,6 +574,9 @@ public class MongoDbConnector extends AbstractConnector {
 							new UpdateOptions().upsert(upsert));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public UpdateResult updateOne(Bson filter, Bson update) {
 			return collection.updateOne(filter, update);
@@ -438,6 +586,9 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.updateOne(new Document(filter), new Document(update));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public UpdateResult updateOne(Bson filter, Bson update, UpdateOptions updateOptions) {
 			return collection.updateOne(filter, update, updateOptions);
@@ -447,6 +598,9 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.updateOne(new Document(filter), new Document(update), new UpdateOptions().upsert(upsert));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public UpdateResult updateMany(Bson filter, Bson update) {
 			return collection.updateMany(filter, update);
@@ -456,6 +610,9 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.updateMany(new Document(filter), new Document(update));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public UpdateResult updateMany(Bson filter, Bson update, UpdateOptions updateOptions) {
 			return collection.updateMany(filter, update, updateOptions);
@@ -466,6 +623,9 @@ public class MongoDbConnector extends AbstractConnector {
 							.updateMany(new Document(filter), new Document(update), new UpdateOptions().upsert(upsert));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public Document findOneAndDelete(Bson filter) {
 			return collection.findOneAndDelete(filter);
@@ -479,11 +639,17 @@ public class MongoDbConnector extends AbstractConnector {
 			return new FindOneAndDeleteOptions();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public Document findOneAndDelete(Bson filter, FindOneAndDeleteOptions options) {
 			return collection.findOneAndDelete(filter, options);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public Document findOneAndReplace(Bson filter, Document replacement) {
 			return collection.findOneAndReplace(filter, replacement);
@@ -493,11 +659,17 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.findOneAndReplace(new Document(filter), new Document(replacement));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public Document findOneAndReplace(Bson filter, Document replacement, FindOneAndReplaceOptions options) {
 			return collection.findOneAndReplace(filter, replacement, options);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public Document findOneAndUpdate(Bson filter, Bson update) {
 			return collection.findOneAndUpdate(filter, update);
@@ -507,61 +679,97 @@ public class MongoDbConnector extends AbstractConnector {
 			return collection.findOneAndUpdate(new Document(filter), new Document(update));
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public Document findOneAndUpdate(Bson filter, Bson update, FindOneAndUpdateOptions options) {
 			return collection.findOneAndUpdate(filter, update, options);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void drop() {
 			collection.drop();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public String createIndex(Bson keys) {
 			return collection.createIndex(keys);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public String createIndex(Bson keys, IndexOptions indexOptions) {
 			return collection.createIndex(keys, indexOptions);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public List<String> createIndexes(List<IndexModel> indexes) {
 			return collection.createIndexes(indexes);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public ListIndexesIterable<Document> listIndexes() {
 			return collection.listIndexes();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public <TResult> ListIndexesIterable<TResult> listIndexes(Class<TResult> tResultClass) {
 			return collection.listIndexes(tResultClass);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void dropIndex(String indexName) {
 			collection.dropIndex(indexName);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void dropIndex(Bson keys) {
 			collection.dropIndex(keys);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void dropIndexes() {
 			collection.dropIndexes();
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void renameCollection(MongoNamespace newCollectionNamespace) {
 			collection.renameCollection(newCollectionNamespace);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public void renameCollection(MongoNamespace newCollectionNamespace,
 						RenameCollectionOptions renameCollectionOptions) {
