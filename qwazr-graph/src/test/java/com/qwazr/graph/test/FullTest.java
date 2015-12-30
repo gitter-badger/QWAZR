@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Emmanuel Keller / QWAZR
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,8 +78,8 @@ public class FullTest {
 		GraphDefinition graphDef = new GraphDefinition(node_properties, edge_types);
 
 		HttpResponse response = Request.Put(BASE_URL + '/' + TEST_BASE)
-						.bodyString(JsonMapper.MAPPER.writeValueAsString(graphDef), APPLICATION_JSON_UTF8).execute()
-						.returnResponse();
+						.bodyString(JsonMapper.MAPPER.writeValueAsString(graphDef), APPLICATION_JSON_UTF8)
+						.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 	}
 
@@ -91,8 +91,8 @@ public class FullTest {
 			node.properties.put("type", "product");
 			node.properties.put("name", "product" + i);
 			HttpResponse response = Request.Put(BASE_URL + '/' + TEST_BASE + "/node/p" + i)
-							.bodyString(JsonMapper.MAPPER.writeValueAsString(node), APPLICATION_JSON_UTF8).execute()
-							.returnResponse();
+							.bodyString(JsonMapper.MAPPER.writeValueAsString(node), APPLICATION_JSON_UTF8)
+							.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 		}
 	}
@@ -123,15 +123,15 @@ public class FullTest {
 				nodeMap.put("v" + (i + k), node);
 			}
 			HttpResponse response = Request.Put(BASE_URL + '/' + TEST_BASE + "/node")
-							.bodyString(JsonMapper.MAPPER.writeValueAsString(nodeMap), APPLICATION_JSON_UTF8).execute()
-							.returnResponse();
+							.bodyString(JsonMapper.MAPPER.writeValueAsString(nodeMap), APPLICATION_JSON_UTF8)
+							.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 		}
 	}
 
 	private boolean nodeExists(int visiteNodeId) throws IOException {
-		HttpResponse response = Request.Get(BASE_URL + '/' + TEST_BASE + "/node/v" + visiteNodeId).execute()
-						.returnResponse();
+		HttpResponse response = Request.Get(BASE_URL + '/' + TEST_BASE + "/node/v" + visiteNodeId).connectTimeout(60000)
+						.socketTimeout(60000).execute().returnResponse();
 		Assert.assertThat(response.getStatusLine().getStatusCode(), AnyOf.anyOf(Is.is(200), Is.is(404)));
 		Assert.assertThat(response.getEntity().getContentType().getValue(), Is.is(APPLICATION_JSON_UTF8.toString()));
 		return response.getStatusLine().getStatusCode() == 200;
@@ -146,7 +146,7 @@ public class FullTest {
 			int productNodeId = RandomUtils.nextInt(PRODUCT_NUMBER / 2, PRODUCT_NUMBER);
 			HttpResponse response = Request
 							.Put(BASE_URL + '/' + TEST_BASE + "/node/v" + visitNodeId + "/edge/see/p" + productNodeId)
-							.execute().returnResponse();
+							.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			if (response.getStatusLine().getStatusCode() == 500)
 				System.out.println(IOUtils.toString(response.getEntity().getContent()));
 			Assert.assertThat(response.getStatusLine().getStatusCode(), AnyOf.anyOf(Is.is(200), Is.is(404)));
@@ -163,14 +163,15 @@ public class FullTest {
 				continue;
 			int productNodeId = RandomUtils.nextInt(0, PRODUCT_NUMBER / 2);
 			HttpResponse response = Request.Delete(BASE_URL + '/' + TEST_BASE + "/node/v" + visiteNodeId + "/edge/see/p"
-							+ productNodeId).execute().returnResponse();
+							+ productNodeId).connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			Assert.assertThat(response.getStatusLine().getStatusCode(), AnyOf.anyOf(Is.is(200), Is.is(404)));
 		}
 	}
 
 	@Test
 	public void test999DeleteDatabase() throws IOException {
-		HttpResponse response = Request.Delete(BASE_URL + '/' + TEST_BASE).execute().returnResponse();
+		HttpResponse response = Request.Delete(BASE_URL + '/' + TEST_BASE).connectTimeout(60000).socketTimeout(60000)
+						.execute().returnResponse();
 		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
 	}
