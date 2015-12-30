@@ -41,7 +41,7 @@ public class GraphServer extends AbstractServer {
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 
 	static {
-		serverDefinition.defaultWebApplicationTcpPort = 9093;
+		serverDefinition.defaultWebServiceTcpPort = 9093;
 		serverDefinition.mainJarPath = "qwazr-graph.jar";
 		serverDefinition.defaultDataDirName = "qwazr";
 	}
