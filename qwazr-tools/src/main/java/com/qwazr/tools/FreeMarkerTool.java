@@ -55,7 +55,7 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	@Override
 	public void load(File parentDir) {
 		this.parentDir = parentDir;
-		cfg = new Configuration(Configuration.VERSION_2_3_22);
+		cfg = new Configuration(Configuration.VERSION_2_3_23);
 		cfg.setTemplateLoader(this);
 		cfg.setOutputEncoding(output_encoding == null ? DEFAULT_CHARSET : output_encoding);
 		cfg.setDefaultEncoding(default_encoding == null ? DEFAULT_CHARSET : default_encoding);
@@ -69,8 +69,14 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 		cfg.clearTemplateCache();
 	}
 
+	private final static ClassLoader getContextClasLoader() {
+		return Thread.currentThread().getContextClassLoader();
+	}
+	
 	@Override
 	public Object findTemplateSource(String path) throws IOException {
+		if (parentDir == null)
+			return getContextClasLoader().getResourceAsStream(path);
 		File file = new File(parentDir, path);
 		return file.exists() && file.isFile() ? file : null;
 	}
@@ -78,17 +84,25 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	@Override
 	@JsonIgnore
 	public long getLastModified(Object templateSource) {
+		if (parentDir == null)
+			return getContextClasLoader().hashCode();
 		return ((File) templateSource).lastModified();
 	}
 
 	@Override
 	@JsonIgnore
 	public Reader getReader(Object templateSource, String encoding) throws IOException {
+		if (templateSource instanceof File)
+			return new FileReader((File) templateSource);
+		if (templateSource instanceof InputStream)
+			return new InputStreamReader((InputStream) templateSource);
 		return new FileReader((File) templateSource);
 	}
 
 	@Override
 	public void closeTemplateSource(Object templateSource) throws IOException {
+		if (templateSource instanceof Closeable)
+			IOUtils.closeQuietly((Closeable) templateSource);
 	}
 
 	public void template(String templatePath, Map<String, Object> dataModel, HttpServletResponse response)
