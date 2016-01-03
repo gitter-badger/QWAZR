@@ -72,7 +72,7 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	private final static ClassLoader getContextClasLoader() {
 		return Thread.currentThread().getContextClassLoader();
 	}
-	
+
 	@Override
 	public Object findTemplateSource(String path) throws IOException {
 		if (parentDir == null)
