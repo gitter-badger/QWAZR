@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Emmanuel Keller / QWAZR
+ * Copyright 2015-2016 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.io.IOException;
 				@JsonSubTypes.Type(value = MoreLikeThisQuery.class),
 				@JsonSubTypes.Type(value = MultiFieldQueryParser.class), @JsonSubTypes.Type(value = PhraseQuery.class),
 				@JsonSubTypes.Type(value = PrefixQuery.class), @JsonSubTypes.Type(value = RegexpQuery.class),
-				@JsonSubTypes.Type(value = SpanFirstQueries.class), @JsonSubTypes.Type(value = SpanFirstQuery.class),
+				@JsonSubTypes.Type(value = SpanFirstQuery.class), @JsonSubTypes.Type(value = SpanPositionsQuery.class),
 				@JsonSubTypes.Type(value = SpanNearQuery.class), @JsonSubTypes.Type(value = SpanNotQuery.class),
 				@JsonSubTypes.Type(value = SpanTermQuery.class), @JsonSubTypes.Type(value = StandardQueryParser.class),
 				@JsonSubTypes.Type(value = TermQuery.class), @JsonSubTypes.Type(value = TermsQuery.class),
