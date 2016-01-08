@@ -157,7 +157,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 
 	public interface CloseableContext {
 
-		void add(AutoCloseable autoCloseable);
+		<T extends AutoCloseable> T add(T autoCloseable);
 
 		void close(AutoCloseable autoCloseable);
 	}
@@ -171,9 +171,10 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 
 		@Override
-		public void add(AutoCloseable autoCloseable) {
+		public <T extends AutoCloseable> T add(T autoCloseable) {
 			synchronized (autoCloseables) {
 				autoCloseables.add(autoCloseable);
+				return autoCloseable;
 			}
 		}
 
