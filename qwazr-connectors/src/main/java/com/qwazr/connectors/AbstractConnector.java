@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 
@@ -32,7 +33,7 @@ public abstract class AbstractConnector {
 
 	public final String name = null;
 
-	public abstract void load(File parentDir);
+	public abstract void load(File parentDir) throws FileNotFoundException;
 
 	public abstract void unload();
 }

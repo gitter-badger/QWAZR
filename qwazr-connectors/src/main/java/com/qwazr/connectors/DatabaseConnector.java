@@ -131,23 +131,20 @@ public class DatabaseConnector extends AbstractPasswordConnector {
 	@JsonIgnore
 	public Transaction getConnection(CloseableContext context) throws SQLException {
 		Transaction transaction = connectionManager.getNewTransaction();
-		context.add(transaction);
-		return transaction;
+		return context.add(transaction);
 	}
 
 	@JsonIgnore
 	public Transaction getConnection(CloseableContext context, boolean autoCommit) throws SQLException {
 		Transaction transaction = connectionManager.getNewTransaction(autoCommit);
-		context.add(transaction);
-		return transaction;
+		return context.add(transaction);
 	}
 
 	@JsonIgnore
 	public Transaction getConnection(CloseableContext context, boolean autoCommit, int transactionIsolation)
 					throws SQLException {
 		Transaction transaction = connectionManager.getNewTransaction(autoCommit, transactionIsolation);
-		context.add(transaction);
-		return transaction;
+		return context.add(transaction);
 	}
 
 	/**
