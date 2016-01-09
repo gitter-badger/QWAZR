@@ -195,7 +195,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 
 	}
-
+	
 	/**
 	 * Extract the content of a file to a string
 	 *

@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
-				implements ToolsManager, TrackedFile.FileEventReceiver {
+		implements ToolsManager, TrackedFile.FileEventReceiver {
 
 	private static final Logger logger = LoggerFactory.getLogger(ToolsManagerImpl.class);
 
