@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.connectors.test;
+package com.qwazr.tools.test;
 
-import com.qwazr.connectors.ConnectorManager;
-import com.qwazr.connectors.ConnectorManagerImpl;
+import com.qwazr.tools.ToolsManager;
+import com.qwazr.tools.ToolsManagerImpl;
 
 import java.io.File;
 import java.io.IOException;
 
-public abstract class AbstractConnectorsTest {
+public abstract class AbstractToolsTest {
 
-	final protected ConnectorManager getConnectorManager() throws IOException {
-		final ConnectorManager connectorManager = ConnectorManagerImpl.getInstance();
-		if (connectorManager != null)
-			return connectorManager;
-		ConnectorManagerImpl.load(new File("src/test/resources"));
-		return ConnectorManagerImpl.getInstance();
+	final protected ToolsManager getToolManager() throws IOException {
+		final ToolsManager toolsManager = ToolsManagerImpl.getInstance();
+		if (toolsManager != null)
+			return toolsManager;
+		ToolsManagerImpl.load(new File("src/test/resources"));
+		return ToolsManagerImpl.getInstance();
 	}
 
 }
