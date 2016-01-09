@@ -15,7 +15,11 @@
  */
 package com.qwazr.utils;
 
+import com.sun.management.UnixOperatingSystemMXBean;
 import org.apache.commons.io.FileUtils;
+
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 
 public class RuntimeUtils {
 
@@ -28,4 +32,10 @@ public class RuntimeUtils {
 		return FileUtils.byteCountToDisplaySize(getMemoryUsage());
 	}
 
+	public static Long getOpenFileCount() {
+		OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+		if (os instanceof UnixOperatingSystemMXBean)
+			return ((UnixOperatingSystemMXBean) os).getOpenFileDescriptorCount();
+		return null;
+	}
 }

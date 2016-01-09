@@ -17,6 +17,7 @@ package com.qwazr.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.SubstitutedVariables;
 import org.rrd4j.ConsolFun;
 import org.rrd4j.DsType;
 import org.rrd4j.core.*;
@@ -41,9 +42,12 @@ public class Rrd4jTool extends AbstractTool {
 	public final RrdDataSource[] datasources = null;
 	public final String backendFactory = null;
 
+	private String resolvedPath = null;
+
 	@Override
 	public void load(File parentDir) throws IOException {
 		Objects.requireNonNull(path, "The path property is required");
+		resolvedPath = SubstitutedVariables.getEnvironmentVariables().substitute(path);
 	}
 
 	protected RrdDef createDef() {
@@ -51,13 +55,13 @@ public class Rrd4jTool extends AbstractTool {
 		if (step != null) {
 			if (startTime != null) {
 				if (version != null)
-					rrdDef = new RrdDef(path, startTime, step, version);
+					rrdDef = new RrdDef(resolvedPath, startTime, step, version);
 				else
-					rrdDef = new RrdDef(path, startTime, step);
+					rrdDef = new RrdDef(resolvedPath, startTime, step);
 			} else
-				rrdDef = new RrdDef(path, step);
+				rrdDef = new RrdDef(resolvedPath, step);
 		} else
-			rrdDef = new RrdDef(path);
+			rrdDef = new RrdDef(resolvedPath);
 		if (archives != null)
 			for (RrdArchive archive : archives)
 				rrdDef.addArchive(archive.getDef());
@@ -79,11 +83,31 @@ public class Rrd4jTool extends AbstractTool {
 	 * @see RrdDb
 	 */
 	@JsonIgnore
-	public RrdDb getDb(IOUtils.CloseableContext closeableContext) throws IOException {
-		RrdDatabase rrdDatabase = new RrdDatabase();
-		if (closeableContext != null)
-			closeableContext.add(rrdDatabase);
+	public RrdDb getDb(IOUtils.CloseableContext closeableContext, boolean readOnly) throws IOException {
+		Objects.requireNonNull(closeableContext, "Requires a closeable parameter");
+		RrdDatabase rrdDatabase = null;
+		try {
+			rrdDatabase = new RrdDatabase(resolvedPath, backendFactory, readOnly);
+		} catch (FileNotFoundException e) {
+			if (logger.isInfoEnabled())
+				logger.info("RRD database not found. Create a new one: " + resolvedPath);
+			rrdDatabase = new RrdDatabase(createDef(), backendFactory);
+		}
+		closeableContext.add(rrdDatabase);
 		return rrdDatabase.rrdDb;
+	}
+
+	/**
+	 * @param closeableContext
+	 * @return a new RrdDb instance
+	 * @throws IOException
+	 */
+	public RrdDb getDb(IOUtils.CloseableContext closeableContext) throws IOException {
+		return getDb(closeableContext, false);
+	}
+
+	public RrdDb getDb(IOUtils.CloseableContext closeableContext, String rrdPath) throws IOException {
+		return new RrdDatabase(rrdPath, backendFactory, true).rrdDb;
 	}
 
 	@JsonIgnore
@@ -94,6 +118,20 @@ public class Rrd4jTool extends AbstractTool {
 		else
 			sample = rrdDb.createSample();
 		return sample;
+	}
+
+	/**
+	 * Parses at-style time specification and returns the corresponding timestamp. For example:<p>
+	 * <pre>
+	 * long t = Util.getTimestamp("now-1d");
+	 * </pre>
+	 *
+	 * @param atStyleTimeSpec at-style time specification. For the complete explanation of the syntax
+	 *                        allowed see RRDTool's <code>rrdfetch</code> man page.<p>
+	 * @return timestamp in seconds since epoch.
+	 */
+	public long getTimestamp(String atStyleTimeSpec) {
+		return Util.getTimestamp(atStyleTimeSpec);
 	}
 
 	public static class RrdArchive {
@@ -130,34 +168,23 @@ public class Rrd4jTool extends AbstractTool {
 		}
 	}
 
-	private class RrdDatabase implements Closeable {
+	private static class RrdDatabase implements Closeable {
 
-		private RrdDb rrdDb = null;
+		private final RrdDb rrdDb;
 
-		private RrdDatabase() throws IOException {
-			try {
-				rrdDb = loadExistingDb();
-			} catch (FileNotFoundException e) {
-				if (logger.isInfoEnabled())
-					logger.info("RRD database not found. Create a new one: " + path);
-				rrdDb = createNewDb(createDef());
+		private RrdDatabase(String path, String backendFactory, boolean readOnly) throws IOException {
+			if (backendFactory != null) {
+				rrdDb = new RrdDb(path, readOnly, RrdBackendFactory.getFactory(backendFactory));
+			} else {
+				rrdDb = new RrdDb(path, readOnly);
 			}
 		}
 
-		private RrdDb loadExistingDb() throws IOException {
-			final RrdDb rrdDb;
+		private RrdDatabase(RrdDef def, String backendFactory) throws IOException {
 			if (backendFactory != null)
-				return new RrdDb(path, backendFactory);
+				rrdDb = new RrdDb(def, RrdBackendFactory.getFactory(backendFactory));
 			else
-				return new RrdDb(path);
-		}
-
-		private RrdDb createNewDb(RrdDef def) throws IOException {
-			final RrdDb rrdDb;
-			if (backendFactory != null)
-				return new RrdDb(def, RrdBackendFactory.getFactory(backendFactory));
-			else
-				return new RrdDb(def);
+				rrdDb = new RrdDb(def);
 		}
 
 		@Override

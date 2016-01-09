@@ -9,23 +9,24 @@
       "class": "com.qwazr.tools.Rrd4jTool",
       "path": "memory.rrd",
       "backendFactory": "MEMORY",
+      "step": 60,
       "datasources": [
         {
           "dsName": "freeMemory",
-          "dsType": "GAUGE",
-          "heartbeat": 60,
+          "dsType": "COUNTER",
+          "heartbeat": 120,
           "minValue": 0
         },
         {
           "dsName": "maxMemory",
-          "dsType": "GAUGE",
-          "heartbeat": 60,
+          "dsType": "COUNTER",
+          "heartbeat": 120,
           "minValue": 0
         },
         {
           "dsName": "totalMemory",
-          "dsType": "GAUGE",
-          "heartbeat": 60,
+          "dsType": "COUNTER",
+          "heartbeat": 120,
           "minValue": 0
         }
       ],
