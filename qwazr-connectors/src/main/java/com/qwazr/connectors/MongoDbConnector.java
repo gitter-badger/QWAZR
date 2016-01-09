@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class MongoDbConnector extends AbstractConnector {
 
 	private MongoClient mongoClient = null;
@@ -72,8 +71,8 @@ public class MongoDbConnector extends AbstractConnector {
 		List<ServerAddress> serverAddresses = new ArrayList();
 		for (MongoServerAddress server : servers) {
 			ServerAddress serverAddress = server.port == null ?
-							new ServerAddress(server.hostname) :
-							new ServerAddress(server.hostname, server.port);
+					new ServerAddress(server.hostname) :
+					new ServerAddress(server.hostname, server.port);
 			serverAddresses.add(serverAddress);
 		}
 		if (credentials == null || credentials.isEmpty()) {
@@ -82,7 +81,7 @@ public class MongoDbConnector extends AbstractConnector {
 			List<MongoCredential> mongoCredentials = new ArrayList<MongoCredential>(credentials.size());
 			for (MongoDbCredential credential : credentials)
 				mongoCredentials.add(MongoCredential.createMongoCRCredential(credential.username, credential.database,
-								credential.password.toCharArray()));
+						credential.password.toCharArray()));
 			mongoClient = new MongoClient(serverAddresses, mongoCredentials);
 		}
 
@@ -340,7 +339,7 @@ public class MongoDbConnector extends AbstractConnector {
 		 */
 		@Override
 		public <TResult> DistinctIterable<TResult> distinct(String fieldName, Bson filter,
-						Class<TResult> tResultClass) {
+				Class<TResult> tResultClass) {
 			return collection.distinct(fieldName, filter, tResultClass);
 		}
 
@@ -398,7 +397,7 @@ public class MongoDbConnector extends AbstractConnector {
 		 */
 		@Override
 		public <TResult> AggregateIterable<TResult> aggregate(List<? extends Bson> pipeline,
-						Class<TResult> tResultClass) {
+				Class<TResult> tResultClass) {
 			return collection.aggregate(pipeline, tResultClass);
 		}
 
@@ -415,7 +414,7 @@ public class MongoDbConnector extends AbstractConnector {
 		 */
 		@Override
 		public <TResult> MapReduceIterable<TResult> mapReduce(String mapFunction, String reduceFunction,
-						Class<TResult> tResultClass) {
+				Class<TResult> tResultClass) {
 			return collection.mapReduce(mapFunction, reduceFunction, tResultClass);
 		}
 
@@ -432,7 +431,7 @@ public class MongoDbConnector extends AbstractConnector {
 		 */
 		@Override
 		public BulkWriteResult bulkWrite(List<? extends WriteModel<? extends Document>> requests,
-						BulkWriteOptions options) {
+				BulkWriteOptions options) {
 			return collection.bulkWrite(requests, options);
 		}
 
@@ -469,7 +468,7 @@ public class MongoDbConnector extends AbstractConnector {
 		 */
 		public void insertOne(Map<String, Object> document, boolean bypassDocumentValidation) {
 			collection.insertOne(new Document(document),
-							new InsertOneOptions().bypassDocumentValidation(bypassDocumentValidation));
+					new InsertOneOptions().bypassDocumentValidation(bypassDocumentValidation));
 		}
 
 		/**
@@ -570,8 +569,8 @@ public class MongoDbConnector extends AbstractConnector {
 		}
 
 		public UpdateResult replaceOne(Map<String, Object> filter, Map<String, Object> replacement, boolean upsert) {
-			return collection.replaceOne(new Document(filter), new Document(replacement),
-							new UpdateOptions().upsert(upsert));
+			return collection
+					.replaceOne(new Document(filter), new Document(replacement), new UpdateOptions().upsert(upsert));
 		}
 
 		/**
@@ -620,7 +619,7 @@ public class MongoDbConnector extends AbstractConnector {
 
 		public UpdateResult updateMany(Map<String, Object> filter, Map<String, Object> update, boolean upsert) {
 			return collection
-							.updateMany(new Document(filter), new Document(update), new UpdateOptions().upsert(upsert));
+					.updateMany(new Document(filter), new Document(update), new UpdateOptions().upsert(upsert));
 		}
 
 		/**
@@ -772,7 +771,7 @@ public class MongoDbConnector extends AbstractConnector {
 		 */
 		@Override
 		public void renameCollection(MongoNamespace newCollectionNamespace,
-						RenameCollectionOptions renameCollectionOptions) {
+				RenameCollectionOptions renameCollectionOptions) {
 			collection.renameCollection(newCollectionNamespace, renameCollectionOptions);
 		}
 	}
@@ -801,7 +800,7 @@ public class MongoDbConnector extends AbstractConnector {
 
 		public MongoBulk addReplaceOne(Map<String, Object> filter, Map<String, Object> replacement, boolean upsert) {
 			add(new ReplaceOneModel(new Document(filter), new Document(replacement),
-							new UpdateOptions().upsert(upsert)));
+					new UpdateOptions().upsert(upsert)));
 			return this;
 		}
 
@@ -812,7 +811,7 @@ public class MongoDbConnector extends AbstractConnector {
 
 		public MongoBulk addUpdateOne(Map<String, Object> filter, Map<String, Object> replacement, boolean upsert) {
 			add(new UpdateOneModel(new Document(filter), new Document(replacement),
-							new UpdateOptions().upsert(upsert)));
+					new UpdateOptions().upsert(upsert)));
 			return this;
 		}
 
@@ -823,7 +822,7 @@ public class MongoDbConnector extends AbstractConnector {
 
 		public MongoBulk addUpdateMany(Map<String, Object> filter, Map<String, Object> replacement, boolean upsert) {
 			add(new UpdateManyModel(new Document(filter), new Document(replacement),
-							new UpdateOptions().upsert(upsert)));
+					new UpdateOptions().upsert(upsert)));
 			return this;
 		}
 	}

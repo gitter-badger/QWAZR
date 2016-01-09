@@ -16,7 +16,6 @@
 package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -29,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class HdfsConnector extends AbstractConnector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HdfsConnector.class);
@@ -154,7 +152,7 @@ public class HdfsConnector extends AbstractConnector {
 
 	public File readAsTempFile(Path path, String fileSuffix) throws IOException {
 		File localFile = File
-						.createTempFile("qwazr-hdfs-connector", fileSuffix == null ? StringUtils.EMPTY : fileSuffix);
+				.createTempFile("qwazr-hdfs-connector", fileSuffix == null ? StringUtils.EMPTY : fileSuffix);
 		return readAsFile(path, localFile);
 	}
 

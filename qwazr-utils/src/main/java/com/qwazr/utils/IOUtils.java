@@ -114,7 +114,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	}
 
 	public static final StringBuilder copy(InputStream inputStream, StringBuilder sb, String charsetName,
-					boolean bCloseInputStream) throws IOException {
+			boolean bCloseInputStream) throws IOException {
 		if (inputStream == null)
 			return sb;
 		if (sb == null)
@@ -155,14 +155,14 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 	}
 
-	public interface CloseableContext {
+	public interface CloseableContext extends Closeable {
 
 		<T extends AutoCloseable> T add(T autoCloseable);
 
 		void close(AutoCloseable autoCloseable);
 	}
 
-	public static class CloseableList implements CloseableContext, Closeable {
+	public static class CloseableList implements CloseableContext {
 
 		private final LinkedHashSet<AutoCloseable> autoCloseables;
 
@@ -195,7 +195,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 
 	}
-
+	
 	/**
 	 * Extract the content of a file to a string
 	 *

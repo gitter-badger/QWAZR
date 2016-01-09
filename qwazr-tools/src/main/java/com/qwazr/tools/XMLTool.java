@@ -15,7 +15,6 @@
  **/
 package com.qwazr.tools;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.jamesmurty.utils.XMLBuilder2;
 import com.qwazr.utils.IOUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -35,7 +34,6 @@ import javax.xml.bind.Marshaller;
 import javax.xml.parsers.*;
 import java.io.*;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class XMLTool extends AbstractTool {
 
 	private static final Logger logger = LoggerFactory.getLogger(XMLTool.class);
@@ -90,7 +88,7 @@ public class XMLTool extends AbstractTool {
 	 * @throws IOException                  if any I/O error occurs
 	 */
 	public void parseStream(ScriptObjectMirror jsObject, InputStream input)
-					throws ParserConfigurationException, SAXException, IOException {
+			throws ParserConfigurationException, SAXException, IOException {
 		DefaultHandler defaultHandler = (DefaultHandler) ScriptUtils.convert(jsObject, DefaultHandler.class);
 		SAXParser saxParser = saxParserFactory.newSAXParser();
 		saxParser.parse(input, defaultHandler);
@@ -106,7 +104,7 @@ public class XMLTool extends AbstractTool {
 	 * @throws ParserConfigurationException if any XML error occurs
 	 */
 	public void parseFile(ScriptObjectMirror jsObject, String path)
-					throws IOException, SAXException, ParserConfigurationException {
+			throws IOException, SAXException, ParserConfigurationException {
 		InputStream in = new BufferedInputStream(new FileInputStream(path));
 		try {
 			parseStream(jsObject, in);

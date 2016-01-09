@@ -43,6 +43,27 @@
       "password": "test"
     },
     {
+      "name": "mybatis_default",
+      "class": "com.qwazr.connectors.MybatisConnector",
+      "properties": {
+        "driver": "com.mysql.jdbc.Driver",
+        "url": "jdbc:mysql://localhost:3306/test?autoReconnect=true",
+        "username": "test",
+        "password": "test"
+      }
+    },
+    {
+      "name": "mybatis_file",
+      "class": "com.qwazr.connectors.MybatisConnector",
+      "configuration_file": "src/main/resources/com/qwazr/connectors/mybatis/default-config.xml",
+      "properties": {
+        "driver": "com.mysql.jdbc.Driver",
+        "url": "jdbc:mysql://localhost:3306/test?autoReconnect=true",
+        "username": "test",
+        "password": "test"
+      }
+    },
+    {
       "name": "mongo",
       "class": "com.qwazr.connectors.MongoDbConnector",
       "servers": [

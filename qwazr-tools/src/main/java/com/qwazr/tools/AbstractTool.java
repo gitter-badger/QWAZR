@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.io.File;
+import java.io.IOException;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 @JsonSubTypes({ @Type(value = ArchiverTool.class), @Type(value = CSVTool.class), @Type(value = FreeMarkerTool.class),
@@ -29,7 +30,7 @@ public abstract class AbstractTool {
 
 	public final String name = null;
 
-	public abstract void load(File parentDir);
+	public abstract void load(File parentDir) throws IOException;
 
 	public abstract void unload();
 }
