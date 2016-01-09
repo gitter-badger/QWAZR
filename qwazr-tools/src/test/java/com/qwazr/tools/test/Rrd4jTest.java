@@ -17,7 +17,7 @@ package com.qwazr.tools.test;
 
 import com.qwazr.tools.Rrd4jTool;
 import com.qwazr.utils.IOUtils;
-import com.sun.tools.javac.util.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 import org.rrd4j.core.RrdDb;
 import org.rrd4j.core.Sample;
@@ -29,7 +29,7 @@ public class Rrd4jTest extends AbstractToolsTest {
 	@Test
 	public void rrd4j() throws IOException {
 		Rrd4jTool rrd_memory = getToolManager().get("rrd_memory");
-		Assert.checkNonNull(rrd_memory);
+		Assert.assertNotNull(rrd_memory);
 		IOUtils.CloseableList closeables = new IOUtils.CloseableList();
 		try {
 			RrdDb rrdDb = rrd_memory.getDb(closeables);
