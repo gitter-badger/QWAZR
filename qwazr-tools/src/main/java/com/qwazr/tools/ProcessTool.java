@@ -15,7 +15,6 @@
  **/
 package com.qwazr.tools;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.ScriptUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
@@ -27,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProcessTool extends AbstractTool {
 
 	final public List<String> commands = null;
@@ -43,7 +41,7 @@ public class ProcessTool extends AbstractTool {
 	}
 
 	public Process execute(File workingDirectory, List<String> commandAndArgs, Map<String, String> env, File outputFile,
-					File errorFile) throws IOException {
+			File errorFile) throws IOException {
 
 		List<String> commandsAndArgs = new ArrayList<String>();
 		if (commandAndArgs != null && !commandAndArgs.isEmpty())

@@ -16,22 +16,22 @@
 package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.IOUtils.CloseableContext;
+import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class MybatisConnector extends AbstractPasswordConnector {
 
 	private static final Logger logger = LoggerFactory.getLogger(MybatisConnector.class);
@@ -44,12 +44,17 @@ public class MybatisConnector extends AbstractPasswordConnector {
 
 	private SqlSessionFactory sqlSessionFactory = null;
 
+	private final static String default_configuration = "com/qwazr/connectors/mybatis/default-config.xml";
+
 	@Override
-	public void load(File data_directory) throws FileNotFoundException {
-		Objects.requireNonNull(configuration_file, "The configuration_path property is missing");
-		File configurationFile = new File(data_directory, configuration_file);
-		if (!configurationFile.exists())
-			throw new RuntimeException("The configurationFile " + configuration_file + " does not exist");
+	public void load(File data_directory) throws IOException {
+		final File configurationFile;
+		if (configuration_file != null) {
+			configurationFile = new File(configuration_file);
+			if (!configurationFile.exists())
+				throw new RuntimeException("The configuration file " + configuration_file + " does not exist");
+		} else
+			configurationFile = null;
 		final Properties props;
 		if (properties != null) {
 			props = new Properties();
@@ -57,21 +62,25 @@ public class MybatisConnector extends AbstractPasswordConnector {
 		} else
 			props = null;
 		final SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
-		FileInputStream fis = new FileInputStream(configurationFile);
+		final InputStream inputStream;
+		if (configurationFile != null)
+			inputStream = new FileInputStream(configurationFile);
+		else
+			inputStream = Resources.getResourceAsStream(default_configuration);
 		try {
 			if (environment != null) {
 				if (props != null)
-					sqlSessionFactory = builder.build(fis, environment, props);
+					sqlSessionFactory = builder.build(inputStream, environment, props);
 				else
-					sqlSessionFactory = builder.build(fis, environment);
+					sqlSessionFactory = builder.build(inputStream, environment);
 			} else {
 				if (props != null)
-					sqlSessionFactory = builder.build(fis, props);
+					sqlSessionFactory = builder.build(inputStream, props);
 				else
-					sqlSessionFactory = builder.build(fis);
+					sqlSessionFactory = builder.build(inputStream);
 			}
 		} finally {
-			IOUtils.close(fis);
+			IOUtils.close(inputStream);
 		}
 	}
 

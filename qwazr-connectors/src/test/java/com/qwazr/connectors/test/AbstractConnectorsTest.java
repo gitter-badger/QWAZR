@@ -15,18 +15,15 @@
  **/
 package com.qwazr.connectors.test;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwazr.connectors.ConnectorManager;
 import com.qwazr.connectors.ConnectorManagerImpl;
 
 import java.io.File;
 import java.io.IOException;
 
-public class ConnectorsTestContext {
+public abstract class AbstractConnectorsTest {
 
-	static synchronized ConnectorManager getConnectorManager()
-					throws IOException {
+	final protected ConnectorManager getConnectorManager() throws IOException {
 		if (ConnectorManagerImpl.getInstance() != null)
 			return ConnectorManagerImpl.getInstance();
 		ConnectorManagerImpl.load(new File("src/test/resources"));

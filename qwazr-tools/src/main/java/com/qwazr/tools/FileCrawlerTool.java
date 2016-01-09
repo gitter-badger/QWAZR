@@ -15,12 +15,10 @@
  **/
 package com.qwazr.tools;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import java.io.File;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class FileCrawlerTool extends AbstractTool {
 
 	@Override

@@ -16,7 +16,6 @@
 package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.directory.api.ldap.model.constants.LdapSecurityConstants;
@@ -39,7 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class LdapConnector extends AbstractPasswordConnector {
 
 	private static final Logger logger = LoggerFactory.getLogger(LdapConnector.class);
@@ -85,7 +83,7 @@ public class LdapConnector extends AbstractPasswordConnector {
 	}
 
 	public Entry auth(LdapConnection connection, String user_filter, String password)
-					throws LdapException, CursorException {
+			throws LdapException, CursorException {
 		Entry entry = getEntry(connection, user_filter);
 		if (entry == null)
 			throw new LdapException("User not found");
@@ -96,7 +94,7 @@ public class LdapConnector extends AbstractPasswordConnector {
 	}
 
 	public List<Entry> search(LdapConnection connection, String filter, int start, int rows)
-					throws LdapException, CursorException {
+			throws LdapException, CursorException {
 		connection.bind();
 
 		SearchRequest request = new SearchRequestImpl();
@@ -151,7 +149,7 @@ public class LdapConnector extends AbstractPasswordConnector {
 	}
 
 	public void createUser(LdapConnection connection, String dn, String clearPassword, ScriptObjectMirror attrs)
-					throws LdapException {
+			throws LdapException {
 		connection.bind();
 		Entry entry = new DefaultEntry(dn + ", " + base_dn);
 		if (clearPassword != null)
@@ -177,10 +175,10 @@ public class LdapConnector extends AbstractPasswordConnector {
 	}
 
 	public void updatePassword(LdapConnection connection, String dn, String passwordAttribute, String clearPassword)
-					throws LdapException {
+			throws LdapException {
 		connection.bind();
 		Modification changePassword = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
-						passwordAttribute, getShaPassword(clearPassword));
+				passwordAttribute, getShaPassword(clearPassword));
 		connection.modify(dn + ", " + base_dn, changePassword);
 	}
 

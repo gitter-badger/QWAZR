@@ -16,13 +16,11 @@
 package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.mail.*;
 
 import java.io.File;
 import java.util.Map;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class EmailConnector extends AbstractPasswordConnector {
 
 	public final String hostname = null;

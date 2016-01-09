@@ -16,7 +16,6 @@
 package com.qwazr.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -34,7 +33,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class XPathTool extends AbstractTool {
 
 	private final static XPathFactory xPathFactory = XPathFactory.newInstance();
@@ -124,7 +122,7 @@ public class XPathTool extends AbstractTool {
 		}
 
 		private Object xpath(String xpath_expression, Object object, QName xPathResult)
-						throws XPathExpressionException {
+				throws XPathExpressionException {
 			if (object == null)
 				object = document;
 			XPathExpression xPathExpression = getXPathExpression(xpath_expression);

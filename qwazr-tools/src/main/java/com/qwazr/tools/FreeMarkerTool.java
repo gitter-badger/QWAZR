@@ -30,7 +30,6 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 
 	public final String output_encoding;
@@ -106,7 +105,7 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	}
 
 	public void template(String templatePath, Map<String, Object> dataModel, HttpServletResponse response)
-					throws TemplateException, IOException {
+			throws TemplateException, IOException {
 		if (response.getContentType() == null)
 			response.setContentType(default_content_type == null ? DEFAULT_CONTENT_TYPE : default_content_type);
 		response.setCharacterEncoding(DEFAULT_CHARSET);
@@ -115,7 +114,7 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	}
 
 	public void template(String templatePath, HttpServletRequest request, HttpServletResponse response)
-					throws IOException, TemplateException {
+			throws IOException, TemplateException {
 		Map<String, Object> variables = new HashMap<String, Object>();
 		variables.put("request", request);
 		variables.put("session", request.getSession());

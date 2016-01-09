@@ -16,15 +16,16 @@
 package com.qwazr.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class CSVTool extends AbstractTool {
 
 	public enum Format {
@@ -63,7 +64,7 @@ public class CSVTool extends AbstractTool {
 
 	@JsonIgnore
 	public CSVPrinter getNewPrinter(CSVFormat format, Appendable appendable, IOUtils.CloseableContext closeable)
-					throws IOException {
+			throws IOException {
 		CSVPrinter printer = new CSVPrinter(appendable, format);
 		if (closeable != null)
 			closeable.add(printer);
@@ -85,7 +86,7 @@ public class CSVTool extends AbstractTool {
 
 	@JsonIgnore
 	public CSVParser getNewParser(CSVFormat format, Reader reader, IOUtils.CloseableContext closeable)
-					throws IOException {
+			throws IOException {
 		CSVParser parser = new CSVParser(reader, format);
 		if (closeable != null)
 			closeable.add(parser);

@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.sql.SQLException;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class DatabaseConnector extends AbstractPasswordConnector {
 
 	private static final Logger logger = LoggerFactory.getLogger(DatabaseConnector.class);
@@ -110,7 +109,7 @@ public class DatabaseConnector extends AbstractPasswordConnector {
 
 			}
 		} catch (InstantiationException | IllegalAccessException
-						| ClassNotFoundException e) {
+				| ClassNotFoundException e) {
 			logger.error(e.getMessage(), e);
 			throw new RuntimeException(e);
 		}
@@ -142,7 +141,7 @@ public class DatabaseConnector extends AbstractPasswordConnector {
 
 	@JsonIgnore
 	public Transaction getConnection(CloseableContext context, boolean autoCommit, int transactionIsolation)
-					throws SQLException {
+			throws SQLException {
 		Transaction transaction = connectionManager.getNewTransaction(autoCommit, transactionIsolation);
 		return context.add(transaction);
 	}

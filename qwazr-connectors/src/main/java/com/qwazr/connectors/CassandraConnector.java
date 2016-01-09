@@ -18,7 +18,6 @@ package com.qwazr.connectors;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.cassandra.CassandraCluster;
 import com.qwazr.utils.cassandra.CassandraSession;
 import org.apache.commons.io.IOUtils;
@@ -27,7 +26,6 @@ import java.io.File;
 import java.util.List;
 import java.util.UUID;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class CassandraConnector extends AbstractPasswordConnector {
 
 	public final List<String> hosts = null;
@@ -49,7 +47,7 @@ public class CassandraConnector extends AbstractPasswordConnector {
 	@Override
 	public void load(File dataDir) {
 		cluster = new CassandraCluster(login, password, hosts, timeout_connect_ms, timeout_read_ms, timeout_pool_ms,
-						pool_connections);
+				pool_connections);
 	}
 
 	@Override

@@ -15,14 +15,12 @@
  **/
 package com.qwazr.tools;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils;
 
 import java.io.*;
 import java.util.Objects;
 import java.util.Properties;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class PropertiesTool extends AbstractTool {
 
 	final public String path = null;

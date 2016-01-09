@@ -15,7 +15,6 @@
  **/
 package com.qwazr.connectors;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.database.TableServiceImpl;
 import com.qwazr.database.model.ColumnDefinition;
 import io.undertow.security.idm.Account;
@@ -31,7 +30,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class TableRealmConnector extends AbstractConnector implements IdentityManager {
 
 	public final String table_name = null;
@@ -49,14 +47,11 @@ public class TableRealmConnector extends AbstractConnector implements IdentityMa
 		if (!tables.contains(table_name)) {
 			tableService.createTable(table_name, null, true);
 			tableService.addColumn(table_name, login_column,
-							new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED), null,
-							true);
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED), null, true);
 			tableService.addColumn(table_name, password_column,
-							new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED), null,
-							true);
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED), null, true);
 			tableService.addColumn(table_name, roles_column,
-							new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED), null,
-							true);
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED), null, true);
 		}
 		columns = new HashSet<String>();
 		columns.add(password_column);
