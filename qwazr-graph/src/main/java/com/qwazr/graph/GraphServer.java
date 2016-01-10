@@ -16,7 +16,6 @@
 package com.qwazr.graph;
 
 import com.qwazr.cluster.ClusterServer;
-import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.database.store.DatabaseException;
 import com.qwazr.utils.server.AbstractServer;
@@ -102,7 +101,6 @@ public class GraphServer extends AbstractServer {
 	public static void main(String[] args) throws IOException, ParseException, ServletException, InstantiationException,
 					IllegalAccessException {
 		new GraphServer().start(args);
-		ClusterManager.INSTANCE.registerMe(SERVICE_NAME_GRAPH);
 	}
 
 }

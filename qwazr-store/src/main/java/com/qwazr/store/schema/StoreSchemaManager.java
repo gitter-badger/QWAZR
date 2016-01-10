@@ -143,20 +143,22 @@ public class StoreSchemaManager extends DirectoryJsonManager<StoreSchemaDefiniti
 		if (schemaDefinition.nodes != null) {
 			if (schemaDefinition.nodes.length != schemaDefinition.replication_factor)
 				throw new ServerException(Status.NOT_ACCEPTABLE,
-								"The number of replicated nodes is not correct: " + schemaDefinition.nodes.length
-												+ " versus " + schemaDefinition.replication_factor);
+						"The number of replicated nodes is not correct: " + schemaDefinition.nodes.length + " versus "
+								+ schemaDefinition.replication_factor);
 			for (String[] nodes : schemaDefinition.nodes)
 				if (nodes == null || nodes.length != schemaDefinition.distribution_factor)
-					throw new ServerException(Status.NOT_ACCEPTABLE, "The number of distributed nodes is not correct: "
-									+ schemaDefinition.distribution_factor + " was expected.");
+					throw new ServerException(Status.NOT_ACCEPTABLE,
+							"The number of distributed nodes is not correct: " + schemaDefinition.distribution_factor
+									+ " was expected.");
 			return;
 		}
 
 		// We retrieve the list of all available store nodes
-		String[] nodes = ClusterManager.INSTANCE.getActiveNodes(StoreServer.SERVICE_NAME_STORE);
+		String[] nodes = ClusterManager
+				.getActiveNodes(ClusterManager.INSTANCE.getNodeSetCacheService(StoreServer.SERVICE_NAME_STORE));
 		if (nodes == null || nodes.length < nodesNumber)
 			throw new ServerException(Status.NOT_ACCEPTABLE,
-							"Not enough store servers to handle the request: " + nodesNumber + " nodes expected.");
+					"Not enough store servers to handle the request: " + nodesNumber + " nodes expected.");
 
 		// We select the nodes using Murmur3 hashing
 		Charset charset = Charset.defaultCharset();

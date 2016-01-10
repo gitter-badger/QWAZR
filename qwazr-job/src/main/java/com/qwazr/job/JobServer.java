@@ -16,7 +16,6 @@
 package com.qwazr.job;
 
 import com.qwazr.cluster.ClusterServer;
-import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.connectors.ConnectorManagerImpl;
 import com.qwazr.job.scheduler.SchedulerManager;
@@ -109,10 +108,9 @@ public class JobServer extends AbstractServer {
 	}
 
 	public static void main(String[] args)
-					throws IOException, ParseException, ServletException, SchedulerException, InstantiationException,
-					IllegalAccessException {
+			throws IOException, ParseException, ServletException, SchedulerException, InstantiationException,
+			IllegalAccessException {
 		new JobServer().start(args);
-		ClusterManager.INSTANCE.registerMe(SERVICE_NAME_SCHEDULER, SERVICE_NAME_SCRIPT);
 	}
 
 	@Override
