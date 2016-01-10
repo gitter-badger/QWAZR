@@ -60,6 +60,7 @@ public class ServerConfiguration {
 	}
 
 	public final Set<ServiceEnum> services;
+	public final Set<String> groups;
 
 	public final Integer scheduler_max_threads;
 
@@ -77,6 +78,15 @@ public class ServerConfiguration {
 					throw new IllegalArgumentException("Unknown service in QWAZR_SERVICES: " + service);
 				}
 			}
+		}
+		String groups_env = System.getenv("QWAZR_GROUPS");
+		if (StringUtils.isEmpty(groups_env)) {
+			groups = null;
+		} else {
+			groups = new HashSet<String>();
+			String[] groups_array = StringUtils.split(groups_env, ',');
+			for (String group : groups_array)
+				groups.add(group);
 		}
 		String s = System.getenv("QWAZR_SCHEDULER_MAX_THREADS");
 		scheduler_max_threads = StringUtils.isEmpty(s) ? 100 : Integer.parseInt(s);

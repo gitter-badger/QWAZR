@@ -90,7 +90,6 @@ public class StoreServer extends AbstractServer {
 	public static void main(String[] args) throws IOException, ParseException, ServletException, InstantiationException,
 					IllegalAccessException {
 		new StoreServer().start(args);
-		ClusterManager.INSTANCE.registerMe(SERVICE_NAME_STORE);
 	}
 
 	@Override

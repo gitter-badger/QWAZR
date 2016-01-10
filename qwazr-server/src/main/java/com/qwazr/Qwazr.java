@@ -18,6 +18,7 @@ package com.qwazr;
 import com.qwazr.ServerConfiguration.ServiceEnum;
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.cluster.service.ClusterNodeJson;
 import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.connectors.AbstractConnector;
 import com.qwazr.connectors.ConnectorManagerImpl;
@@ -213,7 +214,8 @@ public class Qwazr extends AbstractServer {
 			Qwazr server = new Qwazr();
 			server.start(args);
 			// Register the services
-			ClusterManager.INSTANCE.registerMe(services.keySet());
+			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services.keySet(),
+					serverConfiguration.groups));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);

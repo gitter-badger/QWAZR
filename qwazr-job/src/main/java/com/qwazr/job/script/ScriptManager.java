@@ -105,9 +105,9 @@ public class ScriptManager {
 	}
 
 	private ScriptRunThread getNewScriptRunThread(String scriptPath, Map<String, ?> objects)
-					throws ServerException, IOException {
+			throws ServerException, IOException {
 		ScriptRunThread scriptRunThread = new ScriptRunThread(scriptEngine, getScriptFile(scriptPath), objects,
-						ConnectorManagerImpl.getInstance(), ToolsManagerImpl.getInstance());
+				ConnectorManagerImpl.getInstance(), ToolsManagerImpl.getInstance());
 		addScriptRunThread(scriptPath, scriptRunThread);
 		return scriptRunThread;
 	}
@@ -183,8 +183,8 @@ public class ScriptManager {
 		if (!ClusterManager.INSTANCE.isCluster())
 			return new ScriptServiceImpl();
 		return new ScriptMultiClient(clientExecutorService,
-						ClusterManager.INSTANCE.getClusterClient().getActiveNodes(JobServer.SERVICE_NAME_SCRIPT),
-						msTimeout);
+				ClusterManager.INSTANCE.getClusterClient().getActiveNodesByService(JobServer.SERVICE_NAME_SCRIPT),
+				msTimeout);
 	}
 
 	void getSemaphores(Collection<String> semaphores) {
