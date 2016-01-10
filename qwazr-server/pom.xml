@@ -56,11 +56,15 @@
         </dependency>
         <dependency>
             <groupId>com.qwazr</groupId>
-            <artifactId>qwazr-job</artifactId>
+            <artifactId>qwazr-scripts</artifactId>
         </dependency>
         <dependency>
             <groupId>com.qwazr</groupId>
             <artifactId>qwazr-crawlers</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qwazr</groupId>
+            <artifactId>qwazr-scheduler</artifactId>
         </dependency>
         <dependency>
             <groupId>com.qwazr</groupId>
@@ -249,7 +253,7 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>rpm-maven-plugin</artifactId>
                 <configuration>
-                    <license>Apache 2 (c) 2014-2015, Emmanuel Keller / QWAZR</license>
+                    <license>Apache 2 (c) 2014-2016, Emmanuel Keller / QWAZR</license>
                     <group>Application/Internet</group>
                     <packager>QWAZR</packager>
                     <version>

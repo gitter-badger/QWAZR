@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.job.script;
-
-import com.qwazr.job.JobServer;
+package com.qwazr.scripts;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
@@ -23,7 +21,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.Map;
 import java.util.Set;
 
-@RolesAllowed(JobServer.SERVICE_NAME_SCRIPT)
+@RolesAllowed(ScriptsServer.SERVICE_NAME_SCRIPT)
 @Path("/scripts")
 public interface ScriptServiceInterface {
 

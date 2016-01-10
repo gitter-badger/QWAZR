@@ -31,9 +31,10 @@ import com.qwazr.extractor.ExtractorServer;
 import com.qwazr.extractor.ExtractorServiceImpl;
 import com.qwazr.graph.GraphServer;
 import com.qwazr.graph.GraphServiceImpl;
-import com.qwazr.job.JobServer;
-import com.qwazr.job.scheduler.SchedulerServiceImpl;
-import com.qwazr.job.script.ScriptServiceImpl;
+import com.qwazr.scheduler.SchedulerServer;
+import com.qwazr.scheduler.SchedulerServiceImpl;
+import com.qwazr.scripts.ScriptServiceImpl;
+import com.qwazr.scripts.ScriptsServer;
 import com.qwazr.search.SearchServer;
 import com.qwazr.search.index.IndexServiceImpl;
 import com.qwazr.store.StoreServer;
@@ -114,7 +115,7 @@ public class Qwazr extends AbstractServer {
 	@Override
 	public void defineOptions(Options options) {
 		super.defineOptions(options);
-		options.addOption(JobServer.THREADS_OPTION);
+		options.addOption(SchedulerServer.THREADS_OPTION);
 	}
 
 	@Override
@@ -144,7 +145,7 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.scripts.isActive(serverConfiguration)) {
-			JobServer.loadScript(currentDataDir);
+			ScriptsServer.loadScript(currentDataDir);
 			services.add(ServiceEnum.scripts.name(), ScriptServiceImpl.class);
 		}
 
@@ -179,9 +180,9 @@ public class Qwazr extends AbstractServer {
 		ToolsManagerImpl.load(currentDataDir);
 		services.add(ServiceEnum.tools.name(), ToolsServiceImpl.class);
 
-		// Scheduler is last, because it may immediatly execute a script
+		// Scheduler is last, because it may immediatly execute a scripts
 		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
-			JobServer.loadScheduler(currentDataDir, serverConfiguration.getSchedulerMaxThreads());
+			SchedulerServer.loadScheduler(currentDataDir, serverConfiguration.getSchedulerMaxThreads());
 			services.add(ServiceEnum.schedulers.name(), SchedulerServiceImpl.class);
 		}
 	}

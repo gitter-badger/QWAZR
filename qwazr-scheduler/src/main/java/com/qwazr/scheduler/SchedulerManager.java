@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.job.scheduler;
+package com.qwazr.scheduler;
 
 import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.job.JobServer;
-import com.qwazr.job.script.ScriptManager;
-import com.qwazr.job.script.ScriptRunStatus;
+import com.qwazr.scripts.ScriptManager;
+import com.qwazr.scripts.ScriptRunStatus;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.ServerException;
 import org.apache.commons.io.filefilter.FileFileFilter;
@@ -53,7 +52,7 @@ public class SchedulerManager {
 
 	private SchedulerManager(File rootDirectory, int maxThreads)
 			throws IOException, SchedulerException, ServerException {
-		schedulersDirectory = new File(rootDirectory, JobServer.SERVICE_NAME_SCHEDULER);
+		schedulersDirectory = new File(rootDirectory, SchedulerServer.SERVICE_NAME_SCHEDULER);
 		if (!schedulersDirectory.exists())
 			schedulersDirectory.mkdir();
 

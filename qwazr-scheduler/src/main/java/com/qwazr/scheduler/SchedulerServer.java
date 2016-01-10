@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.job;
+package com.qwazr.scheduler;
 
 import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.connectors.ConnectorManagerImpl;
-import com.qwazr.job.scheduler.SchedulerManager;
-import com.qwazr.job.scheduler.SchedulerServiceImpl;
-import com.qwazr.job.script.ScriptManager;
-import com.qwazr.job.script.ScriptServiceImpl;
 import com.qwazr.tools.ToolsManagerImpl;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
@@ -40,33 +36,31 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-public class JobServer extends AbstractServer {
+public class SchedulerServer extends AbstractServer {
 
 	public final static String SERVICE_NAME_SCHEDULER = "schedulers";
-	public final static String SERVICE_NAME_SCRIPT = "scripts";
 
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 
 	static {
 		serverDefinition.defaultWebApplicationTcpPort = 9098;
-		serverDefinition.mainJarPath = "qwazr-job.jar";
+		serverDefinition.mainJarPath = "qwazr-scheduler.jar";
 		serverDefinition.defaultDataDirName = "qwazr";
 	}
 
 	public final static Option THREADS_OPTION = new Option("t", "maxthreads", true, "The maximum of threads");
 
-	private JobServer() {
+	private SchedulerServer() {
 		super(serverDefinition);
 	}
 
-	@ApplicationPath("/job")
-	public static class JobApplication extends RestApplication {
+	@ApplicationPath("/")
+	public static class SchedulerApplication extends RestApplication {
 
 		@Override
 		public Set<Class<?>> getClasses() {
 			Set<Class<?>> classes = super.getClasses();
 			classes.add(ClusterServiceImpl.class);
-			classes.add(ScriptServiceImpl.class);
 			classes.add(SchedulerServiceImpl.class);
 			return classes;
 		}
@@ -85,10 +79,6 @@ public class JobServer extends AbstractServer {
 		maxThreads = Integer.parseInt(THREADS_OPTION.getValue("1000"));
 	}
 
-	public static void loadScript(File dataDir) throws IOException {
-		ScriptManager.load(dataDir);
-	}
-
 	public static void loadScheduler(File dataDirectory, int maxThreads) throws IOException {
 		try {
 			SchedulerManager.load(dataDirectory, maxThreads);
@@ -103,19 +93,18 @@ public class JobServer extends AbstractServer {
 		ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
 		ConnectorManagerImpl.load(currentDataDir);
 		ToolsManagerImpl.load(currentDataDir);
-		loadScript(currentDataDir);
 		loadScheduler(currentDataDir, maxThreads);
 	}
 
 	public static void main(String[] args)
 			throws IOException, ParseException, ServletException, SchedulerException, InstantiationException,
 			IllegalAccessException {
-		new JobServer().start(args);
+		new SchedulerServer().start(args);
 	}
 
 	@Override
-	protected Class<JobApplication> getRestApplication() {
-		return JobApplication.class;
+	protected Class<SchedulerApplication> getRestApplication() {
+		return SchedulerApplication.class;
 	}
 
 	@Override

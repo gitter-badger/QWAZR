@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.crawler.web;
+package com.qwazr.scripts;
 
 import com.qwazr.cluster.ClusterServer;
-import com.qwazr.crawler.web.manager.WebCrawlerManager;
-import com.qwazr.crawler.web.service.WebCrawlerServiceImpl;
-import com.qwazr.scripts.ScriptManager;
-import com.qwazr.scripts.ScriptServiceImpl;
+import com.qwazr.cluster.service.ClusterServiceImpl;
+import com.qwazr.connectors.ConnectorManagerImpl;
+import com.qwazr.tools.ToolsManagerImpl;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
 import com.qwazr.utils.server.ServletApplication;
 import io.undertow.security.idm.IdentityManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
+import org.quartz.SchedulerException;
 
 import javax.servlet.ServletException;
 import javax.ws.rs.ApplicationPath;
@@ -33,28 +33,29 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-public class WebCrawlerServer extends AbstractServer {
+public class ScriptsServer extends AbstractServer {
 
-	public final static String SERVICE_NAME_WEBCRAWLER = "webcrawler";
+	public final static String SERVICE_NAME_SCRIPT = "scripts";
 
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 
 	static {
-		serverDefinition.defaultWebApplicationTcpPort = 9097;
-		serverDefinition.mainJarPath = "qwazr-crawler.jar";
+		serverDefinition.defaultWebApplicationTcpPort = 9098;
+		serverDefinition.mainJarPath = "qwazr-scripts.jar";
+		serverDefinition.defaultDataDirName = "qwazr";
 	}
 
-	private WebCrawlerServer() {
+	private ScriptsServer() {
 		super(serverDefinition);
 	}
 
 	@ApplicationPath("/")
-	public static class WebCrawlerApplication extends RestApplication {
+	public static class ScriptsApplication extends RestApplication {
 
 		@Override
 		public Set<Class<?>> getClasses() {
 			Set<Class<?>> classes = super.getClasses();
-			classes.add(WebCrawlerServiceImpl.class);
+			classes.add(ClusterServiceImpl.class);
 			classes.add(ScriptServiceImpl.class);
 			return classes;
 		}
@@ -64,26 +65,28 @@ public class WebCrawlerServer extends AbstractServer {
 	public void commandLine(CommandLine cmd) throws IOException, ParseException {
 	}
 
-	public static void load(AbstractServer server) throws IOException {
-		File dataDir = server.getCurrentDataDir();
-		WebCrawlerManager.load(server, dataDir);
+	public static void loadScript(File dataDir) throws IOException {
+		ScriptManager.load(dataDir);
 	}
 
 	@Override
 	public void load() throws IOException {
-		ClusterServer.load(getWebServicePublicAddress(), getCurrentDataDir());
-		ScriptManager.load(getCurrentDataDir());
-		load(this);
+		File currentDataDir = getCurrentDataDir();
+		ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
+		ConnectorManagerImpl.load(currentDataDir);
+		ToolsManagerImpl.load(currentDataDir);
+		loadScript(currentDataDir);
 	}
 
 	public static void main(String[] args)
-			throws IOException, ParseException, ServletException, InstantiationException, IllegalAccessException {
-		new WebCrawlerServer().start(args);
+			throws IOException, ParseException, ServletException, SchedulerException, InstantiationException,
+			IllegalAccessException {
+		new ScriptsServer().start(args);
 	}
 
 	@Override
-	protected Class<WebCrawlerApplication> getRestApplication() {
-		return WebCrawlerApplication.class;
+	protected Class<ScriptsApplication> getRestApplication() {
+		return ScriptsApplication.class;
 	}
 
 	@Override
