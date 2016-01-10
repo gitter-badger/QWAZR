@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.job.script;
+package com.qwazr.scripts;
 
 import com.datastax.driver.core.utils.UUIDs;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.connectors.ConnectorManager;
-import com.qwazr.job.script.ScriptRunStatus.ScriptState;
+import com.qwazr.scripts.ScriptRunStatus.ScriptState;
 import com.qwazr.tools.ToolsManager;
 import com.qwazr.utils.IOUtils;
 import org.slf4j.Logger;
@@ -57,7 +57,7 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 	private final File scriptFile;
 
 	ScriptRunThread(ScriptEngine scriptEngine, File scriptFile, Map<String, ?> bindings, ConnectorManager connectors,
-					ToolsManager tools) {
+			ToolsManager tools) {
 		uuid = UUIDs.timeBased().toString();
 		state = ScriptState.ready;
 		startTime = null;
@@ -138,7 +138,7 @@ public class ScriptRunThread extends SimpleScriptContext implements Runnable {
 
 	public ScriptRunStatus getStatus() {
 		return new ScriptRunStatus(ClusterManager.INSTANCE.myAddress, scriptFile.getName(), uuid, state, startTime,
-						endTime, bindings == null ? null : bindings.keySet(), exception);
+				endTime, bindings == null ? null : bindings.keySet(), exception);
 	}
 
 	boolean hasExpired(long currentTime) {

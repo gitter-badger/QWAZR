@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.job.scheduler;
+package com.qwazr.scheduler;
 
 import com.qwazr.utils.server.ServerException;
 import org.quartz.SchedulerException;
@@ -61,7 +61,7 @@ public class SchedulerServiceImpl implements SchedulerServiceInterface {
 			SchedulerManager.INSTANCE.setScheduler(scheduler_name, scheduler);
 			return schedulerStatus;
 		} catch (WebApplicationException | IOException | SchedulerException
-						| URISyntaxException | ServerException e) {
+				| URISyntaxException | ServerException e) {
 			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}

@@ -10,10 +10,11 @@ that require both distributed processes and fail-over abilities.
 What do you get (production ready) ?
 ------------------------------------
 
-This project is a work in progress. The current version of QWAZR (1.0) comes with the following services:
+This project is a work in progress. The current version of QWAZR (1.0.1) comes with the following services:
 
 - [Webapps](qwazr-webapps) : A model-view-controller application server,
-- [Job](qwazr-job): A scheduler and distributed JAVA/Javascript execution service,
+- [Scheduler](qwazr-scheduler): A multi-master scheduler,
+- [Scripts](qwazr-scripts): A distributed JAVA/Javascript execution service,
 - [Connectors](qwazr-connectors) : A set of connectors to link your application to the outside world
 (Cassandra, MongoDB, MySQL, HDFS, LDAP, FTP, etc.),
 - [Tools](qwazr-tools) : A set of tools for data management (language tools, markdown to HTML converter,
@@ -21,7 +22,8 @@ Freemarker, XML parser and writer, etc.).
 - [Crawlers](qwazr-crawlers) : A distributed (web) crawler,
 - [Extractor](qwazr-extractor) : Text extraction from various kinds of binaries files,
 - [Search](qwazr-search): Full-text indexation and search based on Lucene,
-- [Database](qwazr-database): A key/value database based on LevelDB.
+- [Database](qwazr-database): A NoSQL key/value database based on LevelDB.
+- [Cluster](qwazr-cluster) : Manages the cluster's nodes.
 
 Getting started
 ---------------
@@ -58,8 +60,7 @@ The purpose of this Wiki.
 
 #### Releasing the last modules:
 - [Graph](qwazr-graph) : A graph engine,
-- [Store](qwazr-store): A file storage system with distribution and replication support,
-- [Cluster](qwazr-cluster) : Manages the cluster's nodes.
+- [Store](qwazr-store): A file management service with distribution and replication support,
 
 Open Source & contributions
 ---------------------------

@@ -73,7 +73,8 @@
         <module>qwazr-database</module>
         <module>qwazr-extractor</module>
         <module>qwazr-graph</module>
-        <module>qwazr-job</module>
+        <module>qwazr-scripts</module>
+        <module>qwazr-scheduler</module>
         <module>qwazr-search</module>
         <module>qwazr-store</module>
         <module>qwazr-tools</module>
@@ -115,7 +116,12 @@
             </dependency>
             <dependency>
                 <groupId>com.qwazr</groupId>
-                <artifactId>qwazr-job</artifactId>
+                <artifactId>qwazr-scripts</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qwazr</groupId>
+                <artifactId>qwazr-scheduler</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

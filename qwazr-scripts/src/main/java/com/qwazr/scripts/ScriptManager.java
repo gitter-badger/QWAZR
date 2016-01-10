@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.job.script;
+package com.qwazr.scripts;
 
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.connectors.ConnectorManagerImpl;
-import com.qwazr.job.JobServer;
 import com.qwazr.store.data.StoreDataManager;
 import com.qwazr.tools.ToolsManagerImpl;
 import com.qwazr.utils.LockUtils.ReadWriteLock;
@@ -183,7 +182,7 @@ public class ScriptManager {
 		if (!ClusterManager.INSTANCE.isCluster())
 			return new ScriptServiceImpl();
 		return new ScriptMultiClient(clientExecutorService,
-				ClusterManager.INSTANCE.getClusterClient().getActiveNodesByService(JobServer.SERVICE_NAME_SCRIPT),
+				ClusterManager.INSTANCE.getClusterClient().getActiveNodesByService(ScriptsServer.SERVICE_NAME_SCRIPT),
 				msTimeout);
 	}
 
@@ -213,7 +212,7 @@ public class ScriptManager {
 		semaphoreMapLock.w.lock();
 		try {
 			if (logger.isInfoEnabled())
-				logger.info("Register semaphore: " + semaphore_id + " to script: " + script_id);
+				logger.info("Register semaphore: " + semaphore_id + " to scripts: " + script_id);
 			Set<String> owners = semaphoreMap.get(semaphore_id);
 			if (owners == null) {
 				owners = new HashSet<String>();
@@ -229,7 +228,7 @@ public class ScriptManager {
 		semaphoreMapLock.w.lock();
 		try {
 			if (logger.isInfoEnabled())
-				logger.info("Unregister semaphore: " + semaphore_id + " to script: " + script_id);
+				logger.info("Unregister semaphore: " + semaphore_id + " to scripts: " + script_id);
 			Set<String> owners = semaphoreMap.get(semaphore_id);
 			if (owners == null)
 				return;

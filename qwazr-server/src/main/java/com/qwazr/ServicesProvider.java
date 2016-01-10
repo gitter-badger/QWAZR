@@ -27,8 +27,8 @@ import com.qwazr.crawler.web.service.WebCrawlerServiceInterface;
 import com.qwazr.extractor.ExtractorServiceImpl;
 import com.qwazr.extractor.ExtractorServiceInterface;
 import com.qwazr.extractor.ParserManager;
-import com.qwazr.job.JobServer;
-import com.qwazr.job.script.ScriptMultiClient;
+import com.qwazr.scripts.ScriptMultiClient;
+import com.qwazr.scripts.ScriptsServer;
 import com.qwazr.search.SearchServer;
 import com.qwazr.search.index.IndexMultiClient;
 import com.qwazr.search.index.IndexServiceImpl;
@@ -105,7 +105,7 @@ public class ServicesProvider extends AbstractConnector {
 	@JsonIgnore
 	public ScriptMultiClient getNewScriptClient(Integer msTimeout) throws URISyntaxException {
 		return new ScriptMultiClient(executorService,
-				ClusterManager.INSTANCE.getClusterClient().getActiveNodesByService(JobServer.SERVICE_NAME_SCRIPT),
+				ClusterManager.INSTANCE.getClusterClient().getActiveNodesByService(ScriptsServer.SERVICE_NAME_SCRIPT),
 				msTimeout);
 	}
 
