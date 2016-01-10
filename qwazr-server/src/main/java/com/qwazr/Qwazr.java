@@ -37,6 +37,7 @@ import com.qwazr.scripts.ScriptServiceImpl;
 import com.qwazr.scripts.ScriptsServer;
 import com.qwazr.search.SearchServer;
 import com.qwazr.search.index.IndexServiceImpl;
+import com.qwazr.semaphores.SemaphoresManager;
 import com.qwazr.store.StoreServer;
 import com.qwazr.store.data.StoreMasterDataService;
 import com.qwazr.store.schema.StoreMasterSchemaService;
@@ -142,6 +143,10 @@ public class Qwazr extends AbstractServer {
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
 			WebappServer.load(executorService, currentDataDir);
 			services.add(ServiceEnum.webapps.name(), WebappManagerServiceImpl.class);
+		}
+
+		if (ServiceEnum.semaphores.isActive(serverConfiguration)) {
+			services.add(ServiceEnum.semaphores.name(), SemaphoresManager.load(executorService));
 		}
 
 		if (ServiceEnum.scripts.isActive(serverConfiguration)) {
