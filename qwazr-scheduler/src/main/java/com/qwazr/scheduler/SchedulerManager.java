@@ -37,14 +37,28 @@ import java.util.TreeMap;
 
 public class SchedulerManager {
 
+	public static final String SERVICE_NAME_SCHEDULER = "schedulers";
+
 	private static final Logger logger = LoggerFactory.getLogger(SchedulerManager.class);
 
-	public static volatile SchedulerManager INSTANCE = null;
+	static SchedulerManager INSTANCE = null;
 
-	public static void load(File directory, int maxThreads) throws IOException, SchedulerException, ServerException {
+	public static synchronized Class<? extends SchedulerServiceInterface> load(File directory, int maxThreads)
+			throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new SchedulerManager(directory, maxThreads);
+		try {
+			INSTANCE = new SchedulerManager(directory, maxThreads);
+			return SchedulerServiceImpl.class;
+		} catch (ServerException | SchedulerException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static SchedulerManager getInstance() {
+		if (INSTANCE == null)
+			throw new RuntimeException("The scheduler service is not enabled");
+		return INSTANCE;
 	}
 
 	private final File schedulersDirectory;
@@ -52,7 +66,7 @@ public class SchedulerManager {
 
 	private SchedulerManager(File rootDirectory, int maxThreads)
 			throws IOException, SchedulerException, ServerException {
-		schedulersDirectory = new File(rootDirectory, SchedulerServer.SERVICE_NAME_SCHEDULER);
+		schedulersDirectory = new File(rootDirectory, SERVICE_NAME_SCHEDULER);
 		if (!schedulersDirectory.exists())
 			schedulersDirectory.mkdir();
 
@@ -82,7 +96,7 @@ public class SchedulerManager {
 			return map;
 		for (File file : files)
 			if (!file.isHidden())
-				map.put(file.getName(), ClusterManager.INSTANCE.myAddress + "/schedulers/" + file.getName());
+				map.put(file.getName(), ClusterManager.getInstance().myAddress + "/schedulers/" + file.getName());
 		return map;
 	}
 
@@ -136,7 +150,8 @@ public class SchedulerManager {
 	ScriptRunStatus executeScheduler(SchedulerDefinition scheduler)
 			throws IOException, ServerException, URISyntaxException {
 		logger.info("execute " + scheduler.script_path);
-		return ScriptManager.INSTANCE.getNewClient(null).runScriptVariables(scheduler.script_path, scheduler.variables);
+		return ScriptManager.getInstance().getNewClient(null)
+				.runScriptVariables(scheduler.script_path, scheduler.variables);
 	}
 
 	ScriptRunStatus executeScheduler(String scheduler_name) throws IOException, ServerException, URISyntaxException {

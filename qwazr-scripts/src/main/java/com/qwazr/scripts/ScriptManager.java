@@ -35,22 +35,31 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class ScriptManager {
 
+	public static final String SERVICE_NAME_SCRIPT = "scripts";
+
 	private static final Logger logger = LoggerFactory.getLogger(ScriptManager.class);
 
-	public static volatile ScriptManager INSTANCE = null;
+	static ScriptManager INSTANCE = null;
 
-	public static void load(File directory) throws IOException {
+	public synchronized static Class<? extends ScriptServiceInterface> load(ExecutorService executorService,
+			File directory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
-			INSTANCE = new ScriptManager(directory);
+			INSTANCE = new ScriptManager(executorService, directory);
+			return ScriptServiceImpl.class;
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
+	}
+
+	public static ScriptManager getInstance() {
+		if (INSTANCE == null)
+			throw new RuntimeException("The scripts service is not enabled");
+		return INSTANCE;
 	}
 
 	private final ScriptEngine scriptEngine;
@@ -58,22 +67,16 @@ public class ScriptManager {
 	private final ReadWriteLock runsMapLock = new ReadWriteLock();
 	private final HashMap<String, ScriptRunThread> runsMap;
 
-	private final ReadWriteLock semaphoreMapLock = new ReadWriteLock();
-	private final HashMap<String, Set<String>> semaphoreMap;
+	private final ExecutorService executorService;
 
-	private final ExecutorService scriptExecutorService;
-	private final ExecutorService clientExecutorService;
-
-	private ScriptManager(File rootDirectory) throws IOException, URISyntaxException {
+	private ScriptManager(ExecutorService executorService, File rootDirectory) throws IOException, URISyntaxException {
 
 		// Load Nashorn
 		ScriptEngineManager manager = new ScriptEngineManager();
 		scriptEngine = manager.getEngineByName("nashorn");
 
 		runsMap = new HashMap<String, ScriptRunThread>();
-		semaphoreMap = new HashMap<String, Set<String>>();
-		scriptExecutorService = Executors.newFixedThreadPool(100);
-		clientExecutorService = Executors.newFixedThreadPool(8);
+		this.executorService = executorService;
 	}
 
 	private File getScriptFile(String scriptPath) throws ServerException {
@@ -124,7 +127,7 @@ public class ScriptManager {
 		if (logger.isInfoEnabled())
 			logger.info("Run async: " + scriptPath);
 		ScriptRunThread scriptRunThread = getNewScriptRunThread(scriptPath, objects);
-		scriptExecutorService.execute(scriptRunThread);
+		executorService.execute(scriptRunThread);
 		expireScriptRunThread();
 		return scriptRunThread.getStatus();
 	}
@@ -179,65 +182,11 @@ public class ScriptManager {
 	}
 
 	public ScriptServiceInterface getNewClient(Integer msTimeout) throws URISyntaxException {
-		if (!ClusterManager.INSTANCE.isCluster())
+		if (!ClusterManager.getInstance().isCluster())
 			return new ScriptServiceImpl();
-		return new ScriptMultiClient(clientExecutorService,
-				ClusterManager.INSTANCE.getClusterClient().getActiveNodesByService(ScriptsServer.SERVICE_NAME_SCRIPT),
+		return new ScriptMultiClient(executorService,
+				ClusterManager.getInstance().getClusterClient().getActiveNodesByService(SERVICE_NAME_SCRIPT),
 				msTimeout);
-	}
-
-	void getSemaphores(Collection<String> semaphores) {
-		semaphoreMapLock.r.lock();
-		try {
-			semaphores.addAll(semaphoreMap.keySet());
-		} finally {
-			semaphoreMapLock.r.unlock();
-		}
-	}
-
-	void getSemaphoreOwners(String semaphore_id, Collection<String> owners) {
-		semaphoreMapLock.r.lock();
-		try {
-			Set<String> ows = semaphoreMap.get(semaphore_id);
-			if (ows == null)
-				return;
-			for (String owner : ows)
-				owners.add(owner);
-		} finally {
-			semaphoreMapLock.r.unlock();
-		}
-	}
-
-	void registerSemaphore(String semaphore_id, String script_id) {
-		semaphoreMapLock.w.lock();
-		try {
-			if (logger.isInfoEnabled())
-				logger.info("Register semaphore: " + semaphore_id + " to scripts: " + script_id);
-			Set<String> owners = semaphoreMap.get(semaphore_id);
-			if (owners == null) {
-				owners = new HashSet<String>();
-				semaphoreMap.put(semaphore_id, owners);
-			}
-			owners.add(script_id);
-		} finally {
-			semaphoreMapLock.w.unlock();
-		}
-	}
-
-	void unregisterSemaphore(String semaphore_id, String script_id) {
-		semaphoreMapLock.w.lock();
-		try {
-			if (logger.isInfoEnabled())
-				logger.info("Unregister semaphore: " + semaphore_id + " to scripts: " + script_id);
-			Set<String> owners = semaphoreMap.get(semaphore_id);
-			if (owners == null)
-				return;
-			owners.remove(script_id);
-			if (owners.isEmpty())
-				semaphoreMap.remove(semaphore_id);
-		} finally {
-			semaphoreMapLock.w.unlock();
-		}
 	}
 
 }

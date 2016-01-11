@@ -1,12 +1,12 @@
 /**
  * Copyright 2015-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,51 +15,35 @@
  */
 package com.qwazr.graph;
 
-import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
-
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response.Status;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.qwazr.graph.model.GraphDefinition;
-import com.qwazr.graph.model.GraphNode;
-import com.qwazr.graph.model.GraphNodeResult;
-import com.qwazr.graph.model.GraphRequest;
-import com.qwazr.graph.model.GraphResult;
+import com.qwazr.graph.model.*;
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class GraphMultiClient extends
-		JsonMultiClientAbstract<String, GraphSingleClient> implements
-		GraphServiceInterface {
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response.Status;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(GraphMultiClient.class);
+public class GraphMultiClient extends JsonMultiClientAbstract<String, GraphSingleClient>
+		implements GraphServiceInterface {
 
-	GraphMultiClient(ExecutorService executor, String[] urls, Integer msTimeOut)
-			throws URISyntaxException {
+	private static final Logger logger = LoggerFactory.getLogger(GraphMultiClient.class);
+
+	GraphMultiClient(ExecutorService executor, String[] urls, Integer msTimeOut) throws URISyntaxException {
 		super(executor, new GraphSingleClient[urls.length], urls, msTimeOut);
 	}
 
 	@Override
-	public Set<String> list(Integer msTimeOut, Boolean local) {
+	public Set<String> list() {
 
 		try {
-
-			if (local != null && local)
-				throw new ServerException(Status.NOT_IMPLEMENTED);
 
 			// We merge the result of all the nodes
 			TreeSet<String> globalSet = new TreeSet<String>();
@@ -70,7 +54,7 @@ public class GraphMultiClient extends
 
 					@Override
 					public void execute() throws Exception {
-						Set<String> set = client.list(msTimeOut, true);
+						Set<String> set = client.list();
 						synchronized (globalSet) {
 							if (set != null)
 								globalSet.addAll(set);
@@ -88,22 +72,16 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphDefinition createUpdateGraph(String graphName,
-			GraphDefinition graphDef, Integer msTimeOut, Boolean local) {
+	public GraphDefinition createUpdateGraph(String graphName, GraphDefinition graphDef) {
 
 		try {
 
-			if (local != null && local)
-				throw new ServerException(Status.NOT_IMPLEMENTED);
-
-			List<FunctionExceptionCatcher<GraphDefinition>> threads = new ArrayList<>(
-					size());
+			List<FunctionExceptionCatcher<GraphDefinition>> threads = new ArrayList<>(size());
 			for (GraphSingleClient client : this) {
 				threads.add(new FunctionExceptionCatcher<GraphDefinition>() {
 					@Override
 					public GraphResult execute() throws Exception {
-						return client.createUpdateGraph(graphName, graphDef,
-								msTimeOut, true);
+						return client.createUpdateGraph(graphName, graphDef);
 					}
 				});
 			}
@@ -117,14 +95,12 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphResult getGraph(String graphName, Integer msTimeOut,
-			Boolean local) {
-		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
-				logger);
+	public GraphResult getGraph(String graphName) {
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(logger);
 
 		for (GraphSingleClient client : this) {
 			try {
-				return client.getGraph(graphName, msTimeOut, true);
+				return client.getGraph(graphName);
 			} catch (WebApplicationException e) {
 				if (e.getResponse().getStatus() == 404)
 					logger.warn(e.getMessage(), e);
@@ -138,23 +114,17 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphDefinition deleteGraph(String graphName, Integer msTimeOut,
-			Boolean local) {
+	public GraphDefinition deleteGraph(String graphName) {
 
 		try {
 
-			if (local != null && local)
-				throw new ServerException(Status.NOT_IMPLEMENTED);
-
-			List<FunctionExceptionCatcher<GraphDefinition>> threads = new ArrayList<>(
-					size());
+			List<FunctionExceptionCatcher<GraphDefinition>> threads = new ArrayList<>(size());
 			for (GraphSingleClient client : this) {
 				threads.add(new FunctionExceptionCatcher<GraphDefinition>() {
 					@Override
 					public GraphDefinition execute() throws Exception {
 						try {
-							return client.deleteGraph(graphName, msTimeOut,
-									true);
+							return client.deleteGraph(graphName);
 						} catch (WebApplicationException e) {
 							if (e.getResponse().getStatus() == 404)
 								return null;
@@ -167,8 +137,7 @@ public class GraphMultiClient extends
 			ThreadUtils.invokeAndJoin(executor, threads);
 			GraphDefinition graphDef = ThreadUtils.getFirstResult(threads);
 			if (graphDef == null)
-				throw new ServerException(Status.NOT_FOUND, "Graph not found: "
-						+ graphName);
+				throw new ServerException(Status.NOT_FOUND, "Graph not found: " + graphName);
 			return graphDef;
 
 		} catch (Exception e) {
@@ -177,22 +146,19 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public Set<String> createUpdateNodes(String db_name,
-			LinkedHashMap<String, GraphNode> nodes, Boolean upsert) {
+	public Set<String> createUpdateNodes(String db_name, LinkedHashMap<String, GraphNode> nodes, Boolean upsert) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Long createUpdateNodes(String db_name, Boolean upsert,
-			InputStream inpustStream) {
+	public Long createUpdateNodes(String db_name, Boolean upsert, InputStream inpustStream) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public GraphNode createUpdateNode(String db_name, String node_id,
-			GraphNode node, Boolean upsert) {
+	public GraphNode createUpdateNode(String db_name, String node_id, GraphNode node, Boolean upsert) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -210,29 +176,25 @@ public class GraphMultiClient extends
 	}
 
 	@Override
-	public GraphNode createEdge(String db_name, String node_id,
-			String edge_type, String to_node_id) {
+	public GraphNode createEdge(String db_name, String node_id, String edge_type, String to_node_id) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public GraphNode deleteEdge(String db_name, String node_id,
-			String edge_type, String to_node_id) {
+	public GraphNode deleteEdge(String db_name, String node_id, String edge_type, String to_node_id) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List<GraphNodeResult> requestNodes(String db_name,
-			GraphRequest request) {
+	public List<GraphNodeResult> requestNodes(String db_name, GraphRequest request) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	protected GraphSingleClient newClient(String url, Integer msTimeOut)
-			throws URISyntaxException {
+	protected GraphSingleClient newClient(String url, Integer msTimeOut) throws URISyntaxException {
 		return new GraphSingleClient(url, msTimeOut);
 	}
 

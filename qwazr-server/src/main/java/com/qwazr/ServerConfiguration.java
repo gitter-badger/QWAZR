@@ -32,6 +32,8 @@ public class ServerConfiguration {
 
 		schedulers,
 
+		semaphores,
+
 		webapps,
 
 		search,

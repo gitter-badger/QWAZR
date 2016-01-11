@@ -74,6 +74,7 @@
         <module>qwazr-extractor</module>
         <module>qwazr-graph</module>
         <module>qwazr-scripts</module>
+        <module>qwazr-semaphores</module>
         <module>qwazr-scheduler</module>
         <module>qwazr-search</module>
         <module>qwazr-store</module>
@@ -132,6 +133,11 @@
             <dependency>
                 <groupId>com.qwazr</groupId>
                 <artifactId>qwazr-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qwazr</groupId>
+                <artifactId>qwazr-semaphores</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -350,11 +356,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire.version}</version>
             </plugin>
             <plugin>
                 <groupId>org.jasig.maven</groupId>

@@ -15,19 +15,18 @@
  */
 package com.qwazr.store.schema;
 
+import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.store.data.StoreDataManager;
+import com.qwazr.store.data.StoreDataReplicationClient;
+import com.qwazr.utils.server.ServerException;
+
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response.Status;
-
-import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.store.data.StoreDataManager;
-import com.qwazr.store.data.StoreDataReplicationClient;
-import com.qwazr.utils.server.ServerException;
 
 @Path("/store_schema") public class StoreMasterSchemaService implements StoreSchemaServiceInterface {
 
@@ -118,7 +117,7 @@ import com.qwazr.utils.server.ServerException;
 	    StoreSchemaMultiClient nameClient = getSchemaClient(msTimeout, local);
 	    if (nameClient == null) {
 		TreeMap<String, StoreSchemaRepairStatus> map = new TreeMap<String, StoreSchemaRepairStatus>();
-		map.put(ClusterManager.INSTANCE.myAddress,
+		map.put(ClusterManager.getInstance().myAddress,
 				StoreSchemaManager.INSTANCE.getSchemaInstance(schemaName).getRepairStatus());
 		return map;
 	    }
@@ -146,7 +145,7 @@ import com.qwazr.utils.server.ServerException;
 	    StoreSchemaMultiClient nameClient = getSchemaClient(msTimeout, local);
 	    if (nameClient == null) {
 		TreeMap<String, StoreSchemaRepairStatus> map = new TreeMap<String, StoreSchemaRepairStatus>();
-		map.put(ClusterManager.INSTANCE.myAddress,
+		map.put(ClusterManager.getInstance().myAddress,
 				StoreSchemaManager.INSTANCE.getSchemaInstance(schemaName).stopRepair());
 		return map;
 	    } else

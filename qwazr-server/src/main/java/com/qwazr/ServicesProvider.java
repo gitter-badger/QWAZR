@@ -20,20 +20,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.cluster.client.ClusterMultiClient;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.connectors.AbstractConnector;
-import com.qwazr.crawler.web.WebCrawlerServer;
 import com.qwazr.crawler.web.client.WebCrawlerMultiClient;
 import com.qwazr.crawler.web.client.WebCrawlerSingleClient;
+import com.qwazr.crawler.web.manager.WebCrawlerManager;
 import com.qwazr.crawler.web.service.WebCrawlerServiceInterface;
 import com.qwazr.extractor.ExtractorServiceImpl;
 import com.qwazr.extractor.ExtractorServiceInterface;
 import com.qwazr.extractor.ParserManager;
+import com.qwazr.scripts.ScriptManager;
 import com.qwazr.scripts.ScriptMultiClient;
-import com.qwazr.scripts.ScriptsServer;
-import com.qwazr.search.SearchServer;
-import com.qwazr.search.index.IndexMultiClient;
-import com.qwazr.search.index.IndexServiceImpl;
-import com.qwazr.search.index.IndexServiceInterface;
-import com.qwazr.search.index.IndexSingleClient;
+import com.qwazr.search.index.*;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -56,9 +52,9 @@ public class ServicesProvider extends AbstractConnector {
 	}
 
 	public ClusterMultiClient getCluster() {
-		if (ClusterManager.INSTANCE == null)
+		if (ClusterManager.getInstance() == null)
 			return null;
-		return ClusterManager.INSTANCE.getClusterClient();
+		return ClusterManager.getInstance().getClusterClient();
 	}
 
 	/**
@@ -83,11 +79,11 @@ public class ServicesProvider extends AbstractConnector {
 	 */
 	@JsonIgnore
 	public WebCrawlerServiceInterface getNewWebCrawlerClient(Integer msTimeout) throws URISyntaxException {
-		if (ClusterManager.INSTANCE.isCluster())
-			return new WebCrawlerMultiClient(ClusterManager.INSTANCE.getClusterClient()
-					.getActiveNodesByService(WebCrawlerServer.SERVICE_NAME_WEBCRAWLER), msTimeout);
+		if (ClusterManager.getInstance().isCluster())
+			return new WebCrawlerMultiClient(ClusterManager.getInstance().getClusterClient()
+					.getActiveNodesByService(WebCrawlerManager.SERVICE_NAME_WEBCRAWLER), msTimeout);
 		else
-			return new WebCrawlerSingleClient(ClusterManager.INSTANCE.myAddress, msTimeout);
+			return new WebCrawlerSingleClient(ClusterManager.getInstance().myAddress, msTimeout);
 	}
 
 	/**
@@ -104,15 +100,13 @@ public class ServicesProvider extends AbstractConnector {
 
 	@JsonIgnore
 	public ScriptMultiClient getNewScriptClient(Integer msTimeout) throws URISyntaxException {
-		return new ScriptMultiClient(executorService,
-				ClusterManager.INSTANCE.getClusterClient().getActiveNodesByService(ScriptsServer.SERVICE_NAME_SCRIPT),
-				msTimeout);
+		return new ScriptMultiClient(executorService, ClusterManager.getInstance().getClusterClient()
+				.getActiveNodesByService(ScriptManager.SERVICE_NAME_SCRIPT), msTimeout);
 	}
 
 	@JsonIgnore
 	public ExtractorServiceInterface getNewExtractorClient() {
-		if (ParserManager.INSTANCE == null)
-			throw new RuntimeException("Extractor service not available");
+		ParserManager.getInstance();
 		return new ExtractorServiceImpl();
 	}
 
@@ -120,14 +114,13 @@ public class ServicesProvider extends AbstractConnector {
 	public IndexServiceInterface getNewIndexClient(Boolean local, Integer msTimeout) throws URISyntaxException {
 		if (local != null && local)
 			return new IndexServiceImpl();
-		String[] nodes = ClusterManager.INSTANCE.getClusterClient()
-				.getActiveNodesByService(SearchServer.SERVICE_NAME_SEARCH);
+		String[] nodes = ClusterManager.getInstance().getClusterClient()
+				.getActiveNodesByService(IndexManager.SERVICE_NAME_SEARCH);
 		if (nodes == null)
 			throw new RuntimeException("Index service not available");
 		if (nodes.length == 1)
 			return new IndexSingleClient(nodes[0], msTimeout);
-		return new IndexMultiClient(executorService,
-				ClusterManager.INSTANCE.getClusterClient().getActiveNodesByService(SearchServer.SERVICE_NAME_SEARCH),
-				msTimeout);
+		return new IndexMultiClient(executorService, ClusterManager.getInstance().getClusterClient()
+				.getActiveNodesByService(IndexManager.SERVICE_NAME_SEARCH), msTimeout);
 	}
 }

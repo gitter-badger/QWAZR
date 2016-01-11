@@ -42,6 +42,7 @@ import javax.servlet.ServletException;
 import javax.ws.rs.ApplicationPath;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -62,37 +63,37 @@ public abstract class AbstractServer {
 	 * The user can change the TCP listening port
 	 */
 	public final static Option WEBAPP_TCP_PORT_OPTION = new Option("wp", "webapp-port", true,
-					"TCP port for web application");
+			"TCP port for web application");
 
 	/**
 	 * The user can change the TCP listening port
 	 */
 	public final static Option WEBSERVICE_TCP_PORT_OPTION = new Option("sp", "webservice-port", true,
-					"TCP port for the web service");
+			"TCP port for the web service");
 
 	/**
 	 * Set the listening host or IP address
 	 */
 	public final static Option LISTEN_ADDRESS_OPTION = new Option("l", "listen", true,
-					"Listening hostname or IP address");
+			"Listening hostname or IP address");
 
 	/**
 	 * Set the public address (in case of NAT)
 	 */
 	public final static Option PUBLIC_ADDRESS_OPTION = new Option("a", "public-address", true,
-					"The public hostname or IP address for node communication");
+			"The public hostname or IP address for node communication");
 
 	/**
 	 * The name of the REALM connector used for the webservice authentication
 	 */
 	public final static Option WEBSERVICE_REALM_OPTION = new Option("wsr", "ws-realm", true,
-					"The name of the REALM connector used by the web service");
+			"The name of the REALM connector used by the web service");
 
 	/**
 	 * The type of the webservice authentication
 	 */
 	public final static Option WEBSERVICE_AUTH_TYPE_OPTION = new Option("wsa", "ws-auth", true,
-					"The type of the authentication of the web service");
+			"The type of the authentication of the web service");
 
 	/**
 	 * Set the data directory
@@ -201,8 +202,8 @@ public abstract class AbstractServer {
 	 * @throws ParseException   if the command line parameters are not valid
 	 * @throws ServletException if the servlet configuration failed
 	 */
-	final public void start(String[] args) throws IOException, ParseException, ServletException, IllegalAccessException,
-					InstantiationException {
+	final public void start(String[] args)
+			throws IOException, ParseException, ServletException, IllegalAccessException, InstantiationException {
 
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 		Options options = new Options();
@@ -244,18 +245,18 @@ public abstract class AbstractServer {
 
 		// TCP port and listening adresss options
 		servletPort = cmd.hasOption(WEBAPP_TCP_PORT_OPTION.getOpt()) ?
-						Integer.parseInt(cmd.getOptionValue(WEBAPP_TCP_PORT_OPTION.getOpt())) :
-						serverDefinition.defaultWebApplicationTcpPort;
+				Integer.parseInt(cmd.getOptionValue(WEBAPP_TCP_PORT_OPTION.getOpt())) :
+				serverDefinition.defaultWebApplicationTcpPort;
 		restPort = cmd.hasOption(WEBSERVICE_TCP_PORT_OPTION.getOpt()) ?
-						Integer.parseInt(cmd.getOptionValue(WEBSERVICE_TCP_PORT_OPTION.getOpt())) :
-						serverDefinition.defaultWebServiceTcpPort;
+				Integer.parseInt(cmd.getOptionValue(WEBSERVICE_TCP_PORT_OPTION.getOpt())) :
+				serverDefinition.defaultWebServiceTcpPort;
 		currentListenAddress = cmd.hasOption(LISTEN_ADDRESS_OPTION.getOpt()) ?
-						cmd.getOptionValue(LISTEN_ADDRESS_OPTION.getOpt()) :
-						serverDefinition.defaultHostname;
+				cmd.getOptionValue(LISTEN_ADDRESS_OPTION.getOpt()) :
+				serverDefinition.defaultHostname;
 
 		currentPublicAddress = cmd.hasOption(PUBLIC_ADDRESS_OPTION.getOpt()) ?
-						cmd.getOptionValue(PUBLIC_ADDRESS_OPTION.getOpt()) :
-						null;
+				cmd.getOptionValue(PUBLIC_ADDRESS_OPTION.getOpt()) :
+				null;
 		if (StringUtils.isEmpty(currentPublicAddress))
 			currentPublicAddress = currentListenAddress;
 
@@ -277,7 +278,7 @@ public abstract class AbstractServer {
 			pathHandler.addPrefixPath(prefixPath, manager.start());
 			logger.info("Start the WEB server " + currentListenAddress + ":" + servletPort);
 			Builder servletBuilder = Undertow.builder().addHttpListener(servletPort, currentListenAddress)
-							.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(pathHandler);
+					.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(pathHandler);
 			servletBuilder.build().start();
 		}
 
@@ -290,7 +291,7 @@ public abstract class AbstractServer {
 			if (webServiceRealm != null) {
 				identityManager = getIdentityManager(webServiceRealm);
 				deploymentInfo.setIdentityManager(identityManager)
-								.setLoginConfig(new LoginConfig("BASIC", webServiceRealm));
+						.setLoginConfig(new LoginConfig("BASIC", webServiceRealm));
 				deploymentInfo.addInitParameter("resteasy.role.based.security", "true");
 			}
 			ServletContainer container = Servlets.defaultContainer();
@@ -304,7 +305,7 @@ public abstract class AbstractServer {
 			pathHandler.addPrefixPath(appPath.value(), httpHandler);
 			logger.info("Start the REST server " + currentListenAddress + ":" + restPort);
 			Builder restBuilder = Undertow.builder().addHttpListener(restPort, currentListenAddress)
-							.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
+					.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
 			restBuilder.build().start();
 		}
 	}
@@ -313,7 +314,7 @@ public abstract class AbstractServer {
 		handler = new AuthenticationCallHandler(handler);
 		handler = new AuthenticationConstraintHandler(handler);
 		final List<AuthenticationMechanism> mechanisms = Collections.<AuthenticationMechanism>singletonList(
-						new BasicAuthenticationMechanism(realm));
+				new BasicAuthenticationMechanism(realm));
 		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;
@@ -351,4 +352,9 @@ public abstract class AbstractServer {
 
 	protected abstract IdentityManager getIdentityManager(String realm) throws IOException;
 
+	public static void startServerMain(String className, String[] arguments) throws Exception {
+		Class<?> clazz = Class.forName(className);
+		Method method = clazz.getMethod("main");
+		method.invoke(null, arguments);
+	}
 }
