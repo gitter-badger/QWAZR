@@ -60,7 +60,7 @@ public class FullTest {
 		edge_types.add("buy");
 		GraphDefinition graphDef = new GraphDefinition(node_properties, edge_types);
 
-		HttpResponse response = Request.Put(BASE_URL + '/' + TEST_BASE)
+		HttpResponse response = Request.Post(BASE_URL + '/' + TEST_BASE)
 				.bodyString(JsonMapper.MAPPER.writeValueAsString(graphDef), APPLICATION_JSON_UTF8).connectTimeout(60000)
 				.socketTimeout(60000).execute().returnResponse();
 		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -73,7 +73,7 @@ public class FullTest {
 			node.properties = new HashMap<String, Object>();
 			node.properties.put("type", "product");
 			node.properties.put("name", "product" + i);
-			HttpResponse response = Request.Put(BASE_URL + '/' + TEST_BASE + "/node/p" + i)
+			HttpResponse response = Request.Post(BASE_URL + '/' + TEST_BASE + "/node/p" + i)
 					.bodyString(JsonMapper.MAPPER.writeValueAsString(node), APPLICATION_JSON_UTF8).connectTimeout(60000)
 					.socketTimeout(60000).execute().returnResponse();
 			Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -105,7 +105,7 @@ public class FullTest {
 				}
 				nodeMap.put("v" + (i + k), node);
 			}
-			HttpResponse response = Request.Put(BASE_URL + '/' + TEST_BASE + "/node")
+			HttpResponse response = Request.Post(BASE_URL + '/' + TEST_BASE + "/node")
 					.bodyString(JsonMapper.MAPPER.writeValueAsString(nodeMap), APPLICATION_JSON_UTF8)
 					.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -128,7 +128,7 @@ public class FullTest {
 				continue;
 			int productNodeId = RandomUtils.nextInt(PRODUCT_NUMBER / 2, PRODUCT_NUMBER);
 			HttpResponse response = Request
-					.Put(BASE_URL + '/' + TEST_BASE + "/node/v" + visitNodeId + "/edge/see/p" + productNodeId)
+					.Post(BASE_URL + '/' + TEST_BASE + "/node/v" + visitNodeId + "/edge/see/p" + productNodeId)
 					.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			if (response.getStatusLine().getStatusCode() == 500)
 				System.out.println(IOUtils.toString(response.getEntity().getContent()));
