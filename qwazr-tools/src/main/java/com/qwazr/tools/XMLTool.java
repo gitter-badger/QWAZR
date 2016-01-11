@@ -17,6 +17,7 @@ package com.qwazr.tools;
 
 import com.jamesmurty.utils.XMLBuilder2;
 import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.XmlMapper;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.api.scripting.ScriptUtils;
 import org.slf4j.Logger;
@@ -28,9 +29,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import javax.xml.parsers.*;
 import java.io.*;
 
@@ -165,9 +163,9 @@ public class XMLTool extends AbstractTool {
 	 *
 	 * @param object the object to serialize
 	 * @return an XML string which represent the object
-	 * @throws JAXBException if any serialisation error occurs
+	 * @throws IOException if any serialisation error occurs
 	 */
-	public String printXML(Object object) throws JAXBException {
+	public String printXML(Object object) throws IOException {
 		StringWriter sw = new StringWriter();
 		toXML(object, sw);
 		return sw.toString();
@@ -178,13 +176,14 @@ public class XMLTool extends AbstractTool {
 	 *
 	 * @param object the object to serialize
 	 * @param writer the destination writer
-	 * @throws JAXBException if any serialisation error occurs
+	 * @throws IOException if any serialisation error occurs
 	 */
-	public void toXML(Object object, Writer writer) throws JAXBException {
-		JAXBContext jaxbContext = JAXBContext.newInstance(object.getClass());
-		Marshaller marshaller = jaxbContext.createMarshaller();
-		StringWriter sw = new StringWriter();
-		marshaller.marshal(object, writer);
+	public void toXML(Object object, Writer writer) throws IOException {
+		//JAXBContext jaxbContext = JAXBContext.newInstance(object.getClass());
+		//Marshaller marshaller = jaxbContext.createMarshaller();
+		//StringWriter sw = new StringWriter();
+		//marshaller.marshal(object, writer);
+		XmlMapper.MAPPER.writeValue(writer, object);
 	}
 
 	private static class ToolErrorHandler implements ErrorHandler {
