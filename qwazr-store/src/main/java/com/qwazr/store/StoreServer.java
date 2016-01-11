@@ -58,7 +58,7 @@ public class StoreServer extends AbstractServer {
 		public Set<Class<?>> getClasses() {
 			Set<Class<?>> classes = super.getClasses();
 			classes.add(StoreNodeDataService.class);
-			if (ClusterManager.INSTANCE.isMaster()) {
+			if (ClusterManager.getInstance().isMaster()) {
 				classes.add(StoreMasterDataService.class);
 				classes.add(StoreMasterSchemaService.class);
 			}
@@ -76,7 +76,7 @@ public class StoreServer extends AbstractServer {
 		if (!storeDir.exists())
 			storeDir.mkdir();
 		StoreDataManager.load(storeDir);
-		if (ClusterManager.INSTANCE.isMaster())
+		if (ClusterManager.getInstance().isMaster())
 			StoreSchemaManager.load(storeDir);
 	}
 

@@ -45,13 +45,13 @@ public class TableRealmConnector extends AbstractConnector implements IdentityMa
 		tableService = new TableServiceImpl();
 		Set<String> tables = tableService.list(null, true);
 		if (!tables.contains(table_name)) {
-			tableService.createTable(table_name, null, true);
+			tableService.createTable(table_name);
 			tableService.addColumn(table_name, login_column,
-					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED), null, true);
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED));
 			tableService.addColumn(table_name, password_column,
-					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED), null, true);
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
 			tableService.addColumn(table_name, roles_column,
-					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED), null, true);
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
 		}
 		columns = new HashSet<String>();
 		columns.add(password_column);

@@ -34,20 +34,27 @@ public class SemaphoresManager {
 
 	private static final Logger logger = LoggerFactory.getLogger(SemaphoresManager.class);
 
-	static volatile SemaphoresManager INSTANCE = null;
+	static SemaphoresManager INSTANCE = null;
 
-	public static Class<? extends SemaphoresServiceInterface> load(ExecutorService executorService) throws IOException {
+	public synchronized static Class<? extends SemaphoresServiceInterface> load(ExecutorService executorService)
+			throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
 			INSTANCE = new SemaphoresManager(executorService);
-			if (ClusterManager.INSTANCE.isMaster())
+			if (ClusterManager.getInstance().isMaster())
 				return SemaphoresMasterServiceImpl.class;
 			else
 				return SemaphoresNodeServiceImpl.class;
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
+	}
+
+	public static SemaphoresManager getInstance() {
+		if (SemaphoresManager.INSTANCE == null)
+			throw new RuntimeException("The semaphore service is not enabled");
+		return SemaphoresManager.INSTANCE;
 	}
 
 	final ExecutorService executorService;
@@ -60,14 +67,8 @@ public class SemaphoresManager {
 		semaphoreMap = new HashMap<String, Set<String>>();
 	}
 
-	public static SemaphoresManager getInstance() {
-		if (SemaphoresManager.INSTANCE == null)
-			throw new RuntimeException("The semaphore service is not enabled");
-		return SemaphoresManager.INSTANCE;
-	}
-
 	public static SemaphoresServiceInterface getService() {
-		if (ClusterManager.INSTANCE.isCluster())
+		if (ClusterManager.getInstance().isCluster())
 			return new SemaphoresMasterServiceImpl();
 		getInstance();
 		return new SemaphoresNodeServiceImpl();

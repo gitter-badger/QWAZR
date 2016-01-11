@@ -16,27 +16,19 @@
 package com.qwazr;
 
 import com.qwazr.ServerConfiguration.ServiceEnum;
-import com.qwazr.cluster.ClusterServer;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterNodeJson;
 import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.connectors.AbstractConnector;
 import com.qwazr.connectors.ConnectorManagerImpl;
 import com.qwazr.connectors.ConnectorsServiceImpl;
-import com.qwazr.crawler.web.WebCrawlerServer;
-import com.qwazr.crawler.web.service.WebCrawlerServiceImpl;
-import com.qwazr.database.TableServer;
-import com.qwazr.database.TableServiceImpl;
-import com.qwazr.extractor.ExtractorServer;
-import com.qwazr.extractor.ExtractorServiceImpl;
-import com.qwazr.graph.GraphServer;
-import com.qwazr.graph.GraphServiceImpl;
-import com.qwazr.scheduler.SchedulerServer;
-import com.qwazr.scheduler.SchedulerServiceImpl;
-import com.qwazr.scripts.ScriptServiceImpl;
-import com.qwazr.scripts.ScriptsServer;
-import com.qwazr.search.SearchServer;
-import com.qwazr.search.index.IndexServiceImpl;
+import com.qwazr.crawler.web.manager.WebCrawlerManager;
+import com.qwazr.database.TableManager;
+import com.qwazr.extractor.ParserManager;
+import com.qwazr.graph.GraphManager;
+import com.qwazr.scheduler.SchedulerManager;
+import com.qwazr.scripts.ScriptManager;
+import com.qwazr.search.index.IndexManager;
 import com.qwazr.semaphores.SemaphoresManager;
 import com.qwazr.store.StoreServer;
 import com.qwazr.store.data.StoreMasterDataService;
@@ -45,11 +37,11 @@ import com.qwazr.tools.ToolsManagerImpl;
 import com.qwazr.tools.ToolsServiceImpl;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.RestApplication;
-import com.qwazr.webapps.WebappManagerServiceImpl;
-import com.qwazr.webapps.WebappServer;
-import com.qwazr.webapps.WebappServer.WebappApplication;
+import com.qwazr.webapps.WebappApplication;
+import com.qwazr.webapps.transaction.WebappManager;
 import io.undertow.security.idm.IdentityManager;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,10 +105,12 @@ public class Qwazr extends AbstractServer {
 		}
 	}
 
+	public final static Option THREADS_OPTION = new Option("t", "maxthreads", true, "The maximum of threads");
+
 	@Override
 	public void defineOptions(Options options) {
 		super.defineOptions(options);
-		options.addOption(SchedulerServer.THREADS_OPTION);
+		options.addOption(THREADS_OPTION);
 	}
 
 	@Override
@@ -130,19 +124,17 @@ public class Qwazr extends AbstractServer {
 
 		File currentDataDir = getCurrentDataDir();
 
-		ClusterServer.load(getWebServicePublicAddress(), currentDataDir);
+		ClusterManager.load(getWebServicePublicAddress(), currentDataDir);
 
 		services.add("welcome", WelcomeServiceImpl.class);
 		services.add("cluster", ClusterServiceImpl.class);
 
 		if (ServiceEnum.extractor.isActive(serverConfiguration)) {
-			ExtractorServer.loadParserManager();
-			services.add(ServiceEnum.extractor.name(), ExtractorServiceImpl.class);
+			services.add(ServiceEnum.extractor.name(), ParserManager.load());
 		}
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
-			WebappServer.load(executorService, currentDataDir);
-			services.add(ServiceEnum.webapps.name(), WebappManagerServiceImpl.class);
+			services.add(ServiceEnum.webapps.name(), WebappManager.load(executorService, currentDataDir));
 		}
 
 		if (ServiceEnum.semaphores.isActive(serverConfiguration)) {
@@ -150,28 +142,23 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.scripts.isActive(serverConfiguration)) {
-			ScriptsServer.loadScript(currentDataDir);
-			services.add(ServiceEnum.scripts.name(), ScriptServiceImpl.class);
+			services.add(ServiceEnum.scripts.name(), ScriptManager.load(executorService, currentDataDir));
 		}
 
 		if (ServiceEnum.webcrawler.isActive(serverConfiguration)) {
-			WebCrawlerServer.load(this);
-			services.add(ServiceEnum.webcrawler.name(), WebCrawlerServiceImpl.class);
+			services.add(ServiceEnum.webcrawler.name(), WebCrawlerManager.load());
 		}
 
 		if (ServiceEnum.search.isActive(serverConfiguration)) {
-			SearchServer.loadIndexManager(executorService, currentDataDir);
-			services.add(ServiceEnum.search.name(), IndexServiceImpl.class);
+			services.add(ServiceEnum.search.name(), IndexManager.load(executorService, currentDataDir));
 		}
 
 		if (ServiceEnum.graph.isActive(serverConfiguration)) {
-			GraphServer.load(currentDataDir);
-			services.add(ServiceEnum.graph.name(), GraphServiceImpl.class);
+			services.add(ServiceEnum.graph.name(), GraphManager.load(executorService, currentDataDir));
 		}
 
 		if (ServiceEnum.table.isActive(serverConfiguration)) {
-			TableServer.load(currentDataDir);
-			services.add(ServiceEnum.table.name(), TableServiceImpl.class);
+			services.add(ServiceEnum.table.name(), TableManager.load(executorService, currentDataDir));
 		}
 
 		if (ServiceEnum.store.isActive(serverConfiguration)) {
@@ -187,8 +174,8 @@ public class Qwazr extends AbstractServer {
 
 		// Scheduler is last, because it may immediatly execute a scripts
 		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
-			SchedulerServer.loadScheduler(currentDataDir, serverConfiguration.getSchedulerMaxThreads());
-			services.add(ServiceEnum.schedulers.name(), SchedulerServiceImpl.class);
+			services.add(ServiceEnum.schedulers.name(),
+					SchedulerManager.load(currentDataDir, serverConfiguration.getSchedulerMaxThreads()));
 		}
 	}
 
@@ -220,8 +207,9 @@ public class Qwazr extends AbstractServer {
 			Qwazr server = new Qwazr();
 			server.start(args);
 			// Register the services
-			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services.keySet(),
-					serverConfiguration.groups));
+			ClusterManager.getInstance().registerMe(
+					new ClusterNodeJson(ClusterManager.getInstance().myAddress, services.keySet(),
+							serverConfiguration.groups));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);

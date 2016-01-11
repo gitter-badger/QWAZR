@@ -51,7 +51,7 @@ public class WelcomeStatus {
 				Qwazr.logger.warn("No PATH annotation for " + clazz.getName());
 			return;
 		}
-		endpoints.add(ClusterManager.INSTANCE.myAddress + path.value());
+		endpoints.add(ClusterManager.getInstance().myAddress + path.value());
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)

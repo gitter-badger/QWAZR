@@ -21,7 +21,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.TreeMap;
 
-@RolesAllowed(SchedulerServer.SERVICE_NAME_SCHEDULER)
+@RolesAllowed(SchedulerManager.SERVICE_NAME_SCHEDULER)
 @Path("/schedulers")
 public interface SchedulerServiceInterface {
 

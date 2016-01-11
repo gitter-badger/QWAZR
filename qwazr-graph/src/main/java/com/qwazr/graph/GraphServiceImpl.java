@@ -39,51 +39,17 @@ public class GraphServiceImpl implements GraphServiceInterface {
 
 	private static final Logger logger = LoggerFactory.getLogger(GraphServiceImpl.class);
 
-	/**
-	 * Return the right client.
-	 *
-	 * @param msTimeOut
-	 *            a time out used for remote connection
-	 * @param local
-	 *            pass true to force a local connection
-	 * @return a remote client or null for local
-	 * @throws URISyntaxException
-	 *             thrown if the URI is wrong
-	 */
-	private GraphMultiClient getMultiClient(Integer msTimeOut, Boolean local) throws URISyntaxException {
-		if (local != null && local)
-			return null;
-		if (msTimeOut == null)
-			msTimeOut = 60000;
-		return GraphManager.INSTANCE.getMultiClient(msTimeOut);
+	@Override
+	public Set<String> list() {
+		return GraphManager.INSTANCE.nameSet();
 	}
 
 	@Override
-	public Set<String> list(Integer msTimeOut, Boolean local) {
-
-		// Read the bases present in the remote nodes
+	public GraphDefinition createUpdateGraph(String graphName, GraphDefinition graphDef) {
 		try {
-			GraphMultiClient client = getMultiClient(msTimeOut, local);
-			if (client == null)
-				return GraphManager.INSTANCE.nameSet();
-			else
-				return client.list(msTimeOut, local);
-		} catch (URISyntaxException e) {
-			throw ServerException.getJsonException(e);
-		}
-	}
-
-	@Override
-	public GraphDefinition createUpdateGraph(String graphName, GraphDefinition graphDef, Integer msTimeOut,
-					Boolean local) {
-		try {
-			GraphMultiClient client = getMultiClient(msTimeOut, local);
-			if (client == null) {
-				GraphManager.INSTANCE.createUpdateGraph(graphName, graphDef);
-			} else
-				client.createUpdateGraph(graphName, graphDef, msTimeOut, false);
+			GraphManager.INSTANCE.createUpdateGraph(graphName, graphDef);
 			return graphDef;
-		} catch (Exception e) {
+		} catch (IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -97,16 +63,12 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphResult getGraph(String graphName, Integer msTimeOut, Boolean local) {
+	public GraphResult getGraph(String graphName) {
 		try {
-			GraphMultiClient client = getMultiClient(msTimeOut, local);
-			if (client == null) {
-				GraphDefinition graphDef = getGraphOrNotFound(graphName);
-				GraphInstance graphInstance = GraphManager.INSTANCE.getGraphInstance(graphName);
-				return new GraphResult(graphDef, graphInstance.getSize());
-			} else
-				return client.getGraph(graphName, msTimeOut, false);
-		} catch (Exception e) {
+			GraphDefinition graphDef = getGraphOrNotFound(graphName);
+			GraphInstance graphInstance = GraphManager.INSTANCE.getGraphInstance(graphName);
+			return new GraphResult(graphDef, graphInstance.getSize());
+		} catch (ServerException | IOException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -119,14 +81,10 @@ public class GraphServiceImpl implements GraphServiceInterface {
 	}
 
 	@Override
-	public GraphDefinition deleteGraph(String graphName, Integer msTimeOut, Boolean local) {
+	public GraphDefinition deleteGraph(String graphName) {
 		try {
-			GraphMultiClient client = getMultiClient(msTimeOut, local);
-			if (client == null)
-				return deleteGraphLocal(graphName);
-			else
-				return client.deleteGraph(graphName, msTimeOut, false);
-		} catch (Exception e) {
+			return deleteGraphLocal(graphName);
+		} catch (IOException | URISyntaxException | ServerException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -137,7 +95,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		try {
 			GraphManager.INSTANCE.getGraphInstance(graphName).createUpdateNode(node_id, node, upsert);
 			return node;
-		} catch (Exception e) {
+		} catch (IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -148,7 +106,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		try {
 			GraphManager.INSTANCE.getGraphInstance(graphName).createUpdateNodes(nodes, upsert);
 			return nodes.keySet();
-		} catch (Exception e) {
+		} catch (URISyntaxException | IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -183,14 +141,14 @@ public class GraphServiceImpl implements GraphServiceInterface {
 				if (irs != null)
 					IOUtils.closeQuietly(irs);
 			}
-		} catch (Exception e) {
+		} catch (URISyntaxException | IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
 	}
 
 	private GraphNode getNodeOrNotFound(GraphInstance graphInstance, String node_id)
-					throws ServerException, IOException, URISyntaxException, DatabaseException {
+			throws ServerException, IOException, URISyntaxException, DatabaseException {
 		GraphNode node = graphInstance.getNode(node_id);
 		if (node != null)
 			return node;
@@ -202,7 +160,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		try {
 			GraphInstance graphInstance = GraphManager.INSTANCE.getGraphInstance(graphName);
 			return getNodeOrNotFound(graphInstance, node_id);
-		} catch (Exception e) {
+		} catch (URISyntaxException | IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -215,7 +173,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 			GraphNode node = getNodeOrNotFound(graphInstance, node_id);
 			graphInstance.deleteNode(node_id);
 			return node;
-		} catch (Exception e) {
+		} catch (URISyntaxException | IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -226,7 +184,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		try {
 			GraphInstance graphInstance = GraphManager.INSTANCE.getGraphInstance(graphName);
 			return graphInstance.createEdge(node_id, edge_type, to_node_id);
-		} catch (Exception e) {
+		} catch (IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -237,7 +195,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		try {
 			GraphInstance graphInstance = GraphManager.INSTANCE.getGraphInstance(graphName);
 			return graphInstance.deleteEdge(node_id, edge_type, to_node_id);
-		} catch (Exception e) {
+		} catch (URISyntaxException | IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}
@@ -248,7 +206,7 @@ public class GraphServiceImpl implements GraphServiceInterface {
 		try {
 			GraphInstance graphInstance = GraphManager.INSTANCE.getGraphInstance(graphName);
 			return graphInstance.request(request);
-		} catch (Exception e) {
+		} catch (URISyntaxException | IOException | ServerException | DatabaseException e) {
 			logger.warn(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
 		}

@@ -43,7 +43,7 @@ public class SemaphoresMasterServiceImpl implements SemaphoresServiceInterface {
 	}
 
 	private SemaphoresMultiClient getClient() throws URISyntaxException {
-		String[] urls = ClusterManager.INSTANCE.getClusterClient()
+		String[] urls = ClusterManager.getInstance().getClusterClient()
 				.getActiveNodesByService(SemaphoresManager.SERVICE_NAME_SEMAPHORES);
 		return new SemaphoresMultiClient(SemaphoresManager.INSTANCE.executorService, urls, null);
 	}

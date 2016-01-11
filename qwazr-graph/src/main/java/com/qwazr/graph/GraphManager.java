@@ -34,39 +34,49 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 
+	public final static String SERVICE_NAME_GRAPH = "graph";
+
 	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
 
-	public static volatile GraphManager INSTANCE = null;
+	static GraphManager INSTANCE = null;
 
 	public File directory;
 
-	public final ExecutorService executor;
+	final ExecutorService executorService;
 
 	private final Map<String, GraphInstance> graphMap;
 
-	public static void load(File directory) throws IOException, URISyntaxException, ServerException, DatabaseException {
+	public synchronized static Class<? extends GraphServiceInterface> load(ExecutorService executorService,
+			File dataDirectory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new GraphManager(directory);
-		for (String name : INSTANCE.nameSet())
-			INSTANCE.addNewInstance(name, INSTANCE.get(name));
+		File graphDirectory = new File(dataDirectory, SERVICE_NAME_GRAPH);
+		if (!graphDirectory.exists())
+			graphDirectory.mkdir();
+		try {
+			INSTANCE = new GraphManager(executorService, graphDirectory);
+			for (String name : INSTANCE.nameSet())
+				INSTANCE.addNewInstance(name, INSTANCE.get(name));
+			return GraphServiceImpl.class;
+		} catch (ServerException | DatabaseException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	private GraphManager(File directory) throws ServerException, IOException {
+	public static GraphManager getInstance() {
+		if (INSTANCE == null)
+			throw new RuntimeException("The graph service is not enabled");
+		return INSTANCE;
+	}
+
+	private GraphManager(ExecutorService executorService, File directory) throws ServerException, IOException {
 		super(directory, GraphDefinition.class);
+		this.executorService = executorService;
 		this.directory = directory;
 		graphMap = new HashMap<String, GraphInstance>();
-		executor = Executors.newFixedThreadPool(8);
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			@Override
-			public void run() {
-				executor.shutdown();
-			}
-		});
 	}
 
 	private GraphInstance addNewInstance(String graphName, GraphDefinition graphDef)
@@ -135,10 +145,10 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	}
 
 	GraphMultiClient getMultiClient(int msTimeOut) throws URISyntaxException {
-		ClusterMultiClient clusterClient = ClusterManager.INSTANCE.getClusterClient();
+		ClusterMultiClient clusterClient = ClusterManager.getInstance().getClusterClient();
 		if (clusterClient == null)
 			return null;
-		return new GraphMultiClient(executor, clusterClient.getActiveNodesByService(GraphServer.SERVICE_NAME_GRAPH),
+		return new GraphMultiClient(executorService, clusterClient.getActiveNodesByService(SERVICE_NAME_GRAPH),
 				msTimeOut);
 	}
 }
