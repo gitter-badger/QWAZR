@@ -42,7 +42,6 @@ import javax.servlet.ServletException;
 import javax.ws.rs.ApplicationPath;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -351,10 +350,4 @@ public abstract class AbstractServer {
 	protected abstract Class<? extends ServletApplication> getServletApplication();
 
 	protected abstract IdentityManager getIdentityManager(String realm) throws IOException;
-
-	public static void startServerMain(String className, String[] arguments) throws Exception {
-		Class<?> clazz = Class.forName(className);
-		Method method = clazz.getMethod("main");
-		method.invoke(null, arguments);
-	}
 }
