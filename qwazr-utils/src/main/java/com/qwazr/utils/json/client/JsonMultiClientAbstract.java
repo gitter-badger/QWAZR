@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,21 +15,19 @@
  */
 package com.qwazr.utils.json.client;
 
+import com.qwazr.utils.ExceptionUtils.ExceptionHolder;
+import org.apache.commons.lang3.RandomUtils;
+import org.slf4j.Logger;
+
+import javax.ws.rs.WebApplicationException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 
-import javax.ws.rs.WebApplicationException;
-
-import org.apache.commons.lang3.RandomUtils;
-import org.slf4j.Logger;
-
-import com.qwazr.utils.ExceptionUtils.ExceptionHolder;
-
 /**
- * 
+ *
  * This class represents a connection to a set of servers
  *
  * @param <K>
@@ -45,7 +43,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 
 	/**
 	 * Create a new multi client
-	 * 
+	 *
 	 * @param executor
 	 *            An executor service for parallels connections
 	 * @param clientArray
@@ -57,9 +55,8 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	 * @throws URISyntaxException
 	 *             thrown in case of wrong URI syntax
 	 */
-	protected JsonMultiClientAbstract(ExecutorService executor,
-			V[] clientArray, K[] clientKeys, Integer msTimeOut)
-			throws URISyntaxException {
+	protected JsonMultiClientAbstract(ExecutorService executor, V[] clientArray, K[] clientKeys, Integer msTimeOut)
+					throws URISyntaxException {
 		this.executor = executor;
 		clientsArray = clientArray;
 		clientsMap = new HashMap<K, V>();
@@ -70,7 +67,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 
 	/**
 	 * Create a new single client
-	 * 
+	 *
 	 * @param clientKey
 	 *            the key value of the single client
 	 * @param msTimeOut
@@ -79,8 +76,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	 * @throws URISyntaxException
 	 *             if any error occurs
 	 */
-	protected abstract V newClient(K clientKey, Integer msTimeOut)
-			throws URISyntaxException;
+	protected abstract V newClient(K clientKey, Integer msTimeOut) throws URISyntaxException;
 
 	@Override
 	public Iterator<V> iterator() {
@@ -89,7 +85,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 
 	/**
 	 * Fill a collection with the URLs of the clients
-	 * 
+	 *
 	 * @param clientKeyCollection
 	 *            The collection to fill
 	 */
@@ -114,7 +110,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param pos
 	 *            the position of the client
 	 * @return a json client
@@ -149,8 +145,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 
 	}
 
-	public class WebAppExceptionHolder extends
-			ExceptionHolder<WebApplicationException> {
+	public class WebAppExceptionHolder extends ExceptionHolder<WebApplicationException> {
 
 		public WebAppExceptionHolder(Logger logger) {
 			super(logger);

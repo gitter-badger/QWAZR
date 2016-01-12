@@ -81,7 +81,7 @@ public class ServicesProvider extends AbstractConnector {
 	public WebCrawlerServiceInterface getNewWebCrawlerClient(Integer msTimeout) throws URISyntaxException {
 		if (ClusterManager.getInstance().isCluster())
 			return new WebCrawlerMultiClient(ClusterManager.getInstance().getClusterClient()
-					.getActiveNodesByService(WebCrawlerManager.SERVICE_NAME_WEBCRAWLER), msTimeout);
+							.getActiveNodesByService(WebCrawlerManager.SERVICE_NAME_WEBCRAWLER, null), msTimeout);
 		else
 			return new WebCrawlerSingleClient(ClusterManager.getInstance().myAddress, msTimeout);
 	}
@@ -101,7 +101,7 @@ public class ServicesProvider extends AbstractConnector {
 	@JsonIgnore
 	public ScriptMultiClient getNewScriptClient(Integer msTimeout) throws URISyntaxException {
 		return new ScriptMultiClient(executorService, ClusterManager.getInstance().getClusterClient()
-				.getActiveNodesByService(ScriptManager.SERVICE_NAME_SCRIPT), msTimeout);
+						.getActiveNodesByService(ScriptManager.SERVICE_NAME_SCRIPT, null), msTimeout);
 	}
 
 	@JsonIgnore
@@ -115,12 +115,12 @@ public class ServicesProvider extends AbstractConnector {
 		if (local != null && local)
 			return new IndexServiceImpl();
 		String[] nodes = ClusterManager.getInstance().getClusterClient()
-				.getActiveNodesByService(IndexManager.SERVICE_NAME_SEARCH);
+						.getActiveNodesByService(IndexManager.SERVICE_NAME_SEARCH, null);
 		if (nodes == null)
 			throw new RuntimeException("Index service not available");
 		if (nodes.length == 1)
 			return new IndexSingleClient(nodes[0], msTimeout);
 		return new IndexMultiClient(executorService, ClusterManager.getInstance().getClusterClient()
-				.getActiveNodesByService(IndexManager.SERVICE_NAME_SEARCH), msTimeout);
+						.getActiveNodesByService(IndexManager.SERVICE_NAME_SEARCH, null), msTimeout);
 	}
 }
