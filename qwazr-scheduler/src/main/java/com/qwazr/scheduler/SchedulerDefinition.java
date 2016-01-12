@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import java.util.Map;
-import java.util.Set;
 
 @JsonInclude(Include.NON_EMPTY)
 public class SchedulerDefinition {
@@ -35,9 +34,9 @@ public class SchedulerDefinition {
 	public final String script_path;
 
 	/**
-	 * The option groups targeted
+	 * The optional group targeted
 	 */
-	public final Set<String> groups;
+	public final String group;
 
 	public static enum TargetEnum {
 		all, one
@@ -69,7 +68,7 @@ public class SchedulerDefinition {
 		cron = null;
 		time_zone = null;
 		enabled = null;
-		groups = null;
+		group = null;
 		target = TargetEnum.one;
 	}
 
@@ -79,7 +78,7 @@ public class SchedulerDefinition {
 		this.cron = scheduler.cron;
 		this.time_zone = scheduler.time_zone;
 		this.enabled = scheduler.enabled;
-		this.groups = scheduler.groups;
+		this.group = scheduler.group;
 		this.target = scheduler.target;
 	}
 
