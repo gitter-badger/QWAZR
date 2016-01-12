@@ -155,7 +155,7 @@ public class StoreSchemaManager extends DirectoryJsonManager<StoreSchemaDefiniti
 
 		// We retrieve the list of all available store nodes
 		String[] nodes = ClusterManager
-				.getActiveNodes(ClusterManager.getInstance().getNodeSetCacheService(StoreServer.SERVICE_NAME_STORE));
+				.getActiveNodes(ClusterManager.getInstance().getNodeSetCacheService(StoreServer.SERVICE_NAME_STORE, null));
 		if (nodes == null || nodes.length < nodesNumber)
 			throw new ServerException(Status.NOT_ACCEPTABLE,
 					"Not enough store servers to handle the request: " + nodesNumber + " nodes expected.");

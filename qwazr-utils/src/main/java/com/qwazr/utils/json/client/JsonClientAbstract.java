@@ -203,13 +203,29 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		/**
 		 * Add the query parameters if the object parameter is not null
 		 *
-		 * @param object an optional parameter
+		 * @param param  the name of the parameter
+		 * @param object an optional value
 		 * @return the current UBuilder
 		 */
 		public UBuilder setParameterObject(String param, Object object) {
 			if (object == null)
 				return this;
-			setParameter(param, object.toString());
+			super.setParameter(param, object.toString());
+			return this;
+		}
+
+		/**
+		 * Add the query parameter. If the value is null nothing is added.
+		 *
+		 * @param param the name of the parameter
+		 * @param value an optional value
+		 * @return the current UBuilder
+		 */
+		@Override
+		public UBuilder setParameter(String param, String value) {
+			if (value == null)
+				return this;
+			super.setParameter(param, value);
 			return this;
 		}
 
@@ -226,7 +242,6 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 			return this;
 		}
 
-		@Override
 		public URI build() {
 			try {
 				return super.build();

@@ -148,7 +148,7 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 		ClusterMultiClient clusterClient = ClusterManager.getInstance().getClusterClient();
 		if (clusterClient == null)
 			return null;
-		return new GraphMultiClient(executorService, clusterClient.getActiveNodesByService(SERVICE_NAME_GRAPH),
+		return new GraphMultiClient(executorService, clusterClient.getActiveNodesByService(SERVICE_NAME_GRAPH, null),
 				msTimeOut);
 	}
 }
