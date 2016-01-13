@@ -163,9 +163,9 @@ public class Qwazr extends AbstractServer {
 			services.add(ServiceEnum.store.name(), StoreMasterSchemaService.class);
 		}
 
-		ConnectorManagerImpl.load(executorService, currentDataDir);
+		ConnectorManagerImpl.load(currentDataDir);
 		services.add(ServiceEnum.connectors.name(), ConnectorsServiceImpl.class);
-		ToolsManagerImpl.load(executorService, currentDataDir);
+		ToolsManagerImpl.load(currentDataDir);
 		services.add(ServiceEnum.tools.name(), ToolsServiceImpl.class);
 
 		// Scheduler is last, because it may immediatly execute a scripts
@@ -203,9 +203,8 @@ public class Qwazr extends AbstractServer {
 			Qwazr server = new Qwazr();
 			server.start(args);
 			// Register the services
-			ClusterManager.getInstance().registerMe(
-					new ClusterNodeJson(ClusterManager.getInstance().myAddress, services.keySet(),
-							serverConfiguration.groups));
+			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services.keySet(),
+					serverConfiguration.groups));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);

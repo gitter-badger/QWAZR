@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 		implements ConnectorManager, TrackedFile.FileEventReceiver {
@@ -34,15 +33,13 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 
 	private static volatile ConnectorManagerImpl INSTANCE = null;
 
-	public final ExecutorService executorService;
-
-	public static void load(ExecutorService executorService, File directory) throws IOException {
+	public static void load(File directory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new ConnectorManagerImpl(executorService, directory);
+		INSTANCE = new ConnectorManagerImpl(directory);
 	}
 
-	final public static ConnectorManagerImpl getInstance() {
+	final public static ConnectorManager getInstance() {
 		return INSTANCE;
 	}
 
@@ -52,8 +49,7 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 
 	private final Map<String, AbstractConnector> connectors;
 
-	private ConnectorManagerImpl(ExecutorService executorService, File rootDirectory) throws IOException {
-		this.executorService = executorService;
+	private ConnectorManagerImpl(File rootDirectory) throws IOException {
 		connectors = new HashMap<>();
 		this.rootDirectory = rootDirectory;
 		connectorsFile = new File(rootDirectory, "connectors.json");

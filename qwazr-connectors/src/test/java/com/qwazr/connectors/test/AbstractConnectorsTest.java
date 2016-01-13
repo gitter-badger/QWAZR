@@ -20,7 +20,6 @@ import com.qwazr.connectors.ConnectorManagerImpl;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Executors;
 
 public abstract class AbstractConnectorsTest {
 
@@ -28,7 +27,7 @@ public abstract class AbstractConnectorsTest {
 		final ConnectorManager connectorManager = ConnectorManagerImpl.getInstance();
 		if (connectorManager != null)
 			return connectorManager;
-		ConnectorManagerImpl.load(Executors.newCachedThreadPool(), new File("src/test/resources"));
+		ConnectorManagerImpl.load(new File("src/test/resources"));
 		return ConnectorManagerImpl.getInstance();
 	}
 

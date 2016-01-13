@@ -42,7 +42,7 @@ public class SemaphoresManager {
 			throw new IOException("Already loaded");
 		try {
 			INSTANCE = new SemaphoresManager(executorService);
-			return ClusterManager.getInstance().isCluster() ?
+			return ClusterManager.INSTANCE.isCluster() ?
 					SemaphoresClusterServiceImpl.class :
 					SemaphoresServiceImpl.class;
 		} catch (URISyntaxException e) {
@@ -67,7 +67,7 @@ public class SemaphoresManager {
 	}
 
 	public static SemaphoresServiceInterface getService() {
-		if (ClusterManager.getInstance().isCluster())
+		if (ClusterManager.INSTANCE.isCluster())
 			return new SemaphoresClusterServiceImpl();
 		getInstance();
 		return new SemaphoresServiceImpl();

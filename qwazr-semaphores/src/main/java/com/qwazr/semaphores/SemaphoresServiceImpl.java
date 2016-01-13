@@ -25,7 +25,7 @@ public class SemaphoresServiceImpl implements SemaphoresServiceInterface {
 
 	@Override
 	public Set<String> getSemaphores(Boolean local, String group, Integer msTimeout) {
-		if (!ClusterManager.getInstance().isGroup(group))
+		if (!ClusterManager.INSTANCE.isGroup(group))
 			return Collections.emptySet();
 		Set<String> semaphores = new HashSet<String>();
 		SemaphoresManager.INSTANCE.getSemaphores(semaphores);
@@ -34,7 +34,7 @@ public class SemaphoresServiceImpl implements SemaphoresServiceInterface {
 
 	@Override
 	public Set<String> getSemaphoreOwners(String semaphore_id, Boolean local, String group, Integer msTimeout) {
-		if (!ClusterManager.getInstance().isGroup(group))
+		if (!ClusterManager.INSTANCE.isGroup(group))
 			return Collections.emptySet();
 		Set<String> owners = new HashSet<String>();
 		SemaphoresManager.INSTANCE.getSemaphoreOwners(semaphore_id, owners);

@@ -42,7 +42,7 @@ public class SemaphoresMultiClient extends JsonMultiClientAbstract<String, Semap
 
 	@Override
 	protected SemaphoresServiceInterface newClient(String url, Integer msTimeOut) throws URISyntaxException {
-		if (ClusterManager.getInstance().isMe(url))
+		if (ClusterManager.INSTANCE.isMe(url))
 			return new SemaphoresServiceImpl();
 		return new SemaphoresSingleClient(url, msTimeOut);
 	}

@@ -88,7 +88,7 @@ public class StoreFileResult {
 							directories.put(f.getName(), new StoreFileResult(f, false));
 						else if (f.isFile()) {
 							Map<String, StoreFileResult> nodeMap = new TreeMap<String, StoreFileResult>();
-							nodeMap.put(ClusterManager.getInstance().myAddress, new StoreFileResult(f, false));
+							nodeMap.put(ClusterManager.INSTANCE.myAddress, new StoreFileResult(f, false));
 							files.put(f.getName(), nodeMap);
 						}
 					}

@@ -18,6 +18,7 @@ package com.qwazr.scheduler;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.scripts.ScriptManager;
 import com.qwazr.scripts.ScriptRunStatus;
+import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.ServerException;
 import org.apache.commons.io.filefilter.FileFileFilter;
@@ -65,6 +66,8 @@ public class SchedulerManager {
 
 	private final File schedulersDirectory;
 	private final Scheduler globalScheduler;
+	private final TreeMap<String, List<ScriptRunStatus>> schedulerStatusMap;
+	private final LockUtils.ReadWriteLock statusMapLock;
 
 	private SchedulerManager(File rootDirectory, int maxThreads)
 			throws IOException, SchedulerException, ServerException {
@@ -72,6 +75,8 @@ public class SchedulerManager {
 		if (!schedulersDirectory.exists())
 			schedulersDirectory.mkdir();
 
+		statusMapLock = new LockUtils.ReadWriteLock();
+		schedulerStatusMap = new TreeMap<String, List<ScriptRunStatus>>();
 		DirectSchedulerFactory schedulerFactory = DirectSchedulerFactory.getInstance();
 		schedulerFactory.createVolatileScheduler(maxThreads);
 		globalScheduler = schedulerFactory.getScheduler();
@@ -98,7 +103,7 @@ public class SchedulerManager {
 			return map;
 		for (File file : files)
 			if (!file.isHidden())
-				map.put(file.getName(), ClusterManager.getInstance().myAddress + "/schedulers/" + file.getName());
+				map.put(file.getName(), ClusterManager.INSTANCE.myAddress + "/schedulers/" + file.getName());
 		return map;
 	}
 
@@ -115,11 +120,26 @@ public class SchedulerManager {
 		return JsonMapper.MAPPER.readValue(getSchedulerFile(scheduler_name), SchedulerDefinition.class);
 	}
 
+	List<ScriptRunStatus> getStatusList(String scheduler_name) throws IOException, ServerException {
+		statusMapLock.r.lock();
+		try {
+			return schedulerStatusMap.get(scheduler_name);
+		} finally {
+			statusMapLock.r.unlock();
+		}
+	}
+
 	void deleteScheduler(String scheduler_name) throws ServerException, SchedulerException {
 		synchronized (globalScheduler) {
 			globalScheduler.deleteJob(new JobKey(scheduler_name));
 		}
 		getSchedulerFile(scheduler_name).delete();
+		statusMapLock.w.lock();
+		try {
+			schedulerStatusMap.remove(scheduler_name);
+		} finally {
+			statusMapLock.w.unlock();
+		}
 	}
 
 	private void checkSchedulerCron(String scheduler_name, SchedulerDefinition scheduler) throws SchedulerException {
@@ -149,22 +169,33 @@ public class SchedulerManager {
 		return scheduler;
 	}
 
-	List<ScriptRunStatus> executeScheduler(SchedulerDefinition scheduler)
+	List<ScriptRunStatus> executeScheduler(String scheduler_name, SchedulerDefinition scheduler)
 			throws IOException, ServerException, URISyntaxException {
-		ClusterManager clusterManager = ClusterManager.getInstance();
+		ClusterManager clusterManager = ClusterManager.INSTANCE;
 		if (clusterManager.isCluster()) {
 			if (!clusterManager.isLeader(SERVICE_NAME_SCHEDULER, null))
 				return Collections.emptyList();
 		}
 		if (logger.isInfoEnabled())
-			logger.info("execute " + scheduler.script_path);
-		return ScriptManager.getInstance().getNewClient(scheduler.group, null)
+			logger.info("execute " + scheduler_name + " / " + scheduler.script_path);
+		long startTime = System.currentTimeMillis();
+		List<ScriptRunStatus> statusList = ScriptManager.getInstance().getNewClient(scheduler.group, null)
 				.runScriptVariables(scheduler.script_path, false, scheduler.group, scheduler.timeout, scheduler.rule,
 						scheduler.variables);
+		if (statusList != null) {
+			statusList = ScriptRunStatus.cloneSchedulerResultList(statusList, startTime);
+			statusMapLock.w.lock();
+			try {
+				schedulerStatusMap.put(scheduler_name, statusList);
+			} finally {
+				statusMapLock.w.unlock();
+			}
+		}
+		return statusList;
 	}
 
 	List<ScriptRunStatus> executeScheduler(String scheduler_name)
 			throws IOException, ServerException, URISyntaxException {
-		return executeScheduler(getScheduler(scheduler_name));
+		return executeScheduler(scheduler_name, getScheduler(scheduler_name));
 	}
 }

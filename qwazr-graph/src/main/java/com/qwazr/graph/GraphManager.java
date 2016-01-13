@@ -145,7 +145,7 @@ public class GraphManager extends DirectoryJsonManager<GraphDefinition> {
 	}
 
 	GraphMultiClient getMultiClient(int msTimeOut) throws URISyntaxException {
-		ClusterMultiClient clusterClient = ClusterManager.getInstance().getClusterClient();
+		ClusterMultiClient clusterClient = ClusterManager.INSTANCE.getClusterClient();
 		if (clusterClient == null)
 			return null;
 		return new GraphMultiClient(executorService, clusterClient.getActiveNodesByService(SERVICE_NAME_GRAPH, null),
