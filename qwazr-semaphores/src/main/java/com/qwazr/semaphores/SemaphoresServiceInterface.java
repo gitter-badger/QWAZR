@@ -27,10 +27,12 @@ public interface SemaphoresServiceInterface {
 	@GET
 	@Path("/semaphores")
 	@Produces(MediaType.APPLICATION_JSON)
-	Set<String> getSemaphores();
+	Set<String> getSemaphores(@QueryParam("local") Boolean local, @QueryParam("group") String group,
+			@QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/semaphores/{semaphore_id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	Set<String> getSemaphoreOwners(@PathParam("semaphore_id") String semaphore_id);
+	Set<String> getSemaphoreOwners(@PathParam("semaphore_id") String semaphore_id, @QueryParam("local") Boolean local,
+			@QueryParam("group") String group, @QueryParam("timeout") Integer msTimeout);
 }

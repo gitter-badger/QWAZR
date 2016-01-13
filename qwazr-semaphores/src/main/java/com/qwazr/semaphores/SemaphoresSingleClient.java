@@ -32,18 +32,19 @@ public class SemaphoresSingleClient extends JsonClientAbstract implements Semaph
 
 	public final static TypeReference<Set<String>> SetStringTypeRef = new TypeReference<Set<String>>() {
 	};
-
+	
 	@Override
-	public Set<String> getSemaphores() {
-		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_SEMAPHORES);
+	public Set<String> getSemaphores(Boolean local, String group, Integer msTimeout) {
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_SEMAPHORES).setParameters(local, group, msTimeout);
 		Request request = Request.Get(uriBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, SetStringTypeRef, 200);
+		return commonServiceRequest(request, null, msTimeout, SetStringTypeRef, 200);
 	}
 
 	@Override
-	public Set<String> getSemaphoreOwners(String semaphore_id) {
-		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_SEMAPHORES, semaphore_id);
+	public Set<String> getSemaphoreOwners(String semaphore_id, Boolean local, String group, Integer msTimeout) {
+		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_SEMAPHORES, semaphore_id)
+				.setParameters(local, group, msTimeout);
 		Request request = Request.Get(uriBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, SetStringTypeRef, 200);
+		return commonServiceRequest(request, null, msTimeout, SetStringTypeRef, 200);
 	}
 }

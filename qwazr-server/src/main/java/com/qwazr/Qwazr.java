@@ -56,14 +56,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Qwazr extends AbstractServer {
 
 	static final Logger logger = LoggerFactory.getLogger(Qwazr.class);
-
-	private final ExecutorService executorService;
 
 	private final static ServerDefinition serverDefinition = new ServerDefinition();
 
@@ -79,8 +76,7 @@ public class Qwazr extends AbstractServer {
 	private static final MultivaluedMap<String, Class<?>> services = new MultivaluedHashMap<>();
 
 	private Qwazr() {
-		super(serverDefinition);
-		executorService = Executors.newCachedThreadPool();
+		super(serverDefinition, Executors.newCachedThreadPool());
 	}
 
 	@Path("/")
@@ -124,7 +120,7 @@ public class Qwazr extends AbstractServer {
 
 		File currentDataDir = getCurrentDataDir();
 
-		ClusterManager.load(getWebServicePublicAddress(), currentDataDir);
+		ClusterManager.load(executorService, getWebServicePublicAddress(), serverConfiguration.groups);
 
 		services.add("welcome", WelcomeServiceImpl.class);
 		services.add("cluster", ClusterServiceImpl.class);
@@ -146,7 +142,7 @@ public class Qwazr extends AbstractServer {
 		}
 
 		if (ServiceEnum.webcrawler.isActive(serverConfiguration)) {
-			services.add(ServiceEnum.webcrawler.name(), WebCrawlerManager.load());
+			services.add(ServiceEnum.webcrawler.name(), WebCrawlerManager.load(executorService));
 		}
 
 		if (ServiceEnum.search.isActive(serverConfiguration)) {
@@ -167,9 +163,9 @@ public class Qwazr extends AbstractServer {
 			services.add(ServiceEnum.store.name(), StoreMasterSchemaService.class);
 		}
 
-		ConnectorManagerImpl.load(currentDataDir);
+		ConnectorManagerImpl.load(executorService, currentDataDir);
 		services.add(ServiceEnum.connectors.name(), ConnectorsServiceImpl.class);
-		ToolsManagerImpl.load(currentDataDir);
+		ToolsManagerImpl.load(executorService, currentDataDir);
 		services.add(ServiceEnum.tools.name(), ToolsServiceImpl.class);
 
 		// Scheduler is last, because it may immediatly execute a scripts

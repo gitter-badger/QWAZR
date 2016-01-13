@@ -18,6 +18,7 @@ package com.qwazr.graph;
 import com.qwazr.graph.model.*;
 import com.qwazr.utils.json.client.JsonMultiClientAbstract;
 import com.qwazr.utils.server.ServerException;
+import com.qwazr.utils.server.WebAppExceptionHolder;
 import com.qwazr.utils.threads.ThreadUtils;
 import com.qwazr.utils.threads.ThreadUtils.FunctionExceptionCatcher;
 import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;

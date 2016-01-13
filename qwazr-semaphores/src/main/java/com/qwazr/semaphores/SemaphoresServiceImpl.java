@@ -15,20 +15,27 @@
  **/
 package com.qwazr.semaphores;
 
+import com.qwazr.cluster.manager.ClusterManager;
+
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SemaphoresNodeServiceImpl implements SemaphoresServiceInterface {
+public class SemaphoresServiceImpl implements SemaphoresServiceInterface {
 
 	@Override
-	public Set<String> getSemaphores() {
+	public Set<String> getSemaphores(Boolean local, String group, Integer msTimeout) {
+		if (!ClusterManager.getInstance().isGroup(group))
+			return Collections.emptySet();
 		Set<String> semaphores = new HashSet<String>();
 		SemaphoresManager.INSTANCE.getSemaphores(semaphores);
 		return semaphores;
 	}
 
 	@Override
-	public Set<String> getSemaphoreOwners(String semaphore_id) {
+	public Set<String> getSemaphoreOwners(String semaphore_id, Boolean local, String group, Integer msTimeout) {
+		if (!ClusterManager.getInstance().isGroup(group))
+			return Collections.emptySet();
 		Set<String> owners = new HashSet<String>();
 		SemaphoresManager.INSTANCE.getSemaphoreOwners(semaphore_id, owners);
 		return owners;

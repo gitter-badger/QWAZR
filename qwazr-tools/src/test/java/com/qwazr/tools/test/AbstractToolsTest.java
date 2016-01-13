@@ -20,6 +20,7 @@ import com.qwazr.tools.ToolsManagerImpl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Executors;
 
 public abstract class AbstractToolsTest {
 
@@ -27,7 +28,7 @@ public abstract class AbstractToolsTest {
 		final ToolsManager toolsManager = ToolsManagerImpl.getInstance();
 		if (toolsManager != null)
 			return toolsManager;
-		ToolsManagerImpl.load(new File("src/test/resources"));
+		ToolsManagerImpl.load(Executors.newCachedThreadPool(), new File("src/test/resources"));
 		return ToolsManagerImpl.getInstance();
 	}
 
