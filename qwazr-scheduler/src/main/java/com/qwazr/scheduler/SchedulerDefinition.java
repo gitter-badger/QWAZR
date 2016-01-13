@@ -17,6 +17,7 @@ package com.qwazr.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.qwazr.cluster.service.TargetRuleEnum;
 
 import java.util.Map;
 
@@ -38,14 +39,10 @@ public class SchedulerDefinition {
 	 */
 	public final String group;
 
-	public static enum TargetEnum {
-		all, one
-	}
-
 	/**
 	 * Which node are targeted
 	 */
-	public final TargetEnum target;
+	public final TargetRuleEnum target;
 
 	/**
 	 * The cron expression
@@ -69,7 +66,7 @@ public class SchedulerDefinition {
 		time_zone = null;
 		enabled = null;
 		group = null;
-		target = TargetEnum.one;
+		target = TargetRuleEnum.one;
 	}
 
 	public SchedulerDefinition(SchedulerDefinition scheduler) {

@@ -32,7 +32,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
 public class SemaphoresMultiClient extends JsonMultiClientAbstract<String, SemaphoresServiceInterface>
-		implements SemaphoresServiceInterface {
+				implements SemaphoresServiceInterface {
 
 	private static final Logger logger = LoggerFactory.getLogger(SemaphoresMultiClient.class);
 
