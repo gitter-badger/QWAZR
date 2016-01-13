@@ -24,17 +24,14 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class SchedulerStatus extends SchedulerDefinition {
 
-	public List<ScriptRunStatus> script_status;
+	final public List<ScriptRunStatus> script_status;
 
 	public SchedulerStatus() {
 		script_status = null;
 	}
 
-	public SchedulerStatus(List<ScriptRunStatus> script_status) {
-		this.script_status = script_status;
-	}
-
-	public SchedulerStatus(SchedulerDefinition scheduler) {
+	public SchedulerStatus(SchedulerDefinition scheduler, List<ScriptRunStatus> script_status) {
 		super(scheduler);
+		this.script_status = script_status;
 	}
 }

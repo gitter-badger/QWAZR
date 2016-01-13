@@ -15,6 +15,7 @@
  **/
 package com.qwazr.scheduler;
 
+import com.qwazr.scripts.ScriptRunStatus;
 import com.qwazr.utils.server.ServerException;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.TreeMap;
 
 public class SchedulerServiceImpl implements SchedulerServiceInterface {
@@ -38,10 +40,10 @@ public class SchedulerServiceImpl implements SchedulerServiceInterface {
 	@Override
 	public SchedulerStatus get(String scheduler_name, ActionEnum action) {
 		try {
-			SchedulerDefinition scheduler = SchedulerManager.INSTANCE.getScheduler(scheduler_name);
-			SchedulerStatus schedulerStatus = new SchedulerStatus(scheduler);
+			SchedulerDefinition schedulerDef = SchedulerManager.INSTANCE.getScheduler(scheduler_name);
+			List<ScriptRunStatus> statusList = SchedulerManager.INSTANCE.getStatusList(scheduler_name);
 			if (action == null)
-				return schedulerStatus;
+				return new SchedulerStatus(schedulerDef, statusList);
 			Boolean enabled = null;
 			switch (action) {
 			case enable:
@@ -51,15 +53,14 @@ public class SchedulerServiceImpl implements SchedulerServiceInterface {
 				enabled = false;
 				break;
 			case run:
-				schedulerStatus.script_status = SchedulerManager.INSTANCE.executeScheduler(scheduler);
-				return schedulerStatus;
+				return new SchedulerStatus(schedulerDef,
+						SchedulerManager.INSTANCE.executeScheduler(scheduler_name, schedulerDef));
 			}
-			if (enabled == scheduler.enabled)
-				return schedulerStatus;
-			scheduler.enabled = enabled;
-			schedulerStatus.enabled = scheduler.enabled;
-			SchedulerManager.INSTANCE.setScheduler(scheduler_name, scheduler);
-			return schedulerStatus;
+			if (enabled == schedulerDef.enabled)
+				return new SchedulerStatus(schedulerDef, statusList);
+			schedulerDef.enabled = enabled;
+			SchedulerManager.INSTANCE.setScheduler(scheduler_name, schedulerDef);
+			return new SchedulerStatus(schedulerDef, statusList);
 		} catch (WebApplicationException | IOException | SchedulerException
 				| URISyntaxException | ServerException e) {
 			logger.error(e.getMessage(), e);

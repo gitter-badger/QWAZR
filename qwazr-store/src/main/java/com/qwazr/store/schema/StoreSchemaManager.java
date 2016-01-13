@@ -155,7 +155,7 @@ public class StoreSchemaManager extends DirectoryJsonManager<StoreSchemaDefiniti
 
 		// We retrieve the list of all available store nodes
 		String[] nodes = ClusterManager
-				.getActiveNodes(ClusterManager.getInstance().getNodeSetCacheService(StoreServer.SERVICE_NAME_STORE, null));
+				.getActiveNodes(ClusterManager.INSTANCE.getNodeSetCacheService(StoreServer.SERVICE_NAME_STORE, null));
 		if (nodes == null || nodes.length < nodesNumber)
 			throw new ServerException(Status.NOT_ACCEPTABLE,
 					"Not enough store servers to handle the request: " + nodesNumber + " nodes expected.");
@@ -177,7 +177,7 @@ public class StoreSchemaManager extends DirectoryJsonManager<StoreSchemaDefiniti
 	}
 
 	public StoreSchemaMultiClient getNewSchemaClient(Integer msTimeOut) throws URISyntaxException {
-		String[] masters = ClusterManager.getInstance().getMasterArray();
+		String[] masters = ClusterManager.INSTANCE.getMasterArray();
 		if (masters == null)
 			return null;
 		return new StoreSchemaMultiClient(executor, masters, msTimeOut == null ? 60000 : msTimeOut);

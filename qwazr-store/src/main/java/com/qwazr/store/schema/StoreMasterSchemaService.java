@@ -117,7 +117,7 @@ import java.util.TreeMap;
 	    StoreSchemaMultiClient nameClient = getSchemaClient(msTimeout, local);
 	    if (nameClient == null) {
 		TreeMap<String, StoreSchemaRepairStatus> map = new TreeMap<String, StoreSchemaRepairStatus>();
-		map.put(ClusterManager.getInstance().myAddress,
+		map.put(ClusterManager.INSTANCE.myAddress,
 				StoreSchemaManager.INSTANCE.getSchemaInstance(schemaName).getRepairStatus());
 		return map;
 	    }
@@ -145,7 +145,7 @@ import java.util.TreeMap;
 	    StoreSchemaMultiClient nameClient = getSchemaClient(msTimeout, local);
 	    if (nameClient == null) {
 		TreeMap<String, StoreSchemaRepairStatus> map = new TreeMap<String, StoreSchemaRepairStatus>();
-		map.put(ClusterManager.getInstance().myAddress,
+		map.put(ClusterManager.INSTANCE.myAddress,
 				StoreSchemaManager.INSTANCE.getSchemaInstance(schemaName).stopRepair());
 		return map;
 	    } else
