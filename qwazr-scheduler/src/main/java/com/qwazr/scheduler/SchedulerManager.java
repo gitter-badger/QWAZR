@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
@@ -44,7 +46,7 @@ public class SchedulerManager {
 	static SchedulerManager INSTANCE = null;
 
 	public static synchronized Class<? extends SchedulerServiceInterface> load(File directory, int maxThreads)
-					throws IOException {
+			throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
@@ -65,7 +67,7 @@ public class SchedulerManager {
 	private final Scheduler globalScheduler;
 
 	private SchedulerManager(File rootDirectory, int maxThreads)
-					throws IOException, SchedulerException, ServerException {
+			throws IOException, SchedulerException, ServerException {
 		schedulersDirectory = new File(rootDirectory, SERVICE_NAME_SCHEDULER);
 		if (!schedulersDirectory.exists())
 			schedulersDirectory.mkdir();
@@ -127,7 +129,7 @@ public class SchedulerManager {
 			if (!StringUtils.isEmpty(scheduler.time_zone))
 				cronBuilder.inTimeZone(TimeZone.getTimeZone(scheduler.time_zone));
 			TriggerBuilder<CronTrigger> triggerBuilder = TriggerBuilder.newTrigger().withIdentity(scheduler_name)
-							.withSchedule(cronBuilder).forJob(job);
+					.withSchedule(cronBuilder).forJob(job);
 			CronTrigger trigger = triggerBuilder.build();
 			synchronized (globalScheduler) {
 				globalScheduler.scheduleJob(job, trigger);
@@ -140,26 +142,29 @@ public class SchedulerManager {
 	}
 
 	SchedulerDefinition setScheduler(String scheduler_name, SchedulerDefinition scheduler)
-					throws IOException, SchedulerException {
+			throws IOException, SchedulerException {
 		File schedulerFile = new File(schedulersDirectory, scheduler_name);
 		JsonMapper.MAPPER.writeValue(schedulerFile, scheduler);
 		checkSchedulerCron(scheduler_name, scheduler);
 		return scheduler;
 	}
 
-	ScriptRunStatus executeScheduler(SchedulerDefinition scheduler)
-					throws IOException, ServerException, URISyntaxException {
+	List<ScriptRunStatus> executeScheduler(SchedulerDefinition scheduler)
+			throws IOException, ServerException, URISyntaxException {
 		ClusterManager clusterManager = ClusterManager.getInstance();
 		if (clusterManager.isCluster()) {
 			if (!clusterManager.isLeader(SERVICE_NAME_SCHEDULER, null))
-				return null;
+				return Collections.emptyList();
 		}
-		logger.info("execute " + scheduler.script_path);
-		return ScriptManager.getInstance().getNewClient(scheduler.target, scheduler.group, null)
-						.runScriptVariables(scheduler.script_path, scheduler.variables);
+		if (logger.isInfoEnabled())
+			logger.info("execute " + scheduler.script_path);
+		return ScriptManager.getInstance().getNewClient(scheduler.group, null)
+				.runScriptVariables(scheduler.script_path, false, scheduler.group, scheduler.timeout, scheduler.rule,
+						scheduler.variables);
 	}
 
-	ScriptRunStatus executeScheduler(String scheduler_name) throws IOException, ServerException, URISyntaxException {
+	List<ScriptRunStatus> executeScheduler(String scheduler_name)
+			throws IOException, ServerException, URISyntaxException {
 		return executeScheduler(getScheduler(scheduler_name));
 	}
 }

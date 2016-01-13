@@ -19,16 +19,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.qwazr.scripts.ScriptRunStatus;
 
-@JsonInclude(Include.NON_EMPTY)
+import java.util.List;
+
+@JsonInclude(Include.NON_NULL)
 public class SchedulerStatus extends SchedulerDefinition {
 
-	public ScriptRunStatus script_status;
+	public List<ScriptRunStatus> script_status;
 
 	public SchedulerStatus() {
 		script_status = null;
 	}
 
-	public SchedulerStatus(ScriptRunStatus script_status) {
+	public SchedulerStatus(List<ScriptRunStatus> script_status) {
 		this.script_status = script_status;
 	}
 
