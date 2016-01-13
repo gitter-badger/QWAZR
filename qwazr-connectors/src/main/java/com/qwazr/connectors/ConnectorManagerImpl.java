@@ -25,21 +25,24 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
-				implements ConnectorManager, TrackedFile.FileEventReceiver {
+		implements ConnectorManager, TrackedFile.FileEventReceiver {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConnectorManagerImpl.class);
 
 	private static volatile ConnectorManagerImpl INSTANCE = null;
 
-	public static void load(File directory) throws IOException {
+	public final ExecutorService executorService;
+
+	public static void load(ExecutorService executorService, File directory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new ConnectorManagerImpl(directory);
+		INSTANCE = new ConnectorManagerImpl(executorService, directory);
 	}
 
-	final public static ConnectorManager getInstance() {
+	final public static ConnectorManagerImpl getInstance() {
 		return INSTANCE;
 	}
 
@@ -49,7 +52,8 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 
 	private final Map<String, AbstractConnector> connectors;
 
-	private ConnectorManagerImpl(File rootDirectory) throws IOException {
+	private ConnectorManagerImpl(ExecutorService executorService, File rootDirectory) throws IOException {
+		this.executorService = executorService;
 		connectors = new HashMap<>();
 		this.rootDirectory = rootDirectory;
 		connectorsFile = new File(rootDirectory, "connectors.json");
@@ -61,7 +65,7 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 		connectors.clear();
 		logger.info("Loading connectors configuration file: " + connectorsFile.getAbsolutePath());
 		ConnectorsConfiguration configuration = JsonMapper.MAPPER
-						.readValue(connectorsFile, ConnectorsConfiguration.class);
+				.readValue(connectorsFile, ConnectorsConfiguration.class);
 		if (configuration.connectors != null) {
 			for (AbstractConnector connector : configuration.connectors) {
 				logger.info("Loading connector: " + connector.name);

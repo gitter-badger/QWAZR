@@ -15,13 +15,12 @@
  */
 package com.qwazr.store.schema;
 
+import com.qwazr.utils.json.client.JsonClientAbstract;
+import org.apache.http.client.fluent.Request;
+
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.http.client.fluent.Request;
-
-import com.qwazr.utils.json.client.JsonClientAbstract;
 
 public class StoreSchemaSingleClient extends JsonClientAbstract implements StoreSchemaServiceInterface {
 
@@ -34,52 +33,52 @@ public class StoreSchemaSingleClient extends JsonClientAbstract implements Store
 
 	@Override
 	public Set<String> getSchemas(Boolean local, Integer msTimeout) {
-		UBuilder uBuilder = new UBuilder(PREFIX_PATH).setParameters(local, msTimeout);
+		UBuilder uBuilder = new UBuilder(PREFIX_PATH).setParameters(local, null, msTimeout);
 		Request request = Request.Get(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, SetStringTypeRef, 200);
+		return commonServiceRequest(request, null, null, SetStringTypeRef, 200);
 	}
 
 	@Override
 	public StoreSchemaDefinition getSchema(String schemaName, Boolean local, Integer msTimeout) {
-		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName).setParameters(local, msTimeout);
+		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName).setParameters(local, null, msTimeout);
 		Request request = Request.Get(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, StoreSchemaDefinition.class, 200);
+		return commonServiceRequest(request, null, null, StoreSchemaDefinition.class, 200);
 	}
 
 	@Override
 	public StoreSchemaDefinition createSchema(String schemaName, StoreSchemaDefinition schemaDef, Boolean local,
 			Integer msTimeout) {
-		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName).setParameters(local, msTimeout);
+		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName).setParameters(local, null, msTimeout);
 		Request request = Request.Post(uBuilder.build());
-		return commonServiceRequest(request, schemaDef, msTimeOut, StoreSchemaDefinition.class, 200);
+		return commonServiceRequest(request, schemaDef, null, StoreSchemaDefinition.class, 200);
 	}
 
 	@Override
 	public StoreSchemaDefinition deleteSchema(String schemaName, Boolean local, Integer msTimeout) {
-		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName).setParameters(local, msTimeout);
+		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName).setParameters(local, null, msTimeout);
 		Request request = Request.Delete(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, StoreSchemaDefinition.class, 200);
+		return commonServiceRequest(request, null, null, StoreSchemaDefinition.class, 200);
 	}
 
 	@Override
 	public Map<String, StoreSchemaRepairStatus> getRepairStatus(String schemaName, Boolean local, Integer msTimeout) {
-		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH).setParameters(local, msTimeout);
+		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH).setParameters(local, null, msTimeout);
 		Request request = Request.Get(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, MapStringRepairTypeRef, 200);
+		return commonServiceRequest(request, null, null, MapStringRepairTypeRef, 200);
 	}
 
 	@Override
 	public StoreSchemaRepairStatus startRepair(String schemaName, Boolean local, Integer msTimeout) {
-		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH).setParameters(local, msTimeout);
+		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH).setParameters(local, null, msTimeout);
 		Request request = Request.Post(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, StoreSchemaRepairStatus.class, 200);
+		return commonServiceRequest(request, null, null, StoreSchemaRepairStatus.class, 200);
 	}
 
 	@Override
 	public Map<String, StoreSchemaRepairStatus> stopRepair(String schemaName, Boolean local, Integer msTimeout) {
-		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH).setParameters(local, msTimeout);
+		UBuilder uBuilder = new UBuilder(PREFIX_PATH, schemaName, REPAIR_PATH).setParameters(local, null, msTimeout);
 		Request request = Request.Delete(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, MapStringRepairTypeRef, 200);
+		return commonServiceRequest(request, null, null, MapStringRepairTypeRef, 200);
 	}
 
 }

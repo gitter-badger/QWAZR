@@ -36,7 +36,7 @@ public class ToolsServiceClient extends JsonClientAbstract implements ToolsServi
 	public Map<String, String> list() {
 		UBuilder uriBuilder = new UBuilder(TOOLS_PREFIX);
 		Request request = Request.Get(uriBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, MapStringStringTypeRef, 200);
+		return commonServiceRequest(request, null, null, MapStringStringTypeRef, 200);
 	}
 
 	public final static TypeReference<Map<String, Object>> MapStringObjectTypeRef = new TypeReference<Map<String, Object>>() {
@@ -45,7 +45,7 @@ public class ToolsServiceClient extends JsonClientAbstract implements ToolsServi
 	public Map<String, Object> get(String toolName) {
 		UBuilder uriBuilder = new UBuilder(TOOLS_PREFIX, toolName);
 		Request request = Request.Get(uriBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, MapStringObjectTypeRef, 200);
+		return commonServiceRequest(request, null, null, MapStringObjectTypeRef, 200);
 	}
 
 }

@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
@@ -147,14 +149,22 @@ public class SchedulerManager {
 		return scheduler;
 	}
 
-	ScriptRunStatus executeScheduler(SchedulerDefinition scheduler)
+	List<ScriptRunStatus> executeScheduler(SchedulerDefinition scheduler)
 			throws IOException, ServerException, URISyntaxException {
-		logger.info("execute " + scheduler.script_path);
-		return ScriptManager.getInstance().getNewClient(null)
-				.runScriptVariables(scheduler.script_path, scheduler.variables);
+		ClusterManager clusterManager = ClusterManager.getInstance();
+		if (clusterManager.isCluster()) {
+			if (!clusterManager.isLeader(SERVICE_NAME_SCHEDULER, null))
+				return Collections.emptyList();
+		}
+		if (logger.isInfoEnabled())
+			logger.info("execute " + scheduler.script_path);
+		return ScriptManager.getInstance().getNewClient(scheduler.group, null)
+				.runScriptVariables(scheduler.script_path, false, scheduler.group, scheduler.timeout, scheduler.rule,
+						scheduler.variables);
 	}
 
-	ScriptRunStatus executeScheduler(String scheduler_name) throws IOException, ServerException, URISyntaxException {
+	List<ScriptRunStatus> executeScheduler(String scheduler_name)
+			throws IOException, ServerException, URISyntaxException {
 		return executeScheduler(getScheduler(scheduler_name));
 	}
 }

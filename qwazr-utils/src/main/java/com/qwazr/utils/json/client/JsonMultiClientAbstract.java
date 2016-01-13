@@ -15,11 +15,8 @@
  */
 package com.qwazr.utils.json.client;
 
-import com.qwazr.utils.ExceptionUtils.ExceptionHolder;
-import org.apache.commons.lang3.RandomUtils;
-import org.slf4j.Logger;
+import com.qwazr.utils.RandomArrayIterator;
 
-import javax.ws.rs.WebApplicationException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,13 +24,10 @@ import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 
 /**
- *
  * This class represents a connection to a set of servers
  *
- * @param <K>
- *            the type of the key used to locate one server
- * @param <V>
- *            The type of the class which handle the connection to one server
+ * @param <K> the type of the key used to locate one server
+ * @param <V> The type of the class which handle the connection to one server
  */
 public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 
@@ -44,19 +38,14 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	/**
 	 * Create a new multi client
 	 *
-	 * @param executor
-	 *            An executor service for parallels connections
-	 * @param clientArray
-	 *            an array of client connection
-	 * @param clientKeys
-	 *            an array of key values used to create the client connection
-	 * @param msTimeOut
-	 *            the default timeout
-	 * @throws URISyntaxException
-	 *             thrown in case of wrong URI syntax
+	 * @param executor    An executor service for parallels connections
+	 * @param clientArray an array of client connection
+	 * @param clientKeys  an array of key values used to create the client connection
+	 * @param msTimeOut   the default timeout
+	 * @throws URISyntaxException thrown in case of wrong URI syntax
 	 */
 	protected JsonMultiClientAbstract(ExecutorService executor, V[] clientArray, K[] clientKeys, Integer msTimeOut)
-					throws URISyntaxException {
+			throws URISyntaxException {
 		this.executor = executor;
 		clientsArray = clientArray;
 		clientsMap = new HashMap<K, V>();
@@ -68,26 +57,22 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	/**
 	 * Create a new single client
 	 *
-	 * @param clientKey
-	 *            the key value of the single client
-	 * @param msTimeOut
-	 *            the default time out
+	 * @param clientKey the key value of the single client
+	 * @param msTimeOut the default time out
 	 * @return a new JsonClient
-	 * @throws URISyntaxException
-	 *             if any error occurs
+	 * @throws URISyntaxException if any error occurs
 	 */
 	protected abstract V newClient(K clientKey, Integer msTimeOut) throws URISyntaxException;
 
 	@Override
 	public Iterator<V> iterator() {
-		return new JsonClientIterator();
+		return new RandomArrayIterator<V>(clientsArray);
 	}
 
 	/**
 	 * Fill a collection with the URLs of the clients
 	 *
-	 * @param clientKeyCollection
-	 *            The collection to fill
+	 * @param clientKeyCollection The collection to fill
 	 */
 	public void fillClientUrls(Collection<K> clientKeyCollection) {
 		clientKeyCollection.addAll(clientsMap.keySet());
@@ -101,8 +86,7 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	}
 
 	/**
-	 * @param url
-	 *            the URL of the client
+	 * @param url the URL of the client
 	 * @return the client which handle this URL
 	 */
 	public V getClientByUrl(String url) {
@@ -110,45 +94,11 @@ public abstract class JsonMultiClientAbstract<K, V> implements Iterable<V> {
 	}
 
 	/**
-	 *
-	 * @param pos
-	 *            the position of the client
+	 * @param pos the position of the client
 	 * @return a json client
 	 */
 	protected V getClientByPos(Integer pos) {
 		return clientsArray[pos];
 	}
 
-	private class JsonClientIterator implements Iterator<V> {
-
-		private int count = clientsArray.length;
-		private int pos = RandomUtils.nextInt(0, clientsArray.length);
-
-		@Override
-		public boolean hasNext() {
-			return count > 0;
-		}
-
-		@Override
-		public V next() {
-			V client = clientsArray[pos++];
-			if (pos == clientsArray.length)
-				pos = 0;
-			count--;
-			return client;
-		}
-
-		@Override
-		public void remove() {
-			throw new RuntimeException("Not available");
-		}
-
-	}
-
-	public class WebAppExceptionHolder extends ExceptionHolder<WebApplicationException> {
-
-		public WebAppExceptionHolder(Logger logger) {
-			super(logger);
-		}
-	}
 }

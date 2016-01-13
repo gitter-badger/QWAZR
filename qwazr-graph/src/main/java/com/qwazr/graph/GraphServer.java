@@ -29,16 +29,12 @@ import javax.ws.rs.ApplicationPath;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class GraphServer extends AbstractServer {
 
-	private final ExecutorService executorService;
-
 	private GraphServer() {
-		super(new ServerDefinition());
-		executorService = Executors.newCachedThreadPool();
+		super(new ServerDefinition(), Executors.newCachedThreadPool());
 	}
 
 	@ApplicationPath("/")
@@ -75,7 +71,7 @@ public class GraphServer extends AbstractServer {
 	@Override
 	public void load() throws IOException {
 		File dataDir = getCurrentDataDir();
-		ClusterManager.load(getWebServicePublicAddress(), dataDir);
+		ClusterManager.load(executorService, getWebServicePublicAddress(), null);
 		GraphManager.load(executorService, dataDir);
 	}
 

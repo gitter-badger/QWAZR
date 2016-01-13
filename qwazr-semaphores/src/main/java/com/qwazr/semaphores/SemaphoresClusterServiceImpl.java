@@ -21,12 +21,14 @@ import com.qwazr.utils.server.ServerException;
 import java.net.URISyntaxException;
 import java.util.Set;
 
-public class SemaphoresMasterServiceImpl implements SemaphoresServiceInterface {
+public class SemaphoresClusterServiceImpl extends SemaphoresServiceImpl {
 
 	@Override
-	public Set<String> getSemaphores() {
+	public Set<String> getSemaphores(Boolean local, String group, Integer msTimeout) {
+		if (local != null && local)
+			return super.getSemaphores(local, group, msTimeout);
 		try {
-			return getClient().getSemaphores();
+			return getMultiClient(group, msTimeout).getSemaphores(false, group, msTimeout);
 		} catch (URISyntaxException e) {
 			throw ServerException.getJsonException(e);
 		}
@@ -34,18 +36,20 @@ public class SemaphoresMasterServiceImpl implements SemaphoresServiceInterface {
 	}
 
 	@Override
-	public Set<String> getSemaphoreOwners(String semaphore_id) {
+	public Set<String> getSemaphoreOwners(String semaphore_id, Boolean local, String group, Integer msTimeout) {
+		if (local != null && local)
+			return super.getSemaphoreOwners(semaphore_id, local, group, msTimeout);
 		try {
-			return getClient().getSemaphoreOwners(semaphore_id);
+			return getMultiClient(group, msTimeout).getSemaphoreOwners(semaphore_id, true, group, msTimeout);
 		} catch (URISyntaxException e) {
 			throw ServerException.getJsonException(e);
 		}
 	}
 
-	private SemaphoresMultiClient getClient() throws URISyntaxException {
+	private SemaphoresMultiClient getMultiClient(String group, Integer msTimeout) throws URISyntaxException {
 		String[] urls = ClusterManager.getInstance().getClusterClient()
-				.getActiveNodesByService(SemaphoresManager.SERVICE_NAME_SEMAPHORES, null);
-		return new SemaphoresMultiClient(SemaphoresManager.INSTANCE.executorService, urls, null);
+				.getActiveNodesByService(SemaphoresManager.SERVICE_NAME_SEMAPHORES, group);
+		return new SemaphoresMultiClient(SemaphoresManager.INSTANCE.executorService, urls, msTimeout);
 	}
 
 }

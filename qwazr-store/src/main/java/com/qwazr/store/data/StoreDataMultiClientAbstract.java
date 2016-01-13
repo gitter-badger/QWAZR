@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,18 @@
  */
 package com.qwazr.store.data;
 
+import com.qwazr.utils.json.client.JsonMultiClientAbstract;
+import com.qwazr.utils.server.ServerException;
+import com.qwazr.utils.server.WebAppExceptionHolder;
+import com.qwazr.utils.threads.ThreadUtils;
+import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -23,29 +35,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.qwazr.utils.json.client.JsonMultiClientAbstract;
-import com.qwazr.utils.server.ServerException;
-import com.qwazr.utils.threads.ThreadUtils;
-import com.qwazr.utils.threads.ThreadUtils.ProcedureExceptionCatcher;
-
 public abstract class StoreDataMultiClientAbstract<K, V extends StoreDataServiceInterface>
-		extends JsonMultiClientAbstract<K, V> implements
-		StoreDataServiceInterface {
+		extends JsonMultiClientAbstract<K, V> implements StoreDataServiceInterface {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(StoreDataMultiClientAbstract.class);
+	private static final Logger logger = LoggerFactory.getLogger(StoreDataMultiClientAbstract.class);
 
-	protected StoreDataMultiClientAbstract(ExecutorService executor,
-			V[] clientArray, K[] clientKeys, int msTimeOut, boolean childLocal)
-			throws URISyntaxException {
+	protected StoreDataMultiClientAbstract(ExecutorService executor, V[] clientArray, K[] clientKeys, int msTimeOut,
+			boolean childLocal) throws URISyntaxException {
 		super(executor, clientArray, clientKeys, msTimeOut);
 	}
 
@@ -91,10 +87,8 @@ public abstract class StoreDataMultiClientAbstract<K, V extends StoreDataService
 	}
 
 	@Override
-	final public Response headFile(String schemaName, String path,
-			Integer msTimeout) {
-		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(
-				logger);
+	final public Response headFile(String schemaName, String path, Integer msTimeout) {
+		WebAppExceptionHolder exceptionHolder = new WebAppExceptionHolder(logger);
 		for (V client : this) {
 			try {
 				return client.headFile(schemaName, path, msTimeout);
@@ -106,15 +100,13 @@ public abstract class StoreDataMultiClientAbstract<K, V extends StoreDataService
 	}
 
 	@Override
-	public Response putFile(String schemaName, String path,
-			InputStream inputStream, Long lastModified, Integer msTimeout,
-			Integer target) {
+	public Response putFile(String schemaName, String path, InputStream inputStream, Long lastModified,
+			Integer msTimeout, Integer target) {
 		throw new ServerException(Status.NOT_IMPLEMENTED).getTextException();
 	}
 
 	@Override
-	final public StoreFileResult getDirectory(String schemaName,
-			Integer msTimeout) {
+	final public StoreFileResult getDirectory(String schemaName, Integer msTimeout) {
 		return getDirectory(schemaName, StringUtils.EMPTY, msTimeout);
 	}
 

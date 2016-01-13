@@ -42,28 +42,28 @@ public class GraphSingleClient extends JsonClientAbstract implements GraphServic
 	public Set<String> list() {
 		UBuilder uBuilder = new UBuilder(GRAPH_PREFIX);
 		Request request = Request.Get(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, SetStringTypeRef, 200);
+		return commonServiceRequest(request, null, null, SetStringTypeRef, 200);
 	}
 
 	@Override
 	public GraphResult createUpdateGraph(String graphName, GraphDefinition graphDef) {
 		UBuilder uBuilder = new UBuilder(GRAPH_PREFIX, graphName);
 		Request request = Request.Post(uBuilder.build());
-		return commonServiceRequest(request, graphDef, msTimeOut, GraphResult.class, 200);
+		return commonServiceRequest(request, graphDef, null, GraphResult.class, 200);
 	}
 
 	@Override
 	public GraphResult getGraph(String graphName) {
 		UBuilder uBuilder = new UBuilder(GRAPH_PREFIX, graphName);
 		Request request = Request.Get(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, GraphResult.class, 200);
+		return commonServiceRequest(request, null, null, GraphResult.class, 200);
 	}
 
 	@Override
 	public GraphResult deleteGraph(String graphName) {
 		UBuilder uBuilder = new UBuilder(GRAPH_PREFIX, graphName);
 		Request request = Request.Delete(uBuilder.build());
-		return commonServiceRequest(request, null, msTimeOut, GraphResult.class, 200);
+		return commonServiceRequest(request, null, null, GraphResult.class, 200);
 	}
 
 	@Override

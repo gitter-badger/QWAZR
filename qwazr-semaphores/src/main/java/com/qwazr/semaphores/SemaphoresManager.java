@@ -42,10 +42,9 @@ public class SemaphoresManager {
 			throw new IOException("Already loaded");
 		try {
 			INSTANCE = new SemaphoresManager(executorService);
-			if (ClusterManager.getInstance().isMaster())
-				return SemaphoresMasterServiceImpl.class;
-			else
-				return SemaphoresNodeServiceImpl.class;
+			return ClusterManager.getInstance().isCluster() ?
+					SemaphoresClusterServiceImpl.class :
+					SemaphoresServiceImpl.class;
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
@@ -69,9 +68,9 @@ public class SemaphoresManager {
 
 	public static SemaphoresServiceInterface getService() {
 		if (ClusterManager.getInstance().isCluster())
-			return new SemaphoresMasterServiceImpl();
+			return new SemaphoresClusterServiceImpl();
 		getInstance();
-		return new SemaphoresNodeServiceImpl();
+		return new SemaphoresServiceImpl();
 	}
 
 	void getSemaphores(Collection<String> semaphores) {

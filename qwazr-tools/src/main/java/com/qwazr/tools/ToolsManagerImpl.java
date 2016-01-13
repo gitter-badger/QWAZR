@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BiConsumer;
 
 public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
@@ -35,13 +36,15 @@ public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
 
 	private static volatile ToolsManagerImpl INSTANCE = null;
 
-	public static void load(File directory) throws IOException {
+	public final ExecutorService executorService;
+
+	public static void load(ExecutorService executorService, File dataDirectory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new ToolsManagerImpl(directory);
+		INSTANCE = new ToolsManagerImpl(executorService, dataDirectory);
 	}
 
-	final public static ToolsManager getInstance() {
+	final public static ToolsManagerImpl getInstance() {
 		return INSTANCE;
 	}
 
@@ -51,9 +54,10 @@ public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
 
 	private final Map<String, AbstractTool> tools;
 
-	private ToolsManagerImpl(File rootDirectory) throws IOException {
+	private ToolsManagerImpl(ExecutorService executorService, File dataDirectory) throws IOException {
+		this.executorService = executorService;
 		this.tools = new HashMap<String, AbstractTool>();
-		this.rootDirectory = rootDirectory;
+		this.rootDirectory = dataDirectory;
 		toolsFile = new File(rootDirectory, "tools.json");
 		trackedFile = new TrackedFile(this, toolsFile);
 		trackedFile.check();

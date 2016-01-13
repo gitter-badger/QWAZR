@@ -44,12 +44,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
 
 /**
  * Generic REST server
  */
 public abstract class AbstractServer {
+
+	protected final ExecutorService executorService;
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractServer.class);
 
@@ -171,8 +174,9 @@ public abstract class AbstractServer {
 	/**
 	 * @param serverDefinition The default parameters
 	 */
-	protected AbstractServer(ServerDefinition serverDefinition) {
+	protected AbstractServer(ServerDefinition serverDefinition, ExecutorService executorService) {
 		this.serverDefinition = serverDefinition;
+		this.executorService = executorService;
 	}
 
 	/**

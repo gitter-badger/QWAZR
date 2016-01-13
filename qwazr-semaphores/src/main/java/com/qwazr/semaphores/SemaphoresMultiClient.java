@@ -42,13 +42,13 @@ public class SemaphoresMultiClient extends JsonMultiClientAbstract<String, Semap
 
 	@Override
 	protected SemaphoresServiceInterface newClient(String url, Integer msTimeOut) throws URISyntaxException {
-		if (url == ClusterManager.getInstance().myAddress)
-			return new SemaphoresNodeServiceImpl();
+		if (ClusterManager.getInstance().isMe(url))
+			return new SemaphoresServiceImpl();
 		return new SemaphoresSingleClient(url, msTimeOut);
 	}
 
 	@Override
-	public Set<String> getSemaphores() {
+	public Set<String> getSemaphores(Boolean local, String group, Integer msTimeout) {
 
 		try {
 
@@ -60,7 +60,7 @@ public class SemaphoresMultiClient extends JsonMultiClientAbstract<String, Semap
 					public void execute() throws Exception {
 						try {
 							synchronized (this) {
-								semaphores.addAll(client.getSemaphores());
+								semaphores.addAll(client.getSemaphores(true, group, msTimeout));
 							}
 						} catch (WebApplicationException e) {
 							switch (e.getResponse().getStatus()) {
@@ -83,7 +83,7 @@ public class SemaphoresMultiClient extends JsonMultiClientAbstract<String, Semap
 	}
 
 	@Override
-	public Set<String> getSemaphoreOwners(String semaphore_id) {
+	public Set<String> getSemaphoreOwners(String semaphore_id, Boolean local, String group, Integer msTimeout) {
 
 		try {
 
@@ -95,7 +95,7 @@ public class SemaphoresMultiClient extends JsonMultiClientAbstract<String, Semap
 					public void execute() throws Exception {
 						try {
 							synchronized (this) {
-								ownerSet.addAll(client.getSemaphoreOwners(semaphore_id));
+								ownerSet.addAll(client.getSemaphoreOwners(semaphore_id, true, group, msTimeout));
 							}
 						} catch (WebApplicationException e) {
 							switch (e.getResponse().getStatus()) {

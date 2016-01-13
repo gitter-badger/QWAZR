@@ -50,7 +50,9 @@ public class ScriptManager {
 			throw new IOException("Already loaded");
 		try {
 			INSTANCE = new ScriptManager(executorService, directory);
-			return ScriptServiceImpl.class;
+			return ClusterManager.getInstance().isCluster() ?
+					ScriptClusterServiceImpl.class :
+					ScriptSingleServiceImpl.class;
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
@@ -67,7 +69,7 @@ public class ScriptManager {
 	private final ReadWriteLock runsMapLock = new ReadWriteLock();
 	private final HashMap<String, ScriptRunThread> runsMap;
 
-	private final ExecutorService executorService;
+	final ExecutorService executorService;
 
 	private ScriptManager(ExecutorService executorService, File rootDirectory) throws IOException, URISyntaxException {
 
@@ -181,11 +183,11 @@ public class ScriptManager {
 		}
 	}
 
-	public ScriptServiceInterface getNewClient(Integer msTimeout) throws URISyntaxException {
+	public ScriptServiceInterface getNewClient(String group, Integer msTimeout) throws URISyntaxException {
 		if (!ClusterManager.getInstance().isCluster())
-			return new ScriptServiceImpl();
+			return new ScriptSingleServiceImpl();
 		return new ScriptMultiClient(executorService,
-				ClusterManager.getInstance().getClusterClient().getActiveNodesByService(SERVICE_NAME_SCRIPT, null),
+				ClusterManager.getInstance().getClusterClient().getActiveNodesByService(SERVICE_NAME_SCRIPT, group),
 				msTimeout);
 	}
 
