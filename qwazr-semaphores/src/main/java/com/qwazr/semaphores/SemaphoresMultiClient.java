@@ -37,7 +37,7 @@ public class SemaphoresMultiClient extends JsonMultiClientAbstract<String, Semap
 	private static final Logger logger = LoggerFactory.getLogger(SemaphoresMultiClient.class);
 
 	SemaphoresMultiClient(ExecutorService executor, String[] urls, Integer msTimeout) throws URISyntaxException {
-		super(executor, new SemaphoresSingleClient[urls.length], urls, msTimeout);
+		super(executor, new SemaphoresServiceInterface[urls.length], urls, msTimeout);
 	}
 
 	@Override
