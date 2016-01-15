@@ -35,7 +35,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
-public class FileClassCompilerLoader implements Closeable, AutoCloseable {
+public class FileClassCompilerLoader implements Closeable {
 
 	private final static Logger logger = LoggerFactory.getLogger(FileClassCompilerLoader.class);
 
