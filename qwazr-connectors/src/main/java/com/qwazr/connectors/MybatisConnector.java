@@ -38,6 +38,8 @@ public class MybatisConnector extends AbstractPasswordConnector {
 
 	public final String configuration_file = null;
 
+	public final String configuration_resource = null;
+
 	public final String environment = null;
 
 	public final Map<String, String> properties = null;
@@ -66,7 +68,8 @@ public class MybatisConnector extends AbstractPasswordConnector {
 		if (configurationFile != null)
 			inputStream = new FileInputStream(configurationFile);
 		else
-			inputStream = Resources.getResourceAsStream(default_configuration);
+			inputStream = Resources.getResourceAsStream(
+							configuration_resource != null ? configuration_resource : default_configuration);
 		try {
 			if (environment != null) {
 				if (props != null)
