@@ -19,6 +19,7 @@ import com.qwazr.ServerConfiguration.ServiceEnum;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterNodeJson;
 import com.qwazr.cluster.service.ClusterServiceImpl;
+import com.qwazr.compiler.CompilerManager;
 import com.qwazr.connectors.AbstractConnector;
 import com.qwazr.connectors.ConnectorManagerImpl;
 import com.qwazr.connectors.ConnectorsServiceImpl;
@@ -125,37 +126,29 @@ public class Qwazr extends AbstractServer {
 		services.add("welcome", WelcomeServiceImpl.class);
 		services.add("cluster", ClusterServiceImpl.class);
 
-		if (ServiceEnum.extractor.isActive(serverConfiguration)) {
+		if (ServiceEnum.extractor.isActive(serverConfiguration))
 			services.add(ServiceEnum.extractor.name(), ParserManager.load());
-		}
 
-		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
+		if (ServiceEnum.webapps.isActive(serverConfiguration))
 			services.add(ServiceEnum.webapps.name(), WebappManager.load(executorService, currentDataDir));
-		}
 
-		if (ServiceEnum.semaphores.isActive(serverConfiguration)) {
+		if (ServiceEnum.semaphores.isActive(serverConfiguration))
 			services.add(ServiceEnum.semaphores.name(), SemaphoresManager.load(executorService));
-		}
 
-		if (ServiceEnum.scripts.isActive(serverConfiguration)) {
+		if (ServiceEnum.scripts.isActive(serverConfiguration))
 			services.add(ServiceEnum.scripts.name(), ScriptManager.load(executorService, currentDataDir));
-		}
 
-		if (ServiceEnum.webcrawler.isActive(serverConfiguration)) {
+		if (ServiceEnum.webcrawler.isActive(serverConfiguration))
 			services.add(ServiceEnum.webcrawler.name(), WebCrawlerManager.load(executorService));
-		}
 
-		if (ServiceEnum.search.isActive(serverConfiguration)) {
+		if (ServiceEnum.search.isActive(serverConfiguration))
 			services.add(ServiceEnum.search.name(), IndexManager.load(executorService, currentDataDir));
-		}
 
-		if (ServiceEnum.graph.isActive(serverConfiguration)) {
+		if (ServiceEnum.graph.isActive(serverConfiguration))
 			services.add(ServiceEnum.graph.name(), GraphManager.load(executorService, currentDataDir));
-		}
 
-		if (ServiceEnum.table.isActive(serverConfiguration)) {
+		if (ServiceEnum.table.isActive(serverConfiguration))
 			services.add(ServiceEnum.table.name(), TableManager.load(executorService, currentDataDir));
-		}
 
 		if (ServiceEnum.store.isActive(serverConfiguration)) {
 			StoreServer.load(currentDataDir);
@@ -163,16 +156,19 @@ public class Qwazr extends AbstractServer {
 			services.add(ServiceEnum.store.name(), StoreMasterSchemaService.class);
 		}
 
+		if (ServiceEnum.compiler.isActive(serverConfiguration))
+			CompilerManager.load(executorService, currentDataDir);
+
 		ConnectorManagerImpl.load(currentDataDir);
 		services.add(ServiceEnum.connectors.name(), ConnectorsServiceImpl.class);
+
 		ToolsManagerImpl.load(currentDataDir);
 		services.add(ServiceEnum.tools.name(), ToolsServiceImpl.class);
 
 		// Scheduler is last, because it may immediatly execute a scripts
-		if (ServiceEnum.schedulers.isActive(serverConfiguration)) {
+		if (ServiceEnum.schedulers.isActive(serverConfiguration))
 			services.add(ServiceEnum.schedulers.name(),
 					SchedulerManager.load(currentDataDir, serverConfiguration.getSchedulerMaxThreads()));
-		}
 	}
 
 	@Override

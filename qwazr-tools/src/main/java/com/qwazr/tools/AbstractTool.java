@@ -23,14 +23,17 @@ import java.io.File;
 import java.io.IOException;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
-@JsonSubTypes({ @Type(value = ArchiverTool.class), @Type(value = CSVTool.class), @Type(value = FreeMarkerTool.class),
-				@Type(value = MarkdownTool.class), @Type(value = ProcessTool.class),
-				@Type(value = PropertiesTool.class), @Type(value = XMLTool.class), @Type(value = XPathTool.class) })
-public abstract class AbstractTool {
+@JsonSubTypes({ @Type(value = ArchiverTool.class), @Type(value = CSVTool.class), @Type(value = FileCrawlerTool.class),
+		@Type(value = FreeMarkerTool.class), @Type(value = MarkdownTool.class), @Type(value = ProcessTool.class),
+		@Type(value = PropertiesTool.class), @Type(value = Rrd4jTool.class), @Type(value = XMLTool.class),
+		@Type(value = XPathTool.class) })
+public abstract class AbstractTool implements AutoCloseable {
 
 	public final String name = null;
 
 	public abstract void load(File parentDir) throws IOException;
 
-	public abstract void unload();
+	@Override
+	public void close() {
+	}
 }

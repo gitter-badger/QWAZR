@@ -42,10 +42,6 @@ public class FtpConnector extends AbstractPasswordConnector {
 	public void load(File parentDir) {
 	}
 
-	@Override
-	public void unload() {
-	}
-
 	@JsonIgnore
 	public FTPSession getNewSession(IOUtils.CloseableContext context) {
 		FTPSession ftpSession = new FTPSession();
@@ -123,7 +119,7 @@ public class FtpConnector extends AbstractPasswordConnector {
 		}
 
 		public void sync_files(ScriptObjectMirror browser, String remote_path, File localDirectory,
-						Boolean downloadOnlyIfNotExists, Boolean binary) throws IOException {
+				Boolean downloadOnlyIfNotExists, Boolean binary) throws IOException {
 
 			final boolean file_method = browser != null ? browser.hasMember("file") : false;
 			final boolean dir_method = browser != null ? browser.hasMember("directory") : false;
@@ -159,8 +155,8 @@ public class FtpConnector extends AbstractPasswordConnector {
 					continue;
 				File localFile = new File(localDirectory, remoteName);
 				if (file_method)
-					if (Boolean.FALSE.equals(browser.callMember("file", remote_path + '/' + remoteName,
-									localFile.exists())))
+					if (Boolean.FALSE
+							.equals(browser.callMember("file", remote_path + '/' + remoteName, localFile.exists())))
 						continue;
 				if (downloadOnlyIfNotExists != null && downloadOnlyIfNotExists && localFile.exists())
 					continue;
@@ -170,11 +166,11 @@ public class FtpConnector extends AbstractPasswordConnector {
 			}
 			for (Map.Entry<FTPFile, File> entry : remoteDirs.entrySet())
 				sync_files(browser, remote_path + '/' + entry.getKey().getName(), entry.getValue(),
-								downloadOnlyIfNotExists, binary);
+						downloadOnlyIfNotExists, binary);
 		}
 
 		public void sync_files(ScriptObjectMirror browser, String remote_path, String local_path,
-						Boolean downloadOnlyIfNotExists, Boolean binary) throws IOException {
+				Boolean downloadOnlyIfNotExists, Boolean binary) throws IOException {
 			sync_files(browser, remote_path, new File(local_path), downloadOnlyIfNotExists, binary);
 		}
 

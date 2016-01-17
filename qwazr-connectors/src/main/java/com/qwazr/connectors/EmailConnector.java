@@ -97,9 +97,5 @@ public class EmailConnector extends AbstractPasswordConnector {
 	public void load(File parentDir) {
 
 	}
-
-	@Override
-	public void unload() {
-
-	}
+	
 }

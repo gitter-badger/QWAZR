@@ -16,7 +16,6 @@
 package com.qwazr.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.json.JsonMapper;
@@ -42,7 +41,7 @@ public class ArchiverTool extends AbstractTool {
 
 	private static final Logger logger = LoggerFactory.getLogger(ArchiverTool.class);
 
-	private CompressorStreamFactory factory = null;
+	private volatile CompressorStreamFactory factory = null;
 
 	public enum CodecType {
 
@@ -70,11 +69,6 @@ public class ArchiverTool extends AbstractTool {
 	@Override
 	public void load(File parentDir) {
 		factory = new CompressorStreamFactory();
-	}
-
-	@Override
-	public void unload() {
-		factory = null;
 	}
 
 	private InputStream getCompressorNewInputStream(InputStream input) throws IOException, CompressorException {

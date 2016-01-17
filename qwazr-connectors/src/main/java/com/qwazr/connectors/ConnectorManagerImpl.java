@@ -15,6 +15,8 @@
  **/
 package com.qwazr.connectors;
 
+import com.qwazr.compiler.CompilerManager;
+import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.ReadOnlyMap;
 import com.qwazr.utils.TrackedFile;
 import com.qwazr.utils.json.JsonMapper;
@@ -23,11 +25,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
-		implements ConnectorManager, TrackedFile.FileEventReceiver {
+		implements ConnectorManager, TrackedFile.FileEventReceiver, Consumer<ClassLoader> {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConnectorManagerImpl.class);
 
@@ -37,6 +41,9 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		INSTANCE = new ConnectorManagerImpl(directory);
+		CompilerManager compilerManager = CompilerManager.getInstance();
+		if (compilerManager != null)
+			compilerManager.register(INSTANCE);
 	}
 
 	final public static ConnectorManager getInstance() {
@@ -47,18 +54,15 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 	private final File connectorsFile;
 	private final TrackedFile trackedFile;
 
-	private final Map<String, AbstractConnector> connectors;
-
 	private ConnectorManagerImpl(File rootDirectory) throws IOException {
-		connectors = new HashMap<>();
 		this.rootDirectory = rootDirectory;
 		connectorsFile = new File(rootDirectory, "connectors.json");
 		trackedFile = new TrackedFile(this, connectorsFile);
 		trackedFile.check();
 	}
 
-	public void load() throws IOException {
-		connectors.clear();
+	public synchronized void load() throws IOException {
+		final Map<String, AbstractConnector> connectorMap = new HashMap<>();
 		logger.info("Loading connectors configuration file: " + connectorsFile.getAbsolutePath());
 		ConnectorsConfiguration configuration = JsonMapper.MAPPER
 				.readValue(connectorsFile, ConnectorsConfiguration.class);
@@ -66,27 +70,33 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 			for (AbstractConnector connector : configuration.connectors) {
 				logger.info("Loading connector: " + connector.name);
 				connector.load(rootDirectory);
-				connectors.put(connector.name, connector);
+				connectorMap.put(connector.name, connector);
 			}
 		}
-		setMap(new HashMap<>(connectors));
+		reload(connectorMap);
 	}
 
-	public void unload() {
-		for (AbstractConnector connector : connectors.values()) {
-			try {
-				connector.unload();
-			} catch (Exception e) {
-				// This should never happen
-				logger.warn(e.getMessage(), e);
-			}
-		}
-		connectors.clear();
-		setMap(new HashMap<>(connectors));
+	public synchronized void unload() {
+		reload(Collections.emptyMap());
+	}
+
+	private void reload(final Map<String, AbstractConnector> newMap) {
+		Map<String, AbstractConnector> oldMap = setMap(newMap);
+		if (oldMap != null)
+			IOUtils.close(oldMap.values());
 	}
 
 	public AbstractConnector get(String name) throws IOException {
 		trackedFile.check();
 		return super.get(name);
+	}
+
+	@Override
+	public void accept(ClassLoader classLoader) {
+		try {
+			load();
+		} catch (IOException e) {
+			logger.error("Failure on connectors reload", e);
+		}
 	}
 }

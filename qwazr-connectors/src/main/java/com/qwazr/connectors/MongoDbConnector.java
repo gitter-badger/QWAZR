@@ -16,7 +16,6 @@
 package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.*;
 import com.mongodb.bulk.BulkWriteResult;
@@ -24,6 +23,7 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.*;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.StringUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.bson.Document;
@@ -88,9 +88,9 @@ public class MongoDbConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload() {
+	public void close() {
 		if (mongoClient != null) {
-			mongoClient.close();
+			IOUtils.close(mongoClient);
 			mongoClient = null;
 		}
 	}

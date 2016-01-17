@@ -16,7 +16,6 @@
 package com.qwazr.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -64,7 +63,7 @@ public class FreeMarkerTool extends AbstractTool implements TemplateLoader {
 	}
 
 	@Override
-	public void unload() {
+	public void close() {
 		cfg.clearTemplateCache();
 	}
 

@@ -18,12 +18,10 @@ package com.qwazr.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.stream.ImageInputStream;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 
 public class IOUtils extends org.apache.commons.io.IOUtils {
 
@@ -43,60 +41,15 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 	public static final void close(final AutoCloseable... autoCloseables) {
 		if (autoCloseables == null)
 			return;
-		for (AutoCloseable closeable : autoCloseables)
-			close(closeable);
-	}
-
-	public static final void close(List<AutoCloseable> autoCloseables) {
-		if (autoCloseables == null)
-			return;
 		for (AutoCloseable autoCloseable : autoCloseables)
-			closeQuietly(autoCloseable);
-	}
-
-	public static final void close(ImageInputStream... closeables) {
-		if (closeables == null)
-			return;
-		for (ImageInputStream closeable : closeables)
-			closeQuietly(closeable);
-	}
-
-	public static final void closeQuietly(ImageInputStream closeable) {
-		if (closeable == null)
-			return;
-		try {
-			closeable.close();
-		} catch (IOException e) {
-			if (logger.isWarnEnabled())
-				logger.warn("Close failure on " + closeable, e);
-		}
-	}
-
-	public static final void closeQuietly(AutoCloseable autoCloseable) {
-		if (autoCloseable == null)
-			return;
-		try {
-			autoCloseable.close();
-		} catch (Exception e) {
-			if (logger.isWarnEnabled())
-				logger.warn("Close failure on " + autoCloseable, e);
-		}
+			close(autoCloseable);
 	}
 
 	public static final void close(final Collection<? extends AutoCloseable> autoCloseables) {
 		if (autoCloseables == null)
 			return;
-		AutoCloseable[] array = autoCloseables.toArray(new AutoCloseable[autoCloseables.size()]);
-		int i = array.length;
-		while (i > 0) {
-			AutoCloseable autoCloseable = array[--i];
-			try {
-				closeQuietly(autoCloseable);
-			} catch (Exception e) {
-				if (logger.isWarnEnabled())
-					logger.warn("Close failure on " + autoCloseable, e);
-			}
-		}
+		for (AutoCloseable autoCloseable : autoCloseables)
+			close(autoCloseable);
 	}
 
 	public static final int copy(InputStream inputStream, File destFile) throws IOException {
@@ -195,7 +148,7 @@ public class IOUtils extends org.apache.commons.io.IOUtils {
 		}
 
 	}
-	
+
 	/**
 	 * Extract the content of a file to a string
 	 *

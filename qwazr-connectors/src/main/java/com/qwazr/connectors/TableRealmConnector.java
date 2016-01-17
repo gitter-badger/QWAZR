@@ -59,11 +59,6 @@ public class TableRealmConnector extends AbstractConnector implements IdentityMa
 	}
 
 	@Override
-	public void unload() {
-
-	}
-
-	@Override
 	public Account verify(Account account) {
 		return account;
 	}

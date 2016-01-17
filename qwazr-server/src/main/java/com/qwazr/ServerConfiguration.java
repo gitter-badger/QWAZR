@@ -44,6 +44,8 @@ public class ServerConfiguration {
 
 		table,
 
+		compiler,
+
 		connectors,
 
 		tools;

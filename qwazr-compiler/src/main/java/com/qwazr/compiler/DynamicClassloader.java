@@ -17,6 +17,7 @@ package com.qwazr.compiler;
 
 import com.qwazr.utils.DirectoryWatcher;
 import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.LockUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +37,15 @@ public class DynamicClassloader implements Closeable {
 
 	private final URL[] classPathURLs;
 	private volatile URLClassLoader volatileClassLoader;
+	private final Set<Consumer<ClassLoader>> classLoaderConsumers;
+	private final LockUtils.ReadWriteLock consumersLock;
 
 	private final static Logger logger = LoggerFactory.getLogger(DynamicClassloader.class);
 
 	DynamicClassloader(ExecutorService executorService, File... directories) throws IOException {
+
+		consumersLock = new LockUtils.ReadWriteLock();
+		classLoaderConsumers = new HashSet<Consumer<ClassLoader>>();
 
 		final Map<URL, Path> urlCollector = new LinkedHashMap<URL, Path>();
 		for (File directory : directories)
@@ -69,6 +75,32 @@ public class DynamicClassloader implements Closeable {
 		volatileClassLoader = closeOnly ? null : new URLClassLoader(classPathURLs);
 		if (oldClassloader != null)
 			oldClassloader.close();
+		if (volatileClassLoader != null) {
+			consumersLock.r.lock();
+			try {
+				classLoaderConsumers.forEach(classLoaderConsumer -> classLoaderConsumer.accept(volatileClassLoader));
+			} finally {
+				consumersLock.r.unlock();
+			}
+		}
+	}
+
+	void register(Consumer<ClassLoader> consumer) {
+		consumersLock.w.lock();
+		try {
+			classLoaderConsumers.add(consumer);
+		} finally {
+			consumersLock.w.unlock();
+		}
+	}
+
+	void unregister(Consumer<ClassLoader> consumer) {
+		consumersLock.w.lock();
+		try {
+			classLoaderConsumers.remove(consumer);
+		} finally {
+			consumersLock.w.unlock();
+		}
 	}
 
 	@Override
@@ -82,5 +114,9 @@ public class DynamicClassloader implements Closeable {
 		final URLClassLoader classLoader = volatileClassLoader;
 		Objects.requireNonNull(classLoader, "The classloader is null");
 		return classLoader.loadClass(name);
+	}
+
+	public ClassLoader getClassLoader() {
+		return volatileClassLoader;
 	}
 }

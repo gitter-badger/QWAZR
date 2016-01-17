@@ -16,6 +16,7 @@
 package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.qwazr.compiler.CompilerManager;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.IOUtils.CloseableContext;
 import org.apache.ibatis.io.Resources;
@@ -50,6 +51,11 @@ public class MybatisConnector extends AbstractPasswordConnector {
 
 	@Override
 	public void load(File data_directory) throws IOException {
+
+		final CompilerManager compilerManager = CompilerManager.getInstance();
+		if (compilerManager != null)
+			Resources.setDefaultClassLoader(compilerManager.getClassLoader());
+
 		final File configurationFile;
 		if (configuration_file != null) {
 			configurationFile = new File(configuration_file);
@@ -63,13 +69,14 @@ public class MybatisConnector extends AbstractPasswordConnector {
 			props.putAll(properties);
 		} else
 			props = null;
+
 		final SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
 		final InputStream inputStream;
 		if (configurationFile != null)
 			inputStream = new FileInputStream(configurationFile);
 		else
 			inputStream = Resources.getResourceAsStream(
-							configuration_resource != null ? configuration_resource : default_configuration);
+					configuration_resource != null ? configuration_resource : default_configuration);
 		try {
 			if (environment != null) {
 				if (props != null)
@@ -85,10 +92,6 @@ public class MybatisConnector extends AbstractPasswordConnector {
 		} finally {
 			IOUtils.close(inputStream);
 		}
-	}
-
-	@Override
-	public void unload() {
 	}
 
 	@JsonIgnore

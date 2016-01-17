@@ -18,6 +18,10 @@
             <artifactId>qwazr-cluster</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.qwazr</groupId>
+            <artifactId>qwazr-compiler</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.pegdown</groupId>
             <artifactId>pegdown</artifactId>
             <version>1.6.0</version>

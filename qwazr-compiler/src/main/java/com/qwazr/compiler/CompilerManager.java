@@ -15,18 +15,20 @@
  */
 package com.qwazr.compiler;
 
+import com.qwazr.utils.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 
 public class CompilerManager {
 
 	public final static String SERVICE_NAME_COMPILER = "compiler";
 
-	private static CompilerManager INSTANCE = null;
+	private static volatile CompilerManager INSTANCE = null;
 
 	private final static Logger logger = LoggerFactory.getLogger(CompilerManager.class);
 
@@ -36,11 +38,48 @@ public class CompilerManager {
 		INSTANCE = new CompilerManager(executor, dataDirectory);
 	}
 
+	public static void unload(File directory) throws IOException {
+		CompilerManager oldInstance = INSTANCE;
+		if (oldInstance == null)
+			return;
+		INSTANCE = null;
+		oldInstance.close();
+	}
+
+	public static CompilerManager getInstance() {
+		return INSTANCE;
+	}
+
 	private final File compilerDirectory;
-	
-	private CompilerManager(ExecutorService executor, File dataDirectory) {
+	private final File javaSourceDirectory;
+	private final File javaResourceDirectory;
+	private final File javaClassesDirectory;
+
+	private final DynamicClassloader dynamicClassloader;
+
+	private CompilerManager(ExecutorService executor, File dataDirectory) throws IOException {
 		compilerDirectory = new File(dataDirectory, SERVICE_NAME_COMPILER);
 		if (!compilerDirectory.exists())
 			compilerDirectory.mkdir();
+		javaSourceDirectory = new File(dataDirectory, "src/main/java");
+		javaResourceDirectory = new File(dataDirectory, "src/main/resources");
+		javaClassesDirectory = new File(dataDirectory, "target/classes");
+		dynamicClassloader = new DynamicClassloader(executor, javaResourceDirectory, javaClassesDirectory);
+	}
+
+	private void close() {
+		IOUtils.close(dynamicClassloader);
+	}
+
+	public void register(Consumer<ClassLoader> consumer) {
+		dynamicClassloader.register(consumer);
+	}
+
+	public void unregister(Consumer<ClassLoader> consumer) {
+		dynamicClassloader.unregister(consumer);
+	}
+
+	public ClassLoader getClassLoader() {
+		return dynamicClassloader.getClassLoader();
 	}
 }
