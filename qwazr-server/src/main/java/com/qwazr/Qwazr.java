@@ -123,6 +123,9 @@ public class Qwazr extends AbstractServer {
 
 		ClusterManager.load(executorService, getWebServicePublicAddress(), serverConfiguration.groups);
 
+		if (ServiceEnum.compiler.isActive(serverConfiguration))
+			CompilerManager.load(executorService, currentDataDir);
+
 		services.add("welcome", WelcomeServiceImpl.class);
 		services.add("cluster", ClusterServiceImpl.class);
 
@@ -155,9 +158,6 @@ public class Qwazr extends AbstractServer {
 			services.add(ServiceEnum.store.name(), StoreMasterDataService.class);
 			services.add(ServiceEnum.store.name(), StoreMasterSchemaService.class);
 		}
-
-		if (ServiceEnum.compiler.isActive(serverConfiguration))
-			CompilerManager.load(executorService, currentDataDir);
 
 		ConnectorManagerImpl.load(currentDataDir);
 		services.add(ServiceEnum.connectors.name(), ConnectorsServiceImpl.class);

@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
@@ -35,7 +36,11 @@ public class CompilerManager {
 	public static void load(ExecutorService executor, File dataDirectory) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
-		INSTANCE = new CompilerManager(executor, dataDirectory);
+		try {
+			INSTANCE = new CompilerManager(executor, dataDirectory);
+		} catch (URISyntaxException e) {
+			throw new IOException(e);
+		}
 	}
 
 	public static void unload(File directory) throws IOException {
@@ -54,17 +59,30 @@ public class CompilerManager {
 	private final File javaSourceDirectory;
 	private final File javaResourceDirectory;
 	private final File javaClassesDirectory;
+	private final File javaLibrariesDirectory;
 
 	private final DynamicClassloader dynamicClassloader;
+	private final JavaCompiler javaCompiler;
 
-	private CompilerManager(ExecutorService executor, File dataDirectory) throws IOException {
+	private CompilerManager(ExecutorService executor, File dataDirectory) throws IOException, URISyntaxException {
 		compilerDirectory = new File(dataDirectory, SERVICE_NAME_COMPILER);
 		if (!compilerDirectory.exists())
 			compilerDirectory.mkdir();
 		javaSourceDirectory = new File(dataDirectory, "src/main/java");
 		javaResourceDirectory = new File(dataDirectory, "src/main/resources");
 		javaClassesDirectory = new File(dataDirectory, "target/classes");
-		dynamicClassloader = new DynamicClassloader(executor, javaResourceDirectory, javaClassesDirectory);
+		javaLibrariesDirectory = new File(dataDirectory, "lib");
+		dynamicClassloader = new DynamicClassloader(executor, javaResourceDirectory, javaClassesDirectory,
+						javaLibrariesDirectory);
+		javaCompiler = JavaCompiler
+						.newInstance(executor, javaSourceDirectory, javaClassesDirectory, javaLibrariesDirectory);
+	}
+
+	public static ClassLoader getJavaClassLoader() {
+		CompilerManager compilerManager = getInstance();
+		if (compilerManager == null)
+			return null;
+		return compilerManager.getClassLoader();
 	}
 
 	private void close() {

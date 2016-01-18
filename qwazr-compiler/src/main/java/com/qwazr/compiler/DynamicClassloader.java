@@ -34,7 +34,6 @@ import java.util.function.Consumer;
 public class DynamicClassloader implements Closeable {
 
 	private final List<DirectoryWatcher> directorWatchers;
-
 	private final URL[] classPathURLs;
 	private volatile URLClassLoader volatileClassLoader;
 	private final Set<Consumer<ClassLoader>> classLoaderConsumers;
@@ -110,13 +109,13 @@ public class DynamicClassloader implements Closeable {
 		resetClassLoader(true);
 	}
 
-	public Class<?> loadClass(String name) throws ClassNotFoundException {
+	Class<?> loadClass(String name) throws ClassNotFoundException {
 		final URLClassLoader classLoader = volatileClassLoader;
 		Objects.requireNonNull(classLoader, "The classloader is null");
 		return classLoader.loadClass(name);
 	}
 
-	public ClassLoader getClassLoader() {
+	ClassLoader getClassLoader() {
 		return volatileClassLoader;
 	}
 }
