@@ -77,10 +77,6 @@ public class MarkdownTool extends AbstractTool {
 		pegDownProcessor = new PegDownProcessor(extensionsValue);
 	}
 
-	@Override
-	public void unload() {
-	}
-
 	public String toHtml(String input) {
 		return pegDownProcessor.markdownToHtml(input);
 	}

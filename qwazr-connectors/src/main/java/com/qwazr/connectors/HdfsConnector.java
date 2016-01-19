@@ -65,15 +65,10 @@ public class HdfsConnector extends AbstractConnector {
 	}
 
 	@Override
-	public void unload() {
+	public void close() {
 		if (fileSystem != null) {
-			try {
-				logger.info("Closing HDFS");
-				fileSystem.close();
-				fileSystem = null;
-			} catch (IOException e) {
-				logger.error(e.getMessage(), e);
-			}
+			IOUtils.close(fileSystem);
+			fileSystem = null;
 		}
 	}
 

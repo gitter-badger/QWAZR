@@ -39,11 +39,6 @@ public class PropertiesTool extends AbstractTool {
 		comments = null;
 	}
 
-	@Override
-	public void unload() {
-
-	}
-
 	private Properties checkProperties() throws IOException {
 		if (propertiesFile == null)
 			return properties;

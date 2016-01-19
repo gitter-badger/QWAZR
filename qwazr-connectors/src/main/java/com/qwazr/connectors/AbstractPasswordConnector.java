@@ -30,4 +30,5 @@ public abstract class AbstractPasswordConnector extends AbstractConnector {
 	final private void setPassword(String password) {
 		this.password = password;
 	}
+
 }

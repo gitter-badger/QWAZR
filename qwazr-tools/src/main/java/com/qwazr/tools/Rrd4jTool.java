@@ -72,10 +72,6 @@ public class Rrd4jTool extends AbstractTool {
 		return rrdDef;
 	}
 
-	@Override
-	public void unload() {
-	}
-
 	/**
 	 * @param closeableContext
 	 * @return a new RrdDb instance

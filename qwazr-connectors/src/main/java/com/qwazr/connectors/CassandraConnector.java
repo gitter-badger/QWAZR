@@ -51,7 +51,7 @@ public class CassandraConnector extends AbstractPasswordConnector {
 	}
 
 	@Override
-	public void unload() {
+	public void close() {
 		if (cluster != null) {
 			IOUtils.closeQuietly(cluster);
 			cluster = null;

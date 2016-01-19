@@ -28,8 +28,10 @@ public class ReadOnlyMap<K, V> implements Map<K, V> {
 		this.map = Collections.emptyMap();
 	}
 
-	protected void setMap(Map<K, V> map) {
-		this.map = map;
+	protected Map<K, V> setMap(Map<K, V> newMap) {
+		Map<K, V> oldMap = this.map;
+		this.map = newMap;
+		return oldMap;
 	}
 
 	@Override

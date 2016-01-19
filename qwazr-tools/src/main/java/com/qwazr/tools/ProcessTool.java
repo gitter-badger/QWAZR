@@ -36,10 +36,6 @@ public class ProcessTool extends AbstractTool {
 	public void load(File parentDir) {
 	}
 
-	@Override
-	public void unload() {
-	}
-
 	public Process execute(File workingDirectory, List<String> commandAndArgs, Map<String, String> env, File outputFile,
 			File errorFile) throws IOException {
 

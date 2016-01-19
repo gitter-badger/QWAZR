@@ -43,7 +43,7 @@ public class XPathTool extends AbstractTool {
 	}
 
 	private XPath xPath;
-	private Map<String, XPathExpression> xPathMap;
+	private volatile Map<String, XPathExpression> xPathMap;
 
 	@Override
 	public void load(File parentDir) {
@@ -54,9 +54,11 @@ public class XPathTool extends AbstractTool {
 	}
 
 	@Override
-	public void unload() {
-		xPathMap.clear();
-		xPathMap = null;
+	public void close() {
+		if (xPathMap != null) {
+			xPathMap.clear();
+			xPathMap = null;
+		}
 	}
 
 	public XPathDocument readDocument(File file) throws ParserConfigurationException, SAXException, IOException {

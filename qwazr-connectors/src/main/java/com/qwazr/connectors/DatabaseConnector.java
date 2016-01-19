@@ -16,7 +16,6 @@
 package com.qwazr.connectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.qwazr.utils.IOUtils.CloseableContext;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.jdbc.Transaction;
@@ -116,7 +115,7 @@ public class DatabaseConnector extends AbstractPasswordConnector {
 	}
 
 	@Override
-	public void unload() {
+	public void close() {
 		if (basicDataSource != null) {
 			try {
 				if (!basicDataSource.isClosed())

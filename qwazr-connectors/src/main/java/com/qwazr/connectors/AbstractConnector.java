@@ -19,22 +19,24 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
 
 @JsonSubTypes({ @Type(value = CassandraConnector.class), @Type(value = DatabaseConnector.class),
-				@Type(value = EmailConnector.class), @Type(value = FtpConnector.class),
-				@Type(value = HdfsConnector.class), @Type(value = LdapConnector.class),
-				@Type(value = MongoDbConnector.class), @Type(value = TableRealmConnector.class) })
+		@Type(value = EmailConnector.class), @Type(value = FtpConnector.class), @Type(value = HdfsConnector.class),
+		@Type(value = LdapConnector.class), @Type(value = MongoDbConnector.class),
+		@Type(value = MybatisConnector.class), @Type(value = TableRealmConnector.class) })
 
-public abstract class AbstractConnector {
+public abstract class AbstractConnector implements Closeable {
 
 	public final String name = null;
 
-	public abstract void load(File parentDir) throws IOException;
+	public abstract void load(File data_directory) throws IOException;
 
-	public abstract void unload();
+	public void close() {
+	}
+
 }

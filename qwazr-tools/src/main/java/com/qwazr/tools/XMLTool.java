@@ -41,14 +41,10 @@ public class XMLTool extends AbstractTool {
 
 	@Override
 	public void load(File parentDir) {
-		SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
+		saxParserFactory = SAXParserFactory.newInstance();
 		saxParserFactory.setNamespaceAware(true);
 		documentBuilderFactory = DocumentBuilderFactory.newInstance();
 		documentBuilderFactory.setNamespaceAware(true);
-	}
-
-	@Override
-	public void unload() {
 	}
 
 	/**

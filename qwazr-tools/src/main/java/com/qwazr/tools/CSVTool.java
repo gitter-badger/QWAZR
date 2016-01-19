@@ -53,10 +53,6 @@ public class CSVTool extends AbstractTool {
 	public void load(File parentDir) {
 	}
 
-	@Override
-	public void unload() {
-	}
-
 	@JsonIgnore
 	public CSVPrinter getNewPrinter(Appendable appendable, IOUtils.CloseableContext closeable) throws IOException {
 		return getNewPrinter(format.csvFormat, appendable, closeable);

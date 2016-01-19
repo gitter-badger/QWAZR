@@ -25,10 +25,6 @@ public class FileCrawlerTool extends AbstractTool {
 	public void load(File parentDir) {
 	}
 
-	@Override
-	public void unload() {
-	}
-
 	public void browse(String path, int max_depth, ScriptObjectMirror browser) {
 		new Browser(browser, max_depth, new File(path));
 	}

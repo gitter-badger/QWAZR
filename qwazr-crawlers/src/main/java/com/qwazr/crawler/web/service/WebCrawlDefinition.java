@@ -100,6 +100,16 @@ public class WebCrawlDefinition implements Cloneable {
 	public Boolean javascript_enabled = null;
 
 	/**
+	 * Download images
+	 */
+	public Boolean download_images = null;
+
+	/**
+	 * Enable Web security  (default is true)
+	 */
+	public Boolean web_security = null;
+
+	/**
 	 * Cookies
 	 */
 	public Map<String, String> cookies = null;
@@ -119,6 +129,8 @@ public class WebCrawlDefinition implements Cloneable {
 
 	@JsonInclude(Include.NON_EMPTY)
 	public static class ProxyDefinition implements Cloneable {
+
+		public Boolean enabled = null;
 
 		/**
 		 * the proxy host for FTP connections, expected format is
@@ -294,6 +306,8 @@ public class WebCrawlDefinition implements Cloneable {
 		browser_version = src.browser_version;
 		browser_type = src.browser_type;
 		javascript_enabled = src.javascript_enabled;
+		download_images = src.download_images;
+		web_security = src.web_security;
 		robots_txt_enabled = src.robots_txt_enabled;
 		robots_txt_useragent = src.robots_txt_useragent;
 		proxy = src.proxy == null ? null : new ProxyDefinition(src.proxy);
@@ -390,6 +404,16 @@ public class WebCrawlDefinition implements Cloneable {
 
 	public WebCrawlDefinition setJavascript_enabled(Boolean javascript_enabled) {
 		this.javascript_enabled = javascript_enabled;
+		return this;
+	}
+
+	public WebCrawlDefinition setDownload_images(Boolean download_images) {
+		this.download_images = download_images;
+		return this;
+	}
+
+	public WebCrawlDefinition setWeb_security(Boolean web_security) {
+		this.web_security = web_security;
 		return this;
 	}
 

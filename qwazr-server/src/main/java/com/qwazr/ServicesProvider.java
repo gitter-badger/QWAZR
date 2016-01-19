@@ -41,11 +41,6 @@ public class ServicesProvider extends AbstractConnector {
 	public void load(File data_directory) {
 	}
 
-	@Override
-	public void unload() {
-
-	}
-
 	public ClusterMultiClient getCluster() {
 		if (ClusterManager.INSTANCE == null)
 			return null;
