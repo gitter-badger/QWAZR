@@ -19,6 +19,7 @@ import com.qwazr.utils.DirectoryWatcher;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.StringUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.slf4j.Logger;
@@ -44,6 +45,7 @@ public class JavaCompiler implements Closeable {
 
 	private final static Logger logger = LoggerFactory.getLogger(JavaCompiler.class);
 
+	private final int javaSourcePrefixSize;
 	private final File javaSourceDirectory;
 	private final File javaClassesDirectory;
 	private final String classPath;
@@ -56,6 +58,10 @@ public class JavaCompiler implements Closeable {
 					String classPath, Collection<URL> urlList) throws IOException {
 		this.classPath = classPath;
 		this.javaSourceDirectory = javaSourceDirectory;
+		String javaSourcePrefix = javaSourceDirectory.getAbsolutePath();
+		javaSourcePrefixSize = javaSourcePrefix.endsWith("/") ?
+						javaSourcePrefix.length() :
+						javaSourcePrefix.length() + 1;
 		this.javaClassesDirectory = javaClassesDirectory;
 		if (this.javaClassesDirectory != null && !this.javaClassesDirectory.exists())
 			this.javaClassesDirectory.mkdir();
@@ -122,8 +128,6 @@ public class JavaCompiler implements Closeable {
 	}
 
 	private void compile(javax.tools.JavaCompiler compiler, Collection<File> javaFiles) throws IOException {
-		if (logger.isInfoEnabled())
-			logger.info("Compile " + javaFiles.size() + " JAVA file(s).");
 		final DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
 		final StandardJavaFileManager fileManager = compiler.getStandardFileManager(diagnostics, null, null);
 		try {
@@ -155,13 +159,31 @@ public class JavaCompiler implements Closeable {
 		}
 	}
 
+	private Collection<File> filterUptodate(File parentDir, File[] javaSourceFiles) {
+		if (javaSourceFiles == null)
+			return null;
+		final Collection<File> finalJavaFiles = new ArrayList<File>();
+		if (javaSourceFiles.length == 0)
+			return finalJavaFiles;
+		final File parentClassDir = new File(javaClassesDirectory,
+						parentDir.getAbsolutePath().substring(javaSourcePrefixSize));
+		for (File javaSourceFile : javaSourceFiles) {
+			final File classFile = new File(parentClassDir,
+							FilenameUtils.removeExtension(javaSourceFile.getName()) + ".class");
+			if (classFile.exists() && classFile.lastModified() > javaSourceFile.lastModified())
+				continue;
+			finalJavaFiles.add(javaSourceFile);
+		}
+		return finalJavaFiles;
+	}
+
 	private void compileDirectory(javax.tools.JavaCompiler compiler, File sourceDirectory) throws IOException {
-		logger.info("Check compilation at " + sourceDirectory);
-		Collection<File> javaFiles = new ArrayList<>();
-		for (File javaFile : sourceDirectory.listFiles(javaFileFilter))
-			javaFiles.add(javaFile);
-		if (javaFiles.size() > 0)
+		final Collection<File> javaFiles = filterUptodate(sourceDirectory, sourceDirectory.listFiles(javaFileFilter));
+		if (javaFiles != null && javaFiles.size() > 0) {
+			if (logger.isInfoEnabled())
+				logger.info("Compile " + javaFiles.size() + " JAVA file(s) at " + sourceDirectory);
 			compile(compiler, javaFiles);
+		}
 		for (File dir : sourceDirectory.listFiles((FileFilter) DirectoryFileFilter.INSTANCE))
 			compileDirectory(compiler, dir);
 	}

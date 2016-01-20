@@ -51,6 +51,7 @@ public class DynamicClassloader implements Closeable {
 			urlCollector.put(directory.toURI().toURL(), directory.toPath());
 
 		classPathURLs = urlCollector.keySet().toArray(new URL[urlCollector.size()]);
+		resetClassLoader(false);
 
 		directorWatchers = new ArrayList<DirectoryWatcher>(directories.length);
 		for (Path path : urlCollector.values()) {
@@ -70,10 +71,9 @@ public class DynamicClassloader implements Closeable {
 	}
 
 	private synchronized void resetClassLoader(boolean closeOnly) throws IOException {
-		final URLClassLoader oldClassloader = volatileClassLoader;
+		final URLClassLoader oldClassLoader = volatileClassLoader;
 		volatileClassLoader = closeOnly ? null : new URLClassLoader(classPathURLs);
-		if (oldClassloader != null)
-			oldClassloader.close();
+		IOUtils.close(oldClassLoader);
 		if (volatileClassLoader != null) {
 			consumersLock.r.lock();
 			try {
