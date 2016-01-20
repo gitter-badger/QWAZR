@@ -81,7 +81,7 @@ public class CompilerManager {
 	public static ClassLoader getJavaClassLoader() {
 		CompilerManager compilerManager = getInstance();
 		if (compilerManager == null)
-			return null;
+			return Thread.currentThread().getContextClassLoader();
 		return compilerManager.getClassLoader();
 	}
 

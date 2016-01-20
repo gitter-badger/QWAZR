@@ -75,6 +75,8 @@ public class DynamicClassloader implements Closeable {
 		volatileClassLoader = closeOnly ? null : new URLClassLoader(classPathURLs);
 		IOUtils.close(oldClassLoader);
 		if (volatileClassLoader != null) {
+			if (logger.isInfoEnabled())
+				logger.info("Reload class loader");
 			consumersLock.r.lock();
 			try {
 				classLoaderConsumers.forEach(classLoaderConsumer -> classLoaderConsumer.accept(volatileClassLoader));
