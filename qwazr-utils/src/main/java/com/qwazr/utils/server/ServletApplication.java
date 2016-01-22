@@ -20,19 +20,16 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ServletInfo;
 
-import javax.ws.rs.ApplicationPath;
 import java.util.List;
 
 /**
  * Generic ServletApplication
  */
-@ApplicationPath("/")
 public abstract class ServletApplication {
 
-	private final String appPath;
+	private final String appPath = "/";
 
 	public ServletApplication() {
-		appPath = this.getClass().getAnnotation(ApplicationPath.class).value();
 	}
 
 	protected abstract List<ServletInfo> getServletInfos();
