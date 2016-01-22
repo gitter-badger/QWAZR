@@ -15,6 +15,10 @@
  **/
 package com.qwazr.tools;
 
+import com.qwazr.utils.server.ServiceInterface;
+import com.qwazr.utils.server.ServiceName;
+
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -23,16 +27,18 @@ import javax.ws.rs.core.MediaType;
 import java.util.Map;
 
 @Path("/tools")
-public interface ToolsServiceInterface {
+@RolesAllowed("tools")
+@ServiceName("tools")
+public interface ToolsServiceInterface extends ServiceInterface {
 
 	@GET
 	@Path("/")
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	Map<String, String> list();
 
 	@GET
 	@Path("/{tool_name}")
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	Object get(@PathParam("tool_name") String toolName);
 
 }

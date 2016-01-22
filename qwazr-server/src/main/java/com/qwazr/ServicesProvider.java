@@ -29,7 +29,6 @@ import com.qwazr.extractor.ExtractorServiceInterface;
 import com.qwazr.extractor.ParserManager;
 import com.qwazr.scripts.ScriptManager;
 import com.qwazr.scripts.ScriptMultiClient;
-import com.qwazr.search.index.*;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -69,11 +68,12 @@ public class ServicesProvider extends AbstractConnector {
 	 */
 	@JsonIgnore
 	public WebCrawlerServiceInterface getNewWebCrawlerClient(String group, Integer msTimeout)
-			throws URISyntaxException {
+					throws URISyntaxException {
 		if (ClusterManager.INSTANCE.isCluster())
 			return new WebCrawlerMultiClient(ClusterManager.INSTANCE.executor,
-					ClusterManager.INSTANCE.getClusterClient()
-							.getActiveNodesByService(WebCrawlerManager.SERVICE_NAME_WEBCRAWLER, null), msTimeout);
+							ClusterManager.INSTANCE.getClusterClient()
+											.getActiveNodesByService(WebCrawlerManager.SERVICE_NAME_WEBCRAWLER, null),
+							msTimeout);
 		else
 			return new WebCrawlerSingleClient(ClusterManager.INSTANCE.myAddress, msTimeout);
 	}
@@ -93,7 +93,7 @@ public class ServicesProvider extends AbstractConnector {
 	@JsonIgnore
 	public ScriptMultiClient getNewScriptClient(Integer msTimeout) throws URISyntaxException {
 		return new ScriptMultiClient(ClusterManager.INSTANCE.executor, ClusterManager.INSTANCE.getClusterClient()
-				.getActiveNodesByService(ScriptManager.SERVICE_NAME_SCRIPT, null), msTimeout);
+						.getActiveNodesByService(ScriptManager.SERVICE_NAME_SCRIPT, null), msTimeout);
 	}
 
 	@JsonIgnore
@@ -102,17 +102,4 @@ public class ServicesProvider extends AbstractConnector {
 		return new ExtractorServiceImpl();
 	}
 
-	@JsonIgnore
-	public IndexServiceInterface getNewIndexClient(Boolean local, Integer msTimeout) throws URISyntaxException {
-		if (local != null && local)
-			return new IndexServiceImpl();
-		String[] nodes = ClusterManager.INSTANCE.getClusterClient()
-				.getActiveNodesByService(IndexManager.SERVICE_NAME_SEARCH, null);
-		if (nodes == null)
-			throw new RuntimeException("Index service not available");
-		if (nodes.length == 1)
-			return new IndexSingleClient(nodes[0], msTimeout);
-		return new IndexMultiClient(ClusterManager.INSTANCE.executor, ClusterManager.INSTANCE.getClusterClient()
-				.getActiveNodesByService(IndexManager.SERVICE_NAME_SEARCH, null), msTimeout);
-	}
 }

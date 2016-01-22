@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+ * s * Copyright 2016 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.utils.json;
+package com.qwazr.utils.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.qwazr.utils.server.ServiceInterface;
+public interface ServiceInterface {
 
-import javax.ws.rs.Produces;
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Provider;
-
-@Provider
-@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
-public class JacksonConfig implements ContextResolver<ObjectMapper> {
-
-	public JacksonConfig() {
-	}
-
-	@Override
-	public ObjectMapper getContext(Class<?> objectType) {
-		return JsonMapper.MAPPER;
-	}
+	String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
 }

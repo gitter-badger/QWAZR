@@ -15,6 +15,9 @@
  **/
 package com.qwazr.semaphores;
 
+import com.qwazr.utils.server.ServiceInterface;
+import com.qwazr.utils.server.ServiceName;
+
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -22,17 +25,18 @@ import java.util.Set;
 
 @RolesAllowed(SemaphoresManager.SERVICE_NAME_SEMAPHORES)
 @Path("/semaphores")
-public interface SemaphoresServiceInterface {
+@ServiceName(SemaphoresManager.SERVICE_NAME_SEMAPHORES)
+public interface SemaphoresServiceInterface extends ServiceInterface {
 
 	@GET
 	@Path("/semaphores")
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	Set<String> getSemaphores(@QueryParam("local") Boolean local, @QueryParam("group") String group,
-			@QueryParam("timeout") Integer msTimeout);
+					@QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/semaphores/{semaphore_id}")
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	Set<String> getSemaphoreOwners(@PathParam("semaphore_id") String semaphore_id, @QueryParam("local") Boolean local,
-			@QueryParam("group") String group, @QueryParam("timeout") Integer msTimeout);
+					@QueryParam("group") String group, @QueryParam("timeout") Integer msTimeout);
 }
