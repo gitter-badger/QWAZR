@@ -15,13 +15,13 @@
  */
 package com.qwazr.utils.server;
 
+import com.qwazr.utils.StringUtils;
+import com.qwazr.utils.json.JsonExceptionReponse;
+
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
-import com.qwazr.utils.StringUtils;
-import com.qwazr.utils.json.JsonExceptionReponse;
 
 public class ServerException extends Exception {
 

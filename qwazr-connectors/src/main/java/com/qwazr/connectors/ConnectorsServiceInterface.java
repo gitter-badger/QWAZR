@@ -15,6 +15,10 @@
  **/
 package com.qwazr.connectors;
 
+import com.qwazr.utils.server.ServiceInterface;
+import com.qwazr.utils.server.ServiceName;
+
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -23,16 +27,18 @@ import javax.ws.rs.core.MediaType;
 import java.util.Map;
 
 @Path("/connectors")
-public interface ConnectorsServiceInterface {
+@RolesAllowed("connector")
+@ServiceName("connector")
+public interface ConnectorsServiceInterface extends ServiceInterface {
 
 	@GET
 	@Path("/")
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	Map<String, String> list();
 
 	@GET
 	@Path("/{connector_name}")
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	Object get(@PathParam("connector_name") String connectorName);
 
 }

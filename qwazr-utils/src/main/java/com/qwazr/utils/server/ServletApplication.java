@@ -20,30 +20,36 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ServletInfo;
 
+import javax.ws.rs.ApplicationPath;
 import java.util.List;
 
 /**
  * Generic ServletApplication
  */
+@ApplicationPath("/")
 public abstract class ServletApplication {
+
+	private final String appPath;
+
+	public ServletApplication() {
+		appPath = this.getClass().getAnnotation(ApplicationPath.class).value();
+	}
 
 	protected abstract List<ServletInfo> getServletInfos();
 
-	protected abstract SessionListener getSessionListener();
+	final String getApplicationPath() {
+		return appPath;
+	}
 
-	protected abstract String getContextPath();
-
-	DeploymentInfo getDeploymentInfo() {
+	final DeploymentInfo getDeploymentInfo() {
 		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(getClass().getClassLoader())
-						.setContextPath(getContextPath())
-						.setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
-						.setDeploymentName(getClass().getName() + getContextPath());
+						.setContextPath(appPath).setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
+						.setDeploymentName(getClass().getName() + appPath);
 		List<ServletInfo> servletInfos = getServletInfos();
 		if (servletInfos != null)
 			deploymentInfo.addServlets(servletInfos);
-		SessionListener sessionListener = getSessionListener();
-		if (sessionListener != null)
-			deploymentInfo.addSessionListener(sessionListener);
+		if (this instanceof SessionListener)
+			deploymentInfo.addSessionListener((SessionListener) this);
 		return deploymentInfo;
 	}
 }

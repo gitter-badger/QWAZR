@@ -21,7 +21,6 @@ import com.qwazr.graph.model.GraphNode;
 import com.qwazr.utils.json.JsonMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.http.Consts;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.entity.ContentType;
@@ -45,8 +44,6 @@ public class FullTest {
 	public static final int PRODUCT_NUMBER = 1000;
 	public static final int VISIT_NUMBER = 1000;
 
-	public static final ContentType APPLICATION_JSON_UTF8 = ContentType.create("application/json", Consts.UTF_8);
-
 	@Test
 	public void test000CreateDatabase() throws IOException {
 
@@ -61,8 +58,8 @@ public class FullTest {
 		GraphDefinition graphDef = new GraphDefinition(node_properties, edge_types);
 
 		HttpResponse response = Request.Post(BASE_URL + '/' + TEST_BASE)
-				.bodyString(JsonMapper.MAPPER.writeValueAsString(graphDef), APPLICATION_JSON_UTF8).connectTimeout(60000)
-				.socketTimeout(60000).execute().returnResponse();
+						.bodyString(JsonMapper.MAPPER.writeValueAsString(graphDef), ContentType.APPLICATION_JSON)
+						.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 	}
 
@@ -74,8 +71,8 @@ public class FullTest {
 			node.properties.put("type", "product");
 			node.properties.put("name", "product" + i);
 			HttpResponse response = Request.Post(BASE_URL + '/' + TEST_BASE + "/node/p" + i)
-					.bodyString(JsonMapper.MAPPER.writeValueAsString(node), APPLICATION_JSON_UTF8).connectTimeout(60000)
-					.socketTimeout(60000).execute().returnResponse();
+							.bodyString(JsonMapper.MAPPER.writeValueAsString(node), ContentType.APPLICATION_JSON)
+							.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 		}
 	}
@@ -106,17 +103,18 @@ public class FullTest {
 				nodeMap.put("v" + (i + k), node);
 			}
 			HttpResponse response = Request.Post(BASE_URL + '/' + TEST_BASE + "/node")
-					.bodyString(JsonMapper.MAPPER.writeValueAsString(nodeMap), APPLICATION_JSON_UTF8)
-					.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
+							.bodyString(JsonMapper.MAPPER.writeValueAsString(nodeMap), ContentType.APPLICATION_JSON)
+							.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 		}
 	}
 
 	private boolean nodeExists(int visiteNodeId) throws IOException {
 		HttpResponse response = Request.Get(BASE_URL + '/' + TEST_BASE + "/node/v" + visiteNodeId).connectTimeout(60000)
-				.socketTimeout(60000).execute().returnResponse();
+						.socketTimeout(60000).execute().returnResponse();
 		Assert.assertThat(response.getStatusLine().getStatusCode(), AnyOf.anyOf(Is.is(200), Is.is(404)));
-		Assert.assertThat(response.getEntity().getContentType().getValue(), Is.is(APPLICATION_JSON_UTF8.toString()));
+		Assert.assertThat(response.getEntity().getContentType().getValue(),
+						Is.is(ContentType.APPLICATION_JSON.toString()));
 		return response.getStatusLine().getStatusCode() == 200;
 	}
 
@@ -128,13 +126,13 @@ public class FullTest {
 				continue;
 			int productNodeId = RandomUtils.nextInt(PRODUCT_NUMBER / 2, PRODUCT_NUMBER);
 			HttpResponse response = Request
-					.Post(BASE_URL + '/' + TEST_BASE + "/node/v" + visitNodeId + "/edge/see/p" + productNodeId)
-					.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
+							.Post(BASE_URL + '/' + TEST_BASE + "/node/v" + visitNodeId + "/edge/see/p" + productNodeId)
+							.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			if (response.getStatusLine().getStatusCode() == 500)
 				System.out.println(IOUtils.toString(response.getEntity().getContent()));
 			Assert.assertThat(response.getStatusLine().getStatusCode(), AnyOf.anyOf(Is.is(200), Is.is(404)));
 			Assert.assertThat(response.getEntity().getContentType().getValue(),
-					Is.is(APPLICATION_JSON_UTF8.toString()));
+							Is.is(ContentType.APPLICATION_JSON.toString()));
 		}
 	}
 
@@ -145,9 +143,8 @@ public class FullTest {
 			if (!nodeExists(visiteNodeId))
 				continue;
 			int productNodeId = RandomUtils.nextInt(0, PRODUCT_NUMBER / 2);
-			HttpResponse response = Request
-					.Delete(BASE_URL + '/' + TEST_BASE + "/node/v" + visiteNodeId + "/edge/see/p" + productNodeId)
-					.connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
+			HttpResponse response = Request.Delete(BASE_URL + '/' + TEST_BASE + "/node/v" + visiteNodeId + "/edge/see/p"
+							+ productNodeId).connectTimeout(60000).socketTimeout(60000).execute().returnResponse();
 			Assert.assertThat(response.getStatusLine().getStatusCode(), AnyOf.anyOf(Is.is(200), Is.is(404)));
 		}
 	}
@@ -155,7 +152,7 @@ public class FullTest {
 	@Test
 	public void test999DeleteDatabase() throws IOException {
 		HttpResponse response = Request.Delete(BASE_URL + '/' + TEST_BASE).connectTimeout(60000).socketTimeout(60000)
-				.execute().returnResponse();
+						.execute().returnResponse();
 		Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
 	}

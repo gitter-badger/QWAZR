@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.json.JsonMapper;
-import com.qwazr.utils.server.RestApplication;
+import com.qwazr.utils.server.ServiceInterface;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.http.Header;
@@ -138,7 +138,7 @@ public class StoreFileResult {
 			inputStream = new FileInputStream(file);
 			builder.entity(inputStream).type(MediaType.APPLICATION_OCTET_STREAM);
 		} else if (type == Type.DIRECTORY) {
-			builder.entity(JsonMapper.MAPPER.writeValueAsString(this)).type(RestApplication.APPLICATION_JSON_UTF8);
+			builder.entity(JsonMapper.MAPPER.writeValueAsString(this)).type(ServiceInterface.APPLICATION_JSON_UTF8);
 		}
 	}
 
@@ -197,8 +197,7 @@ public class StoreFileResult {
 	 * Check if the file are identical. Same type, same last_modified date, and
 	 * same size.
 	 *
-	 * @param o
-	 *            the object to compare
+	 * @param o the object to compare
 	 * @return true if the file are the same
 	 */
 	public final boolean repairCheckFileEquals(StoreFileResult o) {

@@ -18,10 +18,11 @@ package com.qwazr;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.utils.server.ServiceInterface;
 
 import javax.ws.rs.Path;
-import javax.ws.rs.core.MultivaluedMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -30,10 +31,10 @@ public class WelcomeStatus {
 	public final ImplementationStatus implementation;
 	public final List<String> endpoints;
 
-	WelcomeStatus(MultivaluedMap<String, Class<?>> services) {
+	WelcomeStatus(Collection<Class<? extends ServiceInterface>> classes) {
 		this.implementation = new ImplementationStatus();
 		endpoints = new ArrayList<String>();
-		services.forEach((s, classes) -> classes.forEach(aClass -> addService(endpoints, aClass)));
+		classes.forEach(aClass -> addService(endpoints, aClass));
 	}
 
 	private void addService(List<String> endpoints, Class<?> clazz) {

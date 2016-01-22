@@ -22,7 +22,6 @@ import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ServletInfo;
 import org.glassfish.jersey.servlet.ServletContainer;
 
-import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -32,26 +31,25 @@ import java.util.Set;
 /**
  * Generic RestApplication
  */
-public class RestApplication extends Application {
-
-	public final static String APPLICATION_JSON_UTF8 = "application/json; charset=UTF-8";
+class RestApplication extends Application {
 
 	@Override
-	public Set<Class<?>> getClasses() {
+	final public Set<Class<?>> getClasses() {
 		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(JacksonConfig.class);
 		classes.add(JacksonJsonProvider.class);
+		if (AbstractServer.INSTANCE != null && AbstractServer.INSTANCE.services != null)
+			classes.addAll(AbstractServer.INSTANCE.services);
 		return classes;
 	}
 
-	DeploymentInfo getDeploymentInfo() {
-		ApplicationPath appPath = getClass().getAnnotation(ApplicationPath.class);
-		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(this.getClass().getClassLoader())
-						.setContextPath(appPath.value()).setDeploymentName("REST");
+	final static DeploymentInfo getDeploymentInfo() {
+		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(RestApplication.class.getClassLoader())
+						.setContextPath("/").setDeploymentName("REST");
 		List<ServletInfo> servletInfos = new ArrayList<ServletInfo>();
 		servletInfos.add(new ServletInfo("REST", ServletContainer.class)
-						.addInitParam("javax.ws.rs.Application", getClass().getName()).setAsyncSupported(true)
-						.addMapping("/*"));
+						.addInitParam("javax.ws.rs.Application", RestApplication.class.getName())
+						.setAsyncSupported(true).addMapping("/*"));
 		deploymentInfo.addServlets(servletInfos);
 		return deploymentInfo;
 	}

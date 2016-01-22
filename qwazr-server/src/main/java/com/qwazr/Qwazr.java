@@ -32,12 +32,12 @@ import com.qwazr.scripts.ScriptManager;
 import com.qwazr.search.index.IndexManager;
 import com.qwazr.semaphores.SemaphoresManager;
 import com.qwazr.store.StoreServer;
-import com.qwazr.store.data.StoreMasterDataService;
-import com.qwazr.store.schema.StoreMasterSchemaService;
 import com.qwazr.tools.ToolsManagerImpl;
 import com.qwazr.tools.ToolsServiceImpl;
 import com.qwazr.utils.server.AbstractServer;
-import com.qwazr.utils.server.RestApplication;
+import com.qwazr.utils.server.ServiceInterface;
+import com.qwazr.utils.server.ServiceName;
+import com.qwazr.utils.server.ServletApplication;
 import com.qwazr.webapps.WebappApplication;
 import com.qwazr.webapps.transaction.WebappManager;
 import io.undertow.security.idm.IdentityManager;
@@ -47,16 +47,14 @@ import org.apache.commons.cli.Options;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.MultivaluedMap;
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.concurrent.Executors;
 
 public class Qwazr extends AbstractServer {
@@ -72,34 +70,24 @@ public class Qwazr extends AbstractServer {
 		serverDefinition.defaultDataDirName = "qwazr";
 	}
 
-	private static ServerConfiguration serverConfiguration = null;
+	private final static Collection<Class<? extends ServiceInterface>> services = new ArrayList<>();
 
-	private static final MultivaluedMap<String, Class<?>> services = new MultivaluedHashMap<>();
+	private static ServerConfiguration serverConfiguration = null;
 
 	private Qwazr() {
 		super(serverDefinition, Executors.newCachedThreadPool());
 	}
 
 	@Path("/")
-	public static class WelcomeServiceImpl {
+	@ServiceName("welcome")
+	public static class WelcomeServiceImpl implements ServiceInterface {
 
 		@GET
-		@Produces(MediaType.APPLICATION_JSON)
+		@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 		public WelcomeStatus welcome() {
 			return new WelcomeStatus(services);
 		}
 
-	}
-
-	@ApplicationPath("/")
-	public static class QwazrApplication extends RestApplication {
-
-		@Override
-		public synchronized Set<Class<?>> getClasses() {
-			Set<Class<?>> classes = super.getClasses();
-			services.forEach((s, classes1) -> classes.addAll(classes1));
-			return classes;
-		}
 	}
 
 	public final static Option THREADS_OPTION = new Option("t", "maxthreads", true, "The maximum of threads");
@@ -117,7 +105,7 @@ public class Qwazr extends AbstractServer {
 	}
 
 	@Override
-	public void load() throws IOException {
+	public ServletApplication load(Collection<Class<? extends ServiceInterface>> classes) throws IOException {
 
 		File currentDataDir = getCurrentDataDir();
 
@@ -125,56 +113,50 @@ public class Qwazr extends AbstractServer {
 
 		if (ServiceEnum.compiler.isActive(serverConfiguration))
 			CompilerManager.load(executorService, currentDataDir);
-
-		services.add("welcome", WelcomeServiceImpl.class);
-		services.add("cluster", ClusterServiceImpl.class);
+		services.add(WelcomeServiceImpl.class);
+		services.add(ClusterServiceImpl.class);
 
 		if (ServiceEnum.extractor.isActive(serverConfiguration))
-			services.add(ServiceEnum.extractor.name(), ParserManager.load());
+			services.add(ParserManager.load());
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration))
-			services.add(ServiceEnum.webapps.name(), WebappManager.load(executorService, currentDataDir));
+			services.add(WebappManager.load(executorService, currentDataDir));
 
 		if (ServiceEnum.semaphores.isActive(serverConfiguration))
-			services.add(ServiceEnum.semaphores.name(), SemaphoresManager.load(executorService));
+			services.add(SemaphoresManager.load(executorService));
 
 		if (ServiceEnum.scripts.isActive(serverConfiguration))
-			services.add(ServiceEnum.scripts.name(), ScriptManager.load(executorService, currentDataDir));
+			services.add(ScriptManager.load(executorService, currentDataDir));
 
 		if (ServiceEnum.webcrawler.isActive(serverConfiguration))
-			services.add(ServiceEnum.webcrawler.name(), WebCrawlerManager.load(executorService));
+			services.add(WebCrawlerManager.load(executorService));
 
 		if (ServiceEnum.search.isActive(serverConfiguration))
-			services.add(ServiceEnum.search.name(), IndexManager.load(executorService, currentDataDir));
+			services.add(IndexManager.load(executorService, currentDataDir));
 
 		if (ServiceEnum.graph.isActive(serverConfiguration))
-			services.add(ServiceEnum.graph.name(), GraphManager.load(executorService, currentDataDir));
+			services.add(GraphManager.load(executorService, currentDataDir));
 
 		if (ServiceEnum.table.isActive(serverConfiguration))
-			services.add(ServiceEnum.table.name(), TableManager.load(executorService, currentDataDir));
+			services.add(TableManager.load(executorService, currentDataDir));
 
-		if (ServiceEnum.store.isActive(serverConfiguration)) {
-			StoreServer.load(currentDataDir);
-			services.add(ServiceEnum.store.name(), StoreMasterDataService.class);
-			services.add(ServiceEnum.store.name(), StoreMasterSchemaService.class);
-		}
+		if (ServiceEnum.store.isActive(serverConfiguration))
+			StoreServer.load(currentDataDir, services);
 
 		ConnectorManagerImpl.load(currentDataDir);
-		services.add(ServiceEnum.connectors.name(), ConnectorsServiceImpl.class);
+		services.add(ConnectorsServiceImpl.class);
 
 		ToolsManagerImpl.load(currentDataDir);
-		services.add(ServiceEnum.tools.name(), ToolsServiceImpl.class);
+		services.add(ToolsServiceImpl.class);
 
 		// Scheduler is last, because it may immediatly execute a scripts
 		if (ServiceEnum.schedulers.isActive(serverConfiguration))
-			services.add(ServiceEnum.schedulers.name(),
-					SchedulerManager.load(currentDataDir, serverConfiguration.getSchedulerMaxThreads()));
-	}
+			services.add(SchedulerManager.load(currentDataDir, serverConfiguration.getSchedulerMaxThreads()));
 
-	@Override
-	public Class<WebappApplication> getServletApplication() {
+		classes.addAll(services);
+
 		if (ServiceEnum.webapps.isActive(serverConfiguration))
-			return WebappApplication.class;
+			return new WebappApplication();
 		return null;
 	}
 
@@ -188,19 +170,14 @@ public class Qwazr extends AbstractServer {
 		return (IdentityManager) connector;
 	}
 
-	@Override
-	public Class<QwazrApplication> getRestApplication() {
-		return QwazrApplication.class;
-	}
-
 	public static void main(String[] args) {
 		// Start the server
 		try {
 			Qwazr server = new Qwazr();
 			server.start(args);
 			// Register the services
-			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services.keySet(),
-					serverConfiguration.groups));
+			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services,
+							serverConfiguration.groups));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);
