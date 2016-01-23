@@ -15,12 +15,13 @@
  **/
 package com.qwazr.semaphores;
 
+import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.server.ServiceInterface;
 import com.qwazr.utils.server.ServiceName;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import java.net.URISyntaxException;
 import java.util.Set;
 
 @RolesAllowed(SemaphoresManager.SERVICE_NAME_SEMAPHORES)
@@ -32,11 +33,18 @@ public interface SemaphoresServiceInterface extends ServiceInterface {
 	@Path("/semaphores")
 	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	Set<String> getSemaphores(@QueryParam("local") Boolean local, @QueryParam("group") String group,
-					@QueryParam("timeout") Integer msTimeout);
+			@QueryParam("timeout") Integer msTimeout);
 
 	@GET
 	@Path("/semaphores/{semaphore_id}")
 	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	Set<String> getSemaphoreOwners(@PathParam("semaphore_id") String semaphore_id, @QueryParam("local") Boolean local,
-					@QueryParam("group") String group, @QueryParam("timeout") Integer msTimeout);
+			@QueryParam("group") String group, @QueryParam("timeout") Integer msTimeout);
+
+	public static SemaphoresServiceInterface getClient() throws URISyntaxException {
+		if (ClusterManager.INSTANCE.isCluster())
+			return new SemaphoresClusterServiceImpl();
+		SemaphoresManager.getInstance();
+		return new SemaphoresServiceImpl();
+	}
 }

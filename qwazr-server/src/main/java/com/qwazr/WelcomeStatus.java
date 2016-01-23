@@ -18,6 +18,7 @@ package com.qwazr;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.qwazr.cluster.manager.ClusterManager;
+import com.qwazr.utils.AnnotationsUtils;
 import com.qwazr.utils.server.ServiceInterface;
 
 import javax.ws.rs.Path;
@@ -38,15 +39,7 @@ public class WelcomeStatus {
 	}
 
 	private void addService(List<String> endpoints, Class<?> clazz) {
-		Path path = clazz.getAnnotation(Path.class);
-		if (path == null) {
-			Class<?>[] interfaces = clazz.getInterfaces();
-			if (interfaces == null)
-				return;
-			for (Class<?> interfac : interfaces)
-				if ((path = interfac.getAnnotation(Path.class)) != null)
-					break;
-		}
+		final Path path = AnnotationsUtils.getFirstAnnotation(clazz, Path.class);
 		if (path == null) {
 			if (Qwazr.logger.isWarnEnabled())
 				Qwazr.logger.warn("No PATH annotation for " + clazz.getName());

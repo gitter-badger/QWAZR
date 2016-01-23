@@ -66,13 +66,6 @@ public class SemaphoresManager {
 		semaphoreMap = new HashMap<String, Set<String>>();
 	}
 
-	public static SemaphoresServiceInterface getService() {
-		if (ClusterManager.INSTANCE.isCluster())
-			return new SemaphoresClusterServiceImpl();
-		getInstance();
-		return new SemaphoresServiceImpl();
-	}
-
 	void getSemaphores(Collection<String> semaphores) {
 		semaphoreMapLock.r.lock();
 		try {
