@@ -16,20 +16,37 @@
 package com.qwazr.utils;
 
 import java.lang.annotation.Annotation;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AnnotationsUtils {
 
-	public static <A extends Annotation> A getFirstAnnotation(Class<?> clazz, Class<A> annotationClass) {
+	public static <A extends Annotation> A getFirstAnnotation(Class<?> clazz, Class<A> annotationClass,
+			Set<Class<?>> checked) {
 		if (clazz == null)
 			return null;
+		if (checked.contains(clazz))
+			return null;
+		checked.add(clazz);
 		A annotation = clazz.getAnnotation(annotationClass);
 		if (annotation != null)
 			return annotation;
-		Class<?>[] interfaces = clazz.getInterfaces();
-		if (interfaces == null)
+		annotation = getFirstAnnotation(clazz.getInterfaces(), annotationClass, checked);
+		if (annotation != null)
+			return annotation;
+		return getFirstAnnotation(clazz.getSuperclass(), annotationClass, checked);
+	}
+
+	public static <A extends Annotation> A getFirstAnnotation(Class<?> clazz, Class<A> annotationClass) {
+		return getFirstAnnotation(clazz, annotationClass, new HashSet<>());
+	}
+
+	public static <A extends Annotation> A getFirstAnnotation(Class<?>[] classes, Class<A> annotationClass,
+			Set<Class<?>> checked) {
+		if (classes == null)
 			return null;
-		for (Class<?> intf : interfaces) {
-			annotation = intf.getAnnotation(annotationClass);
+		for (Class<?> cl : classes) {
+			A annotation = getFirstAnnotation(cl, annotationClass, checked);
 			if (annotation != null)
 				return annotation;
 		}
