@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -129,7 +128,7 @@ public class Qwazr extends AbstractServer {
 			services.add(ScriptManager.load(executorService, currentDataDir));
 
 		if (ServiceEnum.webcrawler.isActive(serverConfiguration))
-			services.add(WebCrawlerManager.load(executorService));
+			services.add(WebCrawlerManager.load(executorService, serverConfiguration.logs_directory));
 
 		if (ServiceEnum.search.isActive(serverConfiguration))
 			services.add(IndexManager.load(executorService, currentDataDir));
@@ -176,8 +175,8 @@ public class Qwazr extends AbstractServer {
 			Qwazr server = new Qwazr();
 			server.start(args);
 			// Register the services
-			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services,
-							serverConfiguration.groups));
+			ClusterManager.INSTANCE.registerMe(
+					new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services, serverConfiguration.groups));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);
