@@ -17,6 +17,7 @@ package com.qwazr;
 
 import com.qwazr.utils.StringUtils;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -65,11 +66,24 @@ public class ServerConfiguration {
 
 	public final Set<ServiceEnum> services;
 	public final Set<String> groups;
+	public final File logs_directory;
 
 	public final Integer scheduler_max_threads;
 
 	ServerConfiguration() {
-		String services_env = System.getenv("QWAZR_SERVICES");
+
+		final String logs_env = System.getenv("QWAZR_LOGS");
+		if (StringUtils.isEmpty(logs_env)) {
+			logs_directory = null;
+		} else {
+			logs_directory = new File(logs_env);
+			if (!logs_directory.exists())
+				logs_directory.mkdirs();
+			if (!logs_directory.exists())
+				throw new IllegalArgumentException("Cannot create the QWAZR_LOGS directory: " + logs_directory);
+		}
+
+		final String services_env = System.getenv("QWAZR_SERVICES");
 		if (StringUtils.isEmpty(services_env)) {
 			services = null;
 		} else {
@@ -83,7 +97,7 @@ public class ServerConfiguration {
 				}
 			}
 		}
-		String groups_env = System.getenv("QWAZR_GROUPS");
+		final String groups_env = System.getenv("QWAZR_GROUPS");
 		if (StringUtils.isEmpty(groups_env)) {
 			groups = null;
 		} else {
