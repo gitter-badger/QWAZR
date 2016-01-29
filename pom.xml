@@ -74,6 +74,7 @@
         <module>qwazr-database</module>
         <module>qwazr-extractor</module>
         <module>qwazr-graph</module>
+        <module>qwazr-maven-plugin</module>
         <module>qwazr-scripts</module>
         <module>qwazr-semaphores</module>
         <module>qwazr-scheduler</module>

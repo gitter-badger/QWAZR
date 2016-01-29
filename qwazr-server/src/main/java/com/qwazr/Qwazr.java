@@ -180,9 +180,11 @@ public class Qwazr extends AbstractServer {
 			// Register the services
 			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services,
 							serverConfiguration.groups));
+
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);
 		}
+
 	}
 }
