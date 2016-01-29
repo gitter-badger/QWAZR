@@ -38,7 +38,6 @@ import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServiceInterface;
 import com.qwazr.utils.server.ServiceName;
 import com.qwazr.utils.server.ServletApplication;
-import com.qwazr.webapps.WebappApplication;
 import com.qwazr.webapps.transaction.WebappManager;
 import io.undertow.security.idm.IdentityManager;
 import org.apache.commons.cli.CommandLine;
@@ -106,6 +105,8 @@ public class Qwazr extends AbstractServer {
 	@Override
 	public ServletApplication load(Collection<Class<? extends ServiceInterface>> classes) throws IOException {
 
+		final ServletApplication servletApplication;
+
 		File currentDataDir = getCurrentDataDir();
 
 		ClusterManager.load(executorService, getWebServicePublicAddress(), serverConfiguration.groups);
@@ -118,8 +119,11 @@ public class Qwazr extends AbstractServer {
 		if (ServiceEnum.extractor.isActive(serverConfiguration))
 			services.add(ParserManager.load());
 
-		if (ServiceEnum.webapps.isActive(serverConfiguration))
+		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
 			services.add(WebappManager.load(executorService, currentDataDir));
+			servletApplication = WebappManager.getInstance().getServletApplication();
+		} else
+			servletApplication = null;
 
 		if (ServiceEnum.semaphores.isActive(serverConfiguration))
 			services.add(SemaphoresManager.load(executorService));
@@ -154,9 +158,7 @@ public class Qwazr extends AbstractServer {
 
 		classes.addAll(services);
 
-		if (ServiceEnum.webapps.isActive(serverConfiguration))
-			return new WebappApplication();
-		return null;
+		return servletApplication;
 	}
 
 	@Override
@@ -172,11 +174,12 @@ public class Qwazr extends AbstractServer {
 	public static void main(String[] args) {
 		// Start the server
 		try {
-			Qwazr server = new Qwazr();
-			server.start(args);
+
+			final Qwazr server = new Qwazr();
+			server.start(args, true);
 			// Register the services
-			ClusterManager.INSTANCE.registerMe(
-					new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services, serverConfiguration.groups));
+			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services,
+							serverConfiguration.groups));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);

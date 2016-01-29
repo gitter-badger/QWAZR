@@ -54,7 +54,7 @@ public class GraphServer extends AbstractServer {
 
 	public static void main(String[] args) throws IOException, ParseException, ServletException, InstantiationException,
 					IllegalAccessException {
-		new GraphServer().start(args);
+		new GraphServer().start(args, true);
 	}
 
 }
