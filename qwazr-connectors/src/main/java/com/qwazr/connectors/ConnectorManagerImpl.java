@@ -15,7 +15,6 @@
  **/
 package com.qwazr.connectors;
 
-import com.qwazr.compiler.CompilerManager;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.ReadOnlyMap;
 import com.qwazr.utils.TrackedFile;
@@ -28,10 +27,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
-		implements ConnectorManager, TrackedFile.FileEventReceiver, Consumer<ClassLoader> {
+				implements ConnectorManager, TrackedFile.FileEventReceiver {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConnectorManagerImpl.class);
 
@@ -41,9 +39,6 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		INSTANCE = new ConnectorManagerImpl(directory);
-		CompilerManager compilerManager = CompilerManager.getInstance();
-		if (compilerManager != null)
-			compilerManager.register(INSTANCE);
 	}
 
 	final public static ConnectorManager getInstance() {
@@ -65,7 +60,7 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 		final Map<String, AbstractConnector> connectorMap = new HashMap<>();
 		logger.info("Loading connectors configuration file: " + connectorsFile.getAbsolutePath());
 		ConnectorsConfiguration configuration = JsonMapper.MAPPER
-				.readValue(connectorsFile, ConnectorsConfiguration.class);
+						.readValue(connectorsFile, ConnectorsConfiguration.class);
 		if (configuration.connectors != null) {
 			for (AbstractConnector connector : configuration.connectors) {
 				logger.info("Loading connector: " + connector.name);
@@ -90,13 +85,5 @@ public class ConnectorManagerImpl extends ReadOnlyMap<String, AbstractConnector>
 		trackedFile.check();
 		return super.get(name);
 	}
-
-	@Override
-	public void accept(ClassLoader classLoader) {
-		try {
-			load();
-		} catch (IOException e) {
-			logger.error("Failure on connectors reload", e);
-		}
-	}
+	
 }

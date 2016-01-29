@@ -5,10 +5,10 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 
-@Mojo(name = "sayhi")
-public class QwazrMojo extends AbstractMojo {
+@Mojo(name = "start")
+public class QwazrStartMojo extends AbstractMojo {
 
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		getLog().info("QWAZR PLUGIN");
+		getLog().info("QWAZR START");
 	}
 }

@@ -16,7 +16,6 @@
 package com.qwazr.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.qwazr.compiler.CompilerManager;
 import com.qwazr.utils.IOUtils;
 import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
@@ -133,13 +132,13 @@ public class FreeMarkerTool extends AbstractTool {
 
 		@Override
 		public Object findTemplateSource(String path) throws IOException {
-			return CompilerManager.getJavaClassLoader().getResourceAsStream(path);
+			return Thread.currentThread().getContextClassLoader().getResourceAsStream(path);
 		}
 
 		@Override
 		@JsonIgnore
 		public long getLastModified(Object templateSource) {
-			return CompilerManager.getJavaClassLoader().hashCode();
+			return Thread.currentThread().getContextClassLoader().hashCode();
 		}
 
 		@Override

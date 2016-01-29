@@ -34,6 +34,7 @@ import com.qwazr.semaphores.SemaphoresManager;
 import com.qwazr.store.StoreServer;
 import com.qwazr.tools.ToolsManagerImpl;
 import com.qwazr.tools.ToolsServiceImpl;
+import com.qwazr.utils.process.ProcessUtils;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServiceInterface;
 import com.qwazr.utils.server.ServiceName;
@@ -174,6 +175,8 @@ public class Qwazr extends AbstractServer {
 	public static void main(String[] args) {
 		// Start the server
 		try {
+
+			ProcessUtils.Restart.init(Qwazr.class, args);
 
 			final Qwazr server = new Qwazr();
 			server.start(args, true);

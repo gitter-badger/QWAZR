@@ -15,7 +15,6 @@
  **/
 package com.qwazr.tools;
 
-import com.qwazr.compiler.CompilerManager;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.ReadOnlyMap;
 import com.qwazr.utils.TrackedFile;
@@ -29,10 +28,9 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
-		implements ToolsManager, TrackedFile.FileEventReceiver, Consumer<ClassLoader> {
+				implements ToolsManager, TrackedFile.FileEventReceiver {
 
 	private static final Logger logger = LoggerFactory.getLogger(ToolsManagerImpl.class);
 
@@ -42,9 +40,6 @@ public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		INSTANCE = new ToolsManagerImpl(dataDirectory);
-		CompilerManager compilerManager = CompilerManager.getInstance();
-		if (compilerManager != null)
-			compilerManager.register(INSTANCE);
 	}
 
 	final public static ToolsManager getInstance() {
@@ -94,13 +89,5 @@ public class ToolsManagerImpl extends ReadOnlyMap<String, AbstractTool>
 	public ToolsServiceInterface getRemoteClient(String address, Integer msTimeOut) throws URISyntaxException {
 		return new ToolsServiceClient(address, msTimeOut);
 	}
-
-	@Override
-	public void accept(ClassLoader classLoader) {
-		try {
-			load();
-		} catch (IOException e) {
-			logger.error("Failure on tools reload", e);
-		}
-	}
+	
 }
