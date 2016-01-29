@@ -75,7 +75,7 @@ public class StoreServer extends AbstractServer {
 
 	public static void main(String[] args) throws IOException, ParseException, ServletException, InstantiationException,
 					IllegalAccessException {
-		new StoreServer().start(args);
+		new StoreServer().start(args, true);
 	}
 
 	@Override

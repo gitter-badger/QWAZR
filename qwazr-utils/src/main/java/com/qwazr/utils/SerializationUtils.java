@@ -61,4 +61,9 @@ public class SerializationUtils extends
 		}
 	}
 
+	final public static class NullEmptyObject implements Serializable {
+
+		public final static NullEmptyObject INSTANCE = new NullEmptyObject();
+	}
+
 }

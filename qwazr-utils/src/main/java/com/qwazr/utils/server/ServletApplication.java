@@ -19,6 +19,7 @@ import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ServletInfo;
+import io.undertow.servlet.api.SessionPersistenceManager;
 
 import java.util.List;
 
@@ -34,6 +35,8 @@ public abstract class ServletApplication {
 
 	protected abstract List<ServletInfo> getServletInfos();
 
+	protected abstract SessionPersistenceManager getSessionPersistenceManager();
+
 	final String getApplicationPath() {
 		return appPath;
 	}
@@ -42,6 +45,9 @@ public abstract class ServletApplication {
 		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(getClass().getClassLoader())
 						.setContextPath(appPath).setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
 						.setDeploymentName(getClass().getName() + appPath);
+		final SessionPersistenceManager sessionPersistenceManager = getSessionPersistenceManager();
+		if (sessionPersistenceManager != null)
+			deploymentInfo.setSessionPersistenceManager(sessionPersistenceManager);
 		List<ServletInfo> servletInfos = getServletInfos();
 		if (servletInfos != null)
 			deploymentInfo.addServlets(servletInfos);
