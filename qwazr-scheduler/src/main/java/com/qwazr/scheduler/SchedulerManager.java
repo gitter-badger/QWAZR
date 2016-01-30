@@ -97,9 +97,6 @@ public class SchedulerManager implements TrackedInterface.FileChangeConsumer {
 				}
 			}
 		});
-
-		for (String scheduler_name : getSchedulers().keySet())
-			checkSchedulerCron(scheduler_name, getScheduler(scheduler_name));
 	}
 
 	TreeMap<String, String> getSchedulers() {
@@ -204,8 +201,10 @@ public class SchedulerManager implements TrackedInterface.FileChangeConsumer {
 			final SchedulerConfiguration schedulerConfiguration = JsonMapper.MAPPER
 					.readValue(jsonFile, SchedulerConfiguration.class);
 
-			if (schedulerConfiguration == null || schedulerConfiguration.schedulers == null)
+			if (schedulerConfiguration == null || schedulerConfiguration.schedulers == null) {
+				unloadSchedulerConf(jsonFile);
 				return;
+			}
 
 			if (logger.isInfoEnabled())
 				logger.info("Load Scheduler configuration file: " + jsonFile.getAbsolutePath());
