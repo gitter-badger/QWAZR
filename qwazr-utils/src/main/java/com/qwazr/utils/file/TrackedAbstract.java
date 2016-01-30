@@ -18,18 +18,38 @@ package com.qwazr.utils.file;
 import com.qwazr.utils.LockUtils;
 
 import java.io.File;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 abstract class TrackedAbstract<T> implements TrackedInterface {
 
 	private final LockUtils.ReadWriteLock rwl;
 
-	protected final TrackedInterface.FileChangeConsumer consumer;
+	private final Set<FileChangeConsumer> consumerSet;
 	protected final File trackedFile;
 
-	public TrackedAbstract(TrackedInterface.FileChangeConsumer consumer, File trackedFile) {
+	public TrackedAbstract(File trackedFile) {
 		this.rwl = new LockUtils.ReadWriteLock();
-		this.consumer = consumer;
+		this.consumerSet = new LinkedHashSet<FileChangeConsumer>();
 		this.trackedFile = trackedFile;
+	}
+
+	final public void register(FileChangeConsumer consumer) {
+		synchronized (consumerSet) {
+			consumerSet.add(consumer);
+		}
+	}
+
+	final public void unregister(FileChangeConsumer consumer) {
+		synchronized (consumerSet) {
+			consumerSet.remove(consumer);
+		}
+	}
+
+	protected void notify(ChangeReason reason, File file) {
+		synchronized (consumerSet) {
+			consumerSet.forEach((consumer) -> consumer.accept(reason, file));
+		}
 	}
 
 	protected abstract void apply(T status);
@@ -37,7 +57,8 @@ abstract class TrackedAbstract<T> implements TrackedInterface {
 	protected abstract T getChanges();
 
 	@Override
-	final public synchronized void check() {
+	final public void check() {
+
 		rwl.r.lock();
 		try {
 			if (getChanges() == null)

@@ -27,16 +27,16 @@ public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.Directory
 
 	private volatile Map<File, Long> trackedFiles;
 
-	public TrackedDirectory(TrackedInterface.FileChangeConsumer consumer, File file) {
-		super(consumer, file);
+	public TrackedDirectory(File directory) {
+		super(directory);
 		this.trackedFiles = null;
 	}
 
 	@Override
 	final protected void apply(DirectoryChanges status) {
 		trackedFiles = status.trackedFiles;
-		if (status.changes != null && consumer != null)
-			status.changes.forEach((file, change) -> consumer.accept(change.reason, file));
+		if (status.changes != null)
+			status.changes.forEach((file, change) -> notify(change.reason, file));
 	}
 
 	final private boolean isChanges(File[] files) {
@@ -64,17 +64,18 @@ public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.Directory
 		for (File file : files) {
 			final long newLastModified = file.lastModified();
 			newTrackedFiles.put(file, newLastModified);
-			Long lastModified = trackedFiles.get(file);
+			Long lastModified = trackedFiles == null ? null : trackedFiles.get(file);
 			if (lastModified == null || lastModified != newLastModified)
 				changes.put(file, new TrackedFile.FileChange(ChangeReason.UPDATED, newLastModified));
 		}
-		trackedFiles.forEach(new BiConsumer<File, Long>() {
-			@Override
-			public void accept(File file, Long aLong) {
-				if (!newTrackedFiles.containsKey(file))
-					new TrackedFile.FileChange(ChangeReason.DELETED, null);
-			}
-		});
+		if (trackedFiles != null)
+			trackedFiles.forEach(new BiConsumer<File, Long>() {
+				@Override
+				public void accept(File file, Long aLong) {
+					if (!newTrackedFiles.containsKey(file))
+						new TrackedFile.FileChange(ChangeReason.DELETED, null);
+				}
+			});
 	}
 
 	@Override

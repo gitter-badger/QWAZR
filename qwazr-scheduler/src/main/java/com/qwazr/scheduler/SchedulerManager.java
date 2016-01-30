@@ -19,9 +19,11 @@ import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.scripts.ScriptManager;
 import com.qwazr.scripts.ScriptRunStatus;
 import com.qwazr.utils.LockUtils;
+import com.qwazr.utils.file.TrackedDirectory;
+import com.qwazr.utils.file.TrackedInterface;
 import com.qwazr.utils.json.JsonMapper;
 import com.qwazr.utils.server.ServerException;
-import org.apache.commons.io.filefilter.FileFileFilter;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.quartz.*;
 import org.quartz.impl.DirectSchedulerFactory;
@@ -30,15 +32,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response.Status;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.function.BiConsumer;
 
-public class SchedulerManager {
+public class SchedulerManager implements TrackedInterface.FileChangeConsumer {
 
 	public static final String SERVICE_NAME_SCHEDULER = "schedulers";
 
@@ -46,12 +45,13 @@ public class SchedulerManager {
 
 	static SchedulerManager INSTANCE = null;
 
-	public static synchronized Class<? extends SchedulerServiceInterface> load(File directory, int maxThreads)
-			throws IOException {
+	public static synchronized Class<? extends SchedulerServiceInterface> load(TrackedDirectory etcTracker,
+			Set<String> confSet, int maxThreads) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
-			INSTANCE = new SchedulerManager(directory, maxThreads);
+			INSTANCE = new SchedulerManager(etcTracker, confSet, maxThreads);
+			etcTracker.register(INSTANCE);
 			return SchedulerServiceImpl.class;
 		} catch (ServerException | SchedulerException e) {
 			throw new RuntimeException(e);
@@ -64,19 +64,25 @@ public class SchedulerManager {
 		return INSTANCE;
 	}
 
-	private final File schedulersDirectory;
 	private final Scheduler globalScheduler;
-	private final TreeMap<String, List<ScriptRunStatus>> schedulerStatusMap;
+	private final Map<String, List<ScriptRunStatus>> schedulerStatusMap;
 	private final LockUtils.ReadWriteLock statusMapLock;
+	private final TrackedDirectory etcTracker;
+	private final Set<String> confSet;
 
-	private SchedulerManager(File rootDirectory, int maxThreads)
+	private final LockUtils.ReadWriteLock mapLock;
+	private final Map<File, Map<String, SchedulerDefinition>> schedulerFileMap;
+	private volatile Map<String, SchedulerDefinition> schedulerMap;
+
+	private SchedulerManager(TrackedDirectory etcTracker, Set<String> confSet, int maxThreads)
 			throws IOException, SchedulerException, ServerException {
-		schedulersDirectory = new File(rootDirectory, SERVICE_NAME_SCHEDULER);
-		if (!schedulersDirectory.exists())
-			schedulersDirectory.mkdir();
-
+		this.confSet = confSet;
+		this.etcTracker = etcTracker;
 		statusMapLock = new LockUtils.ReadWriteLock();
-		schedulerStatusMap = new TreeMap<String, List<ScriptRunStatus>>();
+		mapLock = new LockUtils.ReadWriteLock();
+		schedulerMap = null;
+		schedulerFileMap = new HashMap<>();
+		schedulerStatusMap = new HashMap<String, List<ScriptRunStatus>>();
 		DirectSchedulerFactory schedulerFactory = DirectSchedulerFactory.getInstance();
 		schedulerFactory.createVolatileScheduler(maxThreads);
 		globalScheduler = schedulerFactory.getScheduler();
@@ -97,27 +103,22 @@ public class SchedulerManager {
 	}
 
 	TreeMap<String, String> getSchedulers() {
-		File[] files = schedulersDirectory.listFiles((FileFilter) FileFileFilter.FILE);
-		TreeMap<String, String> map = new TreeMap<String, String>();
-		if (files == null)
+		etcTracker.check();
+		final TreeMap<String, String> map = new TreeMap<String, String>();
+		final Map<String, SchedulerDefinition> scMap = schedulerMap;
+		if (scMap == null)
 			return map;
-		for (File file : files)
-			if (!file.isHidden())
-				map.put(file.getName(), ClusterManager.INSTANCE.myAddress + "/schedulers/" + file.getName());
+		scMap.forEach((name, schedulerDef) -> map.put(name, ClusterManager.INSTANCE.myAddress + "/schedulers/" + name));
 		return map;
 	}
 
-	private File getSchedulerFile(String scheduler_name) throws ServerException {
-		File schedulerFile = new File(schedulersDirectory, scheduler_name);
-		if (!schedulerFile.exists())
-			throw new ServerException(Status.NOT_FOUND, "Scheduler not found: " + scheduler_name);
-		if (!schedulerFile.isFile())
-			throw new ServerException(Status.NOT_ACCEPTABLE, "Scheduler is not a file: " + scheduler_name);
-		return schedulerFile;
-	}
-
 	SchedulerDefinition getScheduler(String scheduler_name) throws IOException, ServerException {
-		return JsonMapper.MAPPER.readValue(getSchedulerFile(scheduler_name), SchedulerDefinition.class);
+		etcTracker.check();
+		final Map<String, SchedulerDefinition> scMap = schedulerMap;
+		SchedulerDefinition schedulerDefinition = scMap == null ? null : scMap.get(scheduler_name);
+		if (schedulerDefinition == null)
+			throw new ServerException(Status.NOT_FOUND, "Scheduler not found: " + scheduler_name);
+		return schedulerDefinition;
 	}
 
 	List<ScriptRunStatus> getStatusList(String scheduler_name) throws IOException, ServerException {
@@ -126,19 +127,6 @@ public class SchedulerManager {
 			return schedulerStatusMap.get(scheduler_name);
 		} finally {
 			statusMapLock.r.unlock();
-		}
-	}
-
-	void deleteScheduler(String scheduler_name) throws ServerException, SchedulerException {
-		synchronized (globalScheduler) {
-			globalScheduler.deleteJob(new JobKey(scheduler_name));
-		}
-		getSchedulerFile(scheduler_name).delete();
-		statusMapLock.w.lock();
-		try {
-			schedulerStatusMap.remove(scheduler_name);
-		} finally {
-			statusMapLock.w.unlock();
 		}
 	}
 
@@ -159,14 +147,6 @@ public class SchedulerManager {
 				globalScheduler.deleteJob(job.getKey());
 			}
 		}
-	}
-
-	SchedulerDefinition setScheduler(String scheduler_name, SchedulerDefinition scheduler)
-			throws IOException, SchedulerException {
-		File schedulerFile = new File(schedulersDirectory, scheduler_name);
-		JsonMapper.MAPPER.writeValue(schedulerFile, scheduler);
-		checkSchedulerCron(scheduler_name, scheduler);
-		return scheduler;
 	}
 
 	List<ScriptRunStatus> executeScheduler(String scheduler_name, SchedulerDefinition scheduler)
@@ -198,4 +178,107 @@ public class SchedulerManager {
 			throws IOException, ServerException, URISyntaxException {
 		return executeScheduler(scheduler_name, getScheduler(scheduler_name));
 	}
+
+	@Override
+	public void accept(TrackedInterface.ChangeReason changeReason, File jsonFile) {
+		if (confSet != null) {
+			String filebase = FilenameUtils.removeExtension(jsonFile.getName());
+			if (!confSet.contains(filebase))
+				return;
+		}
+		String extension = FilenameUtils.getExtension(jsonFile.getName());
+		if (!"json".equals(extension))
+			return;
+		switch (changeReason) {
+		case UPDATED:
+			loadSchedulerConf(jsonFile);
+			break;
+		case DELETED:
+			unloadSchedulerConf(jsonFile);
+			break;
+		}
+	}
+
+	private void loadSchedulerConf(File jsonFile) {
+		try {
+			final SchedulerConfiguration schedulerConfiguration = JsonMapper.MAPPER
+					.readValue(jsonFile, SchedulerConfiguration.class);
+
+			if (schedulerConfiguration == null || schedulerConfiguration.schedulers == null)
+				return;
+
+			if (logger.isInfoEnabled())
+				logger.info("Load Scheduler configuration file: " + jsonFile.getAbsolutePath());
+
+			mapLock.w.lock();
+			try {
+				schedulerFileMap.put(jsonFile, schedulerConfiguration.schedulers);
+				buildSchedulerMap();
+			} finally {
+				mapLock.w.unlock();
+			}
+
+		} catch (IOException | SchedulerException e) {
+			if (logger.isErrorEnabled())
+				logger.error(e.getMessage(), e);
+		}
+	}
+
+	private void unloadSchedulerConf(File jsonFile) {
+		mapLock.w.lock();
+		try {
+			final Map<String, SchedulerDefinition> schedulerDefMap = schedulerFileMap.remove(jsonFile);
+			if (schedulerDefMap == null)
+				return;
+			if (logger.isInfoEnabled())
+				logger.info("Unload Scheduler configuration file: " + jsonFile.getAbsolutePath());
+			buildSchedulerMap();
+		} catch (SchedulerException e) {
+			if (logger.isErrorEnabled())
+				logger.error(e.getMessage(), e);
+		} finally {
+			mapLock.w.unlock();
+		}
+	}
+
+	private void buildSchedulerMap() throws SchedulerException {
+		synchronized (globalScheduler) {
+			globalScheduler.clear();
+		}
+		final Map<String, SchedulerDefinition> map = new HashMap<>();
+		schedulerFileMap.forEach((file, schedulerDefMap) -> map.putAll(schedulerDefMap));
+		final List<String> removeKeys = new ArrayList<>();
+
+		// Remove the no more existing jobs status
+		statusMapLock.r.lock();
+		try {
+			schedulerStatusMap.forEach(new BiConsumer<String, List<ScriptRunStatus>>() {
+				@Override
+				public void accept(String name, List<ScriptRunStatus> scriptRunStatuses) {
+					if (!map.containsKey(name))
+						removeKeys.add(name);
+				}
+			});
+			removeKeys.forEach((name) -> schedulerStatusMap.remove(name));
+		} finally {
+			statusMapLock.r.unlock();
+		}
+
+		// Set the volatile map
+		schedulerMap = map;
+
+		// Reschedule the jobs
+		schedulerMap.forEach(new BiConsumer<String, SchedulerDefinition>() {
+			@Override
+			public void accept(String name, SchedulerDefinition schedulerDefinition) {
+				try {
+					checkSchedulerCron(name, schedulerDefinition);
+				} catch (SchedulerException e) {
+					if (logger.isErrorEnabled())
+						logger.error("Error on scheduler " + name + ": " + e.getMessage(), e);
+				}
+			}
+		});
+	}
+
 }

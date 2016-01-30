@@ -21,16 +21,15 @@ public class TrackedFile extends TrackedAbstract<TrackedFile.FileChange> {
 
 	private volatile Long lastModified;
 
-	public TrackedFile(TrackedInterface.FileChangeConsumer consumer, File file) {
-		super(consumer, file);
+	public TrackedFile(File file) {
+		super(file);
 		this.lastModified = null;
 	}
 
 	@Override
 	final protected void apply(FileChange change) {
 		lastModified = change.lastModified;
-		if (consumer != null)
-			consumer.accept(change.reason, trackedFile);
+		notify(change.reason, trackedFile);
 	}
 
 	@Override

@@ -31,6 +31,7 @@ import com.qwazr.scheduler.SchedulerManager;
 import com.qwazr.scripts.ScriptManager;
 import com.qwazr.search.index.IndexManager;
 import com.qwazr.semaphores.SemaphoresManager;
+import com.qwazr.utils.file.TrackedDirectory;
 import com.qwazr.utils.process.ProcessUtils;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServiceInterface;
@@ -106,6 +107,9 @@ public class Qwazr extends AbstractServer {
 		final ServletApplication servletApplication;
 
 		File currentDataDir = getCurrentDataDir();
+		File currentTempDir = new File(currentDataDir, "tmp");
+		File currentEtcDir = new File(currentDataDir, "etc");
+		TrackedDirectory etcTracker = new TrackedDirectory(currentEtcDir);
 
 		ClusterManager.load(executorService, getWebServicePublicAddress(), serverConfiguration.groups);
 
@@ -118,7 +122,7 @@ public class Qwazr extends AbstractServer {
 			services.add(ParserManager.load());
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
-			services.add(WebappManager.load(executorService, currentDataDir));
+			services.add(WebappManager.load(currentDataDir, etcTracker, serverConfiguration.etc, currentTempDir));
 			servletApplication = WebappManager.getInstance().getServletApplication();
 		} else
 			servletApplication = null;
@@ -130,7 +134,7 @@ public class Qwazr extends AbstractServer {
 			services.add(ScriptManager.load(executorService, currentDataDir));
 
 		if (ServiceEnum.webcrawler.isActive(serverConfiguration))
-			services.add(WebCrawlerManager.load(executorService, serverConfiguration.logs_directory));
+			services.add(WebCrawlerManager.load(executorService));
 
 		if (ServiceEnum.search.isActive(serverConfiguration))
 			services.add(IndexManager.load(executorService, currentDataDir));
@@ -141,12 +145,15 @@ public class Qwazr extends AbstractServer {
 		if (ServiceEnum.table.isActive(serverConfiguration))
 			services.add(TableManager.load(executorService, currentDataDir));
 
-		LibraryManager.load(currentDataDir);
+		LibraryManager.load(currentDataDir, etcTracker, serverConfiguration.etc);
 		services.add(LibraryServiceImpl.class);
 
 		// Scheduler is last, because it may immediatly execute a scripts
 		if (ServiceEnum.schedulers.isActive(serverConfiguration))
-			services.add(SchedulerManager.load(currentDataDir, serverConfiguration.getSchedulerMaxThreads()));
+			services.add(SchedulerManager
+					.load(etcTracker, serverConfiguration.etc, serverConfiguration.getSchedulerMaxThreads()));
+
+		etcTracker.check();
 
 		classes.addAll(services);
 
