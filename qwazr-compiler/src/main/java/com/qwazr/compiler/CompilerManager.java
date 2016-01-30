@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
 
 public class CompilerManager {
 
@@ -61,7 +60,7 @@ public class CompilerManager {
 	private final File javaClassesDirectory;
 	private final File javaLibrariesDirectory;
 
-	private final DynamicClassloader dynamicClassloader;
+	private final DynamicRestart dynamicRestart;
 	private final JavaCompiler javaCompiler;
 
 	private CompilerManager(ExecutorService executor, File dataDirectory) throws IOException, URISyntaxException {
@@ -72,32 +71,14 @@ public class CompilerManager {
 		javaResourceDirectory = new File(dataDirectory, "src/main/resources");
 		javaClassesDirectory = new File(dataDirectory, "target/classes");
 		javaLibrariesDirectory = new File(dataDirectory, "lib");
-		dynamicClassloader = new DynamicClassloader(executor, javaResourceDirectory, javaClassesDirectory,
+		dynamicRestart = new DynamicRestart(executor, javaResourceDirectory, javaClassesDirectory,
 						javaLibrariesDirectory);
 		javaCompiler = JavaCompiler
 						.newInstance(executor, javaSourceDirectory, javaClassesDirectory, javaLibrariesDirectory);
 	}
 
-	public static ClassLoader getJavaClassLoader() {
-		CompilerManager compilerManager = getInstance();
-		if (compilerManager == null)
-			return Thread.currentThread().getContextClassLoader();
-		return compilerManager.getClassLoader();
-	}
-
 	private void close() {
-		IOUtils.close(dynamicClassloader);
+		IOUtils.close(dynamicRestart);
 	}
 
-	public void register(Consumer<ClassLoader> consumer) {
-		dynamicClassloader.register(consumer);
-	}
-
-	public void unregister(Consumer<ClassLoader> consumer) {
-		dynamicClassloader.unregister(consumer);
-	}
-
-	public ClassLoader getClassLoader() {
-		return dynamicClassloader.getClassLoader();
-	}
 }

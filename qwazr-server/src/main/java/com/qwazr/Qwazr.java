@@ -20,20 +20,19 @@ import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterNodeJson;
 import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.compiler.CompilerManager;
-import com.qwazr.connectors.AbstractConnector;
-import com.qwazr.connectors.ConnectorManagerImpl;
-import com.qwazr.connectors.ConnectorsServiceImpl;
 import com.qwazr.crawler.web.manager.WebCrawlerManager;
 import com.qwazr.database.TableManager;
 import com.qwazr.extractor.ParserManager;
 import com.qwazr.graph.GraphManager;
+import com.qwazr.library.AbstractLibrary;
+import com.qwazr.library.LibraryManager;
+import com.qwazr.library.LibraryServiceImpl;
 import com.qwazr.scheduler.SchedulerManager;
 import com.qwazr.scripts.ScriptManager;
 import com.qwazr.search.index.IndexManager;
 import com.qwazr.semaphores.SemaphoresManager;
-import com.qwazr.store.StoreServer;
-import com.qwazr.tools.ToolsManagerImpl;
-import com.qwazr.tools.ToolsServiceImpl;
+import com.qwazr.utils.file.TrackedDirectory;
+import com.qwazr.utils.process.ProcessUtils;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServiceInterface;
 import com.qwazr.utils.server.ServiceName;
@@ -108,6 +107,9 @@ public class Qwazr extends AbstractServer {
 		final ServletApplication servletApplication;
 
 		File currentDataDir = getCurrentDataDir();
+		File currentTempDir = new File(currentDataDir, "tmp");
+		File currentEtcDir = new File(currentDataDir, "etc");
+		TrackedDirectory etcTracker = new TrackedDirectory(currentEtcDir);
 
 		ClusterManager.load(executorService, getWebServicePublicAddress(), serverConfiguration.groups);
 
@@ -120,7 +122,7 @@ public class Qwazr extends AbstractServer {
 			services.add(ParserManager.load());
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
-			services.add(WebappManager.load(executorService, currentDataDir));
+			services.add(WebappManager.load(currentDataDir, etcTracker, serverConfiguration.etc, currentTempDir));
 			servletApplication = WebappManager.getInstance().getServletApplication();
 		} else
 			servletApplication = null;
@@ -132,7 +134,7 @@ public class Qwazr extends AbstractServer {
 			services.add(ScriptManager.load(executorService, currentDataDir));
 
 		if (ServiceEnum.webcrawler.isActive(serverConfiguration))
-			services.add(WebCrawlerManager.load(executorService, serverConfiguration.logs_directory));
+			services.add(WebCrawlerManager.load(executorService));
 
 		if (ServiceEnum.search.isActive(serverConfiguration))
 			services.add(IndexManager.load(executorService, currentDataDir));
@@ -143,18 +145,15 @@ public class Qwazr extends AbstractServer {
 		if (ServiceEnum.table.isActive(serverConfiguration))
 			services.add(TableManager.load(executorService, currentDataDir));
 
-		if (ServiceEnum.store.isActive(serverConfiguration))
-			StoreServer.load(currentDataDir, services);
-
-		ConnectorManagerImpl.load(currentDataDir);
-		services.add(ConnectorsServiceImpl.class);
-
-		ToolsManagerImpl.load(currentDataDir);
-		services.add(ToolsServiceImpl.class);
+		LibraryManager.load(currentDataDir, etcTracker, serverConfiguration.etc);
+		services.add(LibraryServiceImpl.class);
 
 		// Scheduler is last, because it may immediatly execute a scripts
 		if (ServiceEnum.schedulers.isActive(serverConfiguration))
-			services.add(SchedulerManager.load(currentDataDir, serverConfiguration.getSchedulerMaxThreads()));
+			services.add(SchedulerManager
+					.load(etcTracker, serverConfiguration.etc, serverConfiguration.getSchedulerMaxThreads()));
+
+		etcTracker.check();
 
 		classes.addAll(services);
 
@@ -163,26 +162,30 @@ public class Qwazr extends AbstractServer {
 
 	@Override
 	protected IdentityManager getIdentityManager(String realm) throws IOException {
-		AbstractConnector connector = ConnectorManagerImpl.getInstance().get(realm);
-		if (connector == null)
+		AbstractLibrary library = LibraryManager.getInstance().get(realm);
+		if (library == null)
 			throw new IOException("No realm connector with this name: " + realm);
-		if (!(connector instanceof IdentityManager))
+		if (!(library instanceof IdentityManager))
 			throw new IOException("This is a not a realm connector: " + realm);
-		return (IdentityManager) connector;
+		return (IdentityManager) library;
 	}
 
 	public static void main(String[] args) {
 		// Start the server
 		try {
 
+			ProcessUtils.Restart.init(Qwazr.class, args);
+
 			final Qwazr server = new Qwazr();
 			server.start(args, true);
 			// Register the services
-			ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services,
-							serverConfiguration.groups));
+			ClusterManager.INSTANCE.registerMe(
+					new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services, serverConfiguration.groups));
+
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);
 		}
+
 	}
 }

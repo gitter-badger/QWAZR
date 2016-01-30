@@ -69,17 +69,16 @@
         <module>qwazr-server</module>
         <module>qwazr-cluster</module>
         <module>qwazr-compiler</module>
-        <module>qwazr-connectors</module>
         <module>qwazr-crawlers</module>
         <module>qwazr-database</module>
         <module>qwazr-extractor</module>
         <module>qwazr-graph</module>
+        <module>qwazr-library</module>
+        <module>qwazr-maven-plugin</module>
         <module>qwazr-scripts</module>
         <module>qwazr-semaphores</module>
         <module>qwazr-scheduler</module>
         <module>qwazr-search</module>
-        <module>qwazr-store</module>
-        <module>qwazr-tools</module>
         <module>qwazr-utils</module>
         <module>qwazr-webapps</module>
     </modules>
@@ -94,11 +93,6 @@
             <dependency>
                 <groupId>com.qwazr</groupId>
                 <artifactId>qwazr-compiler</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.qwazr</groupId>
-                <artifactId>qwazr-connectors</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -123,12 +117,17 @@
             </dependency>
             <dependency>
                 <groupId>com.qwazr</groupId>
-                <artifactId>qwazr-scripts</artifactId>
+                <artifactId>qwazr-library</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.qwazr</groupId>
                 <artifactId>qwazr-scheduler</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qwazr</groupId>
+                <artifactId>qwazr-scripts</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -144,16 +143,6 @@
             <dependency>
                 <groupId>com.qwazr</groupId>
                 <artifactId>qwazr-semaphores</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.qwazr</groupId>
-                <artifactId>qwazr-store</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.qwazr</groupId>
-                <artifactId>qwazr-tools</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

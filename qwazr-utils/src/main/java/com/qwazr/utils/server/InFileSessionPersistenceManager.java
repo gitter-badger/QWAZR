@@ -49,8 +49,8 @@ public class InFileSessionPersistenceManager implements SessionPersistenceManage
 				logger.error("Cannot create the session directory " + deploymentDir + ": persistence aborted.");
 			return;
 		}
-		sessionData.forEach(
-						(sessionId, persistentSession) -> writeSession(deploymentDir, sessionId, persistentSession));
+		sessionData
+				.forEach((sessionId, persistentSession) -> writeSession(deploymentDir, sessionId, persistentSession));
 	}
 
 	private void writeSession(File deploymentDir, String sessionId, PersistentSession persistentSession) {
@@ -83,6 +83,8 @@ public class InFileSessionPersistenceManager implements SessionPersistenceManage
 	private void writeSessionAttribute(ObjectOutputStream out, String attribute, Object object) {
 		if (attribute == null || object == null)
 			return;
+		if (!(object instanceof Serializable))
+			return;
 		try {
 			out.writeUTF(attribute); // Attribute name stored as string
 		} catch (IOException e) {
@@ -100,8 +102,8 @@ public class InFileSessionPersistenceManager implements SessionPersistenceManage
 				out.writeObject(SerializationUtils.NullEmptyObject.INSTANCE);
 			} catch (IOException e1) {
 				if (logger.isErrorEnabled())
-					logger.error("Cannot write NULL session object for attribute " + attribute
-									+ ": persistence aborted.");
+					logger.error(
+							"Cannot write NULL session object for attribute " + attribute + ": persistence aborted.");
 			}
 		}
 
@@ -160,7 +162,7 @@ public class InFileSessionPersistenceManager implements SessionPersistenceManage
 			Object object = in.readObject();
 			if (!(object instanceof SerializationUtils.NullEmptyObject))
 				sessionData.put(attribute, object);
-		} catch (ClassNotFoundException e) {
+		} catch (ClassNotFoundException | NotSerializableException e) {
 			if (logger.isWarnEnabled())
 				logger.warn("The attribute " + attribute + " cannot be deserialized: " + e.getMessage(), e);
 		}

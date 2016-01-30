@@ -6,7 +6,7 @@ import com.qwazr.crawler.web.driver.BrowserDriver;
 import com.qwazr.crawler.web.driver.BrowserDriverBuilder;
 import com.qwazr.crawler.web.service.WebCrawlDefinition;
 import com.qwazr.crawler.web.service.WebCrawlerServiceInterface;
-import com.qwazr.tools.AbstractTool;
+import com.qwazr.library.AbstractLibrary;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.json.JsonMapper;
 
@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class WebCrawlerTool extends AbstractTool {
+public class WebCrawlerTool extends AbstractLibrary {
 
 	final public WebCrawlDefinition config = null;
 
@@ -48,11 +48,11 @@ public class WebCrawlerTool extends AbstractTool {
 	public BrowserDriver getNewWebDriver(IOUtils.CloseableContext context, String json)
 			throws ReflectiveOperationException, SecurityException, IOException {
 		WebCrawlDefinition webCrawlDef = JsonMapper.MAPPER.readValue(json, WebCrawlDefinition.class);
-		return new BrowserDriverBuilder(webCrawlDef, null).build();
+		return new BrowserDriverBuilder(webCrawlDef).build();
 	}
 
 	@JsonIgnore
 	public BrowserDriver getNewWebDriver(IOUtils.CloseableContext context) throws ReflectiveOperationException {
-		return new BrowserDriverBuilder(config, null).build();
+		return new BrowserDriverBuilder(config).build();
 	}
 }

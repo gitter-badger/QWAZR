@@ -17,12 +17,10 @@ package com.qwazr.scheduler;
 
 import com.qwazr.scripts.ScriptRunStatus;
 import com.qwazr.utils.server.ServerException;
-import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -44,46 +42,16 @@ public class SchedulerServiceImpl implements SchedulerServiceInterface {
 			List<ScriptRunStatus> statusList = SchedulerManager.INSTANCE.getStatusList(scheduler_name);
 			if (action == null)
 				return new SchedulerStatus(schedulerDef, statusList);
-			Boolean enabled = null;
 			switch (action) {
-			case enable:
-				enabled = true;
-				break;
-			case disable:
-				enabled = false;
-				break;
 			case run:
 				return new SchedulerStatus(schedulerDef,
 						SchedulerManager.INSTANCE.executeScheduler(scheduler_name, schedulerDef));
 			}
-			if (enabled == schedulerDef.enabled)
-				return new SchedulerStatus(schedulerDef, statusList);
-			schedulerDef.enabled = enabled;
-			SchedulerManager.INSTANCE.setScheduler(scheduler_name, schedulerDef);
 			return new SchedulerStatus(schedulerDef, statusList);
-		} catch (WebApplicationException | IOException | SchedulerException
+		} catch (WebApplicationException | IOException
 				| URISyntaxException | ServerException e) {
 			logger.error(e.getMessage(), e);
 			throw ServerException.getJsonException(e);
-		}
-	}
-
-	@Override
-	public Response delete(String scheduler_name) {
-		try {
-			SchedulerManager.INSTANCE.deleteScheduler(scheduler_name);
-			return Response.accepted().build();
-		} catch (ServerException | SchedulerException e) {
-			throw ServerException.getTextException(e);
-		}
-	}
-
-	@Override
-	public SchedulerDefinition set(String scheduler_name, SchedulerDefinition scheduler) {
-		try {
-			return SchedulerManager.INSTANCE.setScheduler(scheduler_name, scheduler);
-		} catch (IOException | SchedulerException e) {
-			throw ServerException.getTextException(e);
 		}
 	}
 

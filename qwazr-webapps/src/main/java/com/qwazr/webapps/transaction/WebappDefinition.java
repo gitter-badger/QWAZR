@@ -15,13 +15,51 @@
  **/
 package com.qwazr.webapps.transaction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.function.Consumer;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class WebappDefinition {
 
-	public final Map<String, String> controllers = null;
-	public final Map<String, String> statics = null;
+	public final Map<String, String> controllers;
+	public final Map<String, String> statics;
+
+	public WebappDefinition() {
+		controllers = null;
+		statics = null;
+	}
+
+	WebappDefinition(Map<String, String> controllers, Map<String, String> statics) {
+		this.controllers = controllers;
+		this.statics = statics;
+	}
+
+	static WebappDefinition merge(Collection<WebappDefinition> webappDefinitions) {
+		if (webappDefinitions == null)
+			return null;
+		final Map<String, String> controllers = new HashMap<>();
+		final Map<String, String> statics = new HashMap<>();
+		webappDefinitions.forEach(new Consumer<WebappDefinition>() {
+			@Override
+			public void accept(WebappDefinition webappDefinition) {
+				if (webappDefinition.controllers != null)
+					controllers.putAll(webappDefinition.controllers);
+				if (webappDefinition.statics != null)
+					statics.putAll(webappDefinition.statics);
+			}
+		});
+		return new WebappDefinition(controllers, statics);
+	}
+
+	@JsonIgnore
+	public boolean isEmpty() {
+		return (controllers == null || controllers.isEmpty()) && (statics == null || statics.isEmpty());
+	}
 }

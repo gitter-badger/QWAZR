@@ -20,8 +20,6 @@ import com.qwazr.utils.server.ServiceName;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.TreeMap;
 
 @RolesAllowed(SchedulerManager.SERVICE_NAME_SCHEDULER)
@@ -30,7 +28,7 @@ import java.util.TreeMap;
 public interface SchedulerServiceInterface extends ServiceInterface {
 
 	enum ActionEnum {
-		enable, disable, run
+		run
 	}
 
 	@GET
@@ -42,15 +40,5 @@ public interface SchedulerServiceInterface extends ServiceInterface {
 	@Path("/{scheduler_name}")
 	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 	SchedulerStatus get(@PathParam("scheduler_name") String scheduler_name, @QueryParam("action") ActionEnum action);
-
-	@DELETE
-	@Path("/{scheduler_name}")
-	Response delete(@PathParam("scheduler_name") String scheduler_name);
-
-	@POST
-	@Path("/{scheduler_name}")
-	@Consumes(ServiceInterface.APPLICATION_JSON_UTF8)
-	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
-	SchedulerDefinition set(@PathParam("scheduler_name") String scheduler_name, SchedulerDefinition scheduler);
 
 }
