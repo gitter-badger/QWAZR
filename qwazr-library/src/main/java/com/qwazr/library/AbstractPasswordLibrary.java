@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.tools;
+package com.qwazr.library;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+public abstract class AbstractPasswordLibrary extends AbstractLibrary {
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class ToolsConfiguration {
+	protected String password = null;
 
-	public List<AbstractTool> tools;
+	/**
+	 * Obfuscated password
+	 *
+	 * @param password
+	 */
+	@JsonProperty("password")
+	final private void setPassword(String password) {
+		this.password = password;
+	}
 
 }

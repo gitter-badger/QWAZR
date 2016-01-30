@@ -41,15 +41,9 @@ public class ServerConfiguration {
 
 		graph,
 
-		store,
-
 		table,
 
-		compiler,
-
-		connectors,
-
-		tools;
+		compiler;
 
 		/**
 		 * @param serverConfiguration

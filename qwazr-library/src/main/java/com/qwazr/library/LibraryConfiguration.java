@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.connectors.test;
+package com.qwazr.library;
 
-import com.qwazr.connectors.ConnectorManager;
-import com.qwazr.connectors.ConnectorManagerImpl;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.List;
 
-public abstract class AbstractConnectorsTest {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class LibraryConfiguration {
 
-	final protected ConnectorManager getConnectorManager() throws IOException {
-		final ConnectorManager connectorManager = ConnectorManagerImpl.getInstance();
-		if (connectorManager != null)
-			return connectorManager;
-		ConnectorManagerImpl.load(new File("src/test/resources"));
-		return ConnectorManagerImpl.getInstance();
-	}
+	public List<AbstractLibrary> library;
 
 }
