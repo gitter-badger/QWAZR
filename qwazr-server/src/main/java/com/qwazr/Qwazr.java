@@ -65,12 +65,12 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 
 	@Path("/")
 	@ServiceName("welcome")
-	public class WelcomeServiceImpl implements ServiceInterface {
+	public static class WelcomeServiceImpl implements ServiceInterface {
 
 		@GET
 		@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
 		public WelcomeStatus welcome() {
-			return new WelcomeStatus(services);
+			return new WelcomeStatus(qwazr.services);
 		}
 
 	}

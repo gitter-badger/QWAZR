@@ -15,6 +15,7 @@
  **/
 package com.qwazr.classloader;
 
+import com.qwazr.utils.ClassLoaderUtils;
 import com.qwazr.utils.IOUtils;
 
 import java.io.File;
@@ -37,21 +38,24 @@ public class ClassLoaderManager {
 		INSTANCE = new ClassLoaderManager(dataDirectory, mainThread);
 	}
 
+	public static volatile URLClassLoader classLoader = null;
+
+	public static <T> Class<T> findClass(String className) throws ClassNotFoundException {
+		return ClassLoaderUtils.findClass(classLoader, className);
+	}
+
 	public final File javaResourceDirectory;
 	public final File javaClassesDirectory;
 	public final File javaLibrariesDirectory;
 
+	private final ClassLoader parentClassLoader;
 	private final Thread mainThread;
-	private final ClassLoader originalClassLoader;
 
 	private final URL[] urls;
 
-	private volatile URLClassLoader currentClassLoader;
-
 	private ClassLoaderManager(File dataDirectory, Thread mainThread) throws MalformedURLException {
 		this.mainThread = mainThread;
-		this.originalClassLoader = mainThread.getContextClassLoader();
-		this.currentClassLoader = null;
+		this.parentClassLoader = mainThread.getContextClassLoader();
 		this.javaResourceDirectory = new File(dataDirectory, "src/main/resources");
 		this.javaClassesDirectory = new File(dataDirectory, "target/classes");
 		if (!javaClassesDirectory.exists())
@@ -63,10 +67,10 @@ public class ClassLoaderManager {
 	}
 
 	public synchronized void reload() {
-		URLClassLoader oldClassLoader = currentClassLoader;
-		URLClassLoader newClassLoader = new URLClassLoader(urls, originalClassLoader);
+		URLClassLoader oldClassLoader = classLoader;
+		URLClassLoader newClassLoader = new URLClassLoader(urls, parentClassLoader);
 		mainThread.setContextClassLoader(newClassLoader);
-		currentClassLoader = newClassLoader;
+		classLoader = newClassLoader;
 		if (oldClassLoader != null)
 			IOUtils.close(oldClassLoader);
 	}
