@@ -24,7 +24,6 @@ import java.util.Set;
 abstract class TrackedAbstract<T> implements TrackedInterface {
 
 	private final LockUtils.ReadWriteLock rwl;
-
 	private final Set<FileChangeConsumer> consumerSet;
 	protected final File trackedFile;
 

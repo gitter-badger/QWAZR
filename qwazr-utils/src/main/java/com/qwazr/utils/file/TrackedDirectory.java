@@ -15,8 +15,6 @@
  */
 package com.qwazr.utils.file;
 
-import org.apache.commons.io.filefilter.FileFileFilter;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.util.HashMap;
@@ -26,9 +24,11 @@ import java.util.function.BiConsumer;
 public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.DirectoryChanges> {
 
 	private volatile Map<File, Long> trackedFiles;
+	private final FileFilter fileFilter;
 
-	public TrackedDirectory(File directory) {
+	public TrackedDirectory(File directory, FileFilter fileFilter) {
 		super(directory);
+		this.fileFilter = fileFilter;
 		this.trackedFiles = null;
 	}
 
@@ -82,7 +82,7 @@ public class TrackedDirectory extends TrackedAbstract<TrackedDirectory.Directory
 	final protected DirectoryChanges getChanges() {
 		final File[] files;
 		if (trackedFile.exists() && trackedFile.isDirectory())
-			files = trackedFile.listFiles((FileFilter) FileFileFilter.FILE);
+			files = trackedFile.listFiles(fileFilter);
 		else
 			files = null;
 		if (!isChanges(files))

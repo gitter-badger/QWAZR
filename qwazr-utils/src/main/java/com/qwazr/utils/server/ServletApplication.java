@@ -42,9 +42,10 @@ public abstract class ServletApplication {
 	}
 
 	final DeploymentInfo getDeploymentInfo() {
-		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(getClass().getClassLoader())
-						.setContextPath(appPath).setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
-						.setDeploymentName(getClass().getName() + appPath);
+		DeploymentInfo deploymentInfo = Servlets.deployment()
+				.setClassLoader(Thread.currentThread().getContextClassLoader()).setContextPath(appPath)
+				.setDefaultEncoding(java.nio.charset.Charset.defaultCharset().name())
+				.setDeploymentName(getClass().getName() + appPath);
 		final SessionPersistenceManager sessionPersistenceManager = getSessionPersistenceManager();
 		if (sessionPersistenceManager != null)
 			deploymentInfo.setSessionPersistenceManager(sessionPersistenceManager);

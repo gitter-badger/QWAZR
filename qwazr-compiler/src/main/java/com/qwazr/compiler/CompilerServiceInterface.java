@@ -12,23 +12,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-package com.qwazr.cluster.test;
+ **/
+package com.qwazr.compiler;
 
-import com.google.common.io.Files;
-import com.qwazr.cluster.ClusterServer;
-import org.junit.runner.Description;
-import org.junit.runner.notification.RunListener;
+import com.qwazr.utils.server.ServiceInterface;
+import com.qwazr.utils.server.ServiceName;
 
-import java.io.File;
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 
-public class ExecutionListener extends RunListener {
+@RolesAllowed(CompilerManager.SERVICE_NAME_COMPILER)
+@Path("/compiler")
+@ServiceName(CompilerManager.SERVICE_NAME_COMPILER)
+public interface CompilerServiceInterface extends ServiceInterface {
 
-	@Override
-	public void testRunStarted(Description description) throws Exception {
+	@GET
+	@Path("/")
+	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
+	CompilerStatus get();
 
-		final File dataDir = Files.createTempDir();
-		System.setProperty("QWAZR_DATA", dataDir.getAbsolutePath());
-		ClusterServer.main(null);
-	}
 }

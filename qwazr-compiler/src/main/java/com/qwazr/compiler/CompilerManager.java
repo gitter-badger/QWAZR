@@ -15,7 +15,7 @@
  */
 package com.qwazr.compiler;
 
-import com.qwazr.utils.IOUtils;
+import com.qwazr.classloader.ClassLoaderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +32,13 @@ public class CompilerManager {
 
 	private final static Logger logger = LoggerFactory.getLogger(CompilerManager.class);
 
-	public static void load(ExecutorService executor, File dataDirectory) throws IOException {
+	public static Class<? extends CompilerServiceInterface> load(ExecutorService executor, File dataDirectory)
+			throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
 			INSTANCE = new CompilerManager(executor, dataDirectory);
+			return CompilerServiceImpl.class;
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
@@ -47,38 +49,23 @@ public class CompilerManager {
 		if (oldInstance == null)
 			return;
 		INSTANCE = null;
-		oldInstance.close();
 	}
 
 	public static CompilerManager getInstance() {
 		return INSTANCE;
 	}
 
-	private final File compilerDirectory;
 	private final File javaSourceDirectory;
-	private final File javaResourceDirectory;
-	private final File javaClassesDirectory;
-	private final File javaLibrariesDirectory;
 
-	private final DynamicRestart dynamicRestart;
 	private final JavaCompiler javaCompiler;
 
 	private CompilerManager(ExecutorService executor, File dataDirectory) throws IOException, URISyntaxException {
-		compilerDirectory = new File(dataDirectory, SERVICE_NAME_COMPILER);
-		if (!compilerDirectory.exists())
-			compilerDirectory.mkdir();
+		ClassLoaderManager classLoaderManager = ClassLoaderManager.getInstance();
 		javaSourceDirectory = new File(dataDirectory, "src/main/java");
-		javaResourceDirectory = new File(dataDirectory, "src/main/resources");
-		javaClassesDirectory = new File(dataDirectory, "target/classes");
-		javaLibrariesDirectory = new File(dataDirectory, "lib");
-		dynamicRestart = new DynamicRestart(executor, javaResourceDirectory, javaClassesDirectory,
-						javaLibrariesDirectory);
-		javaCompiler = JavaCompiler
-						.newInstance(executor, javaSourceDirectory, javaClassesDirectory, javaLibrariesDirectory);
-	}
-
-	private void close() {
-		IOUtils.close(dynamicRestart);
+		if (!classLoaderManager.javaClassesDirectory.exists())
+			classLoaderManager.javaClassesDirectory.mkdirs();
+		javaCompiler = JavaCompiler.newInstance(executor, javaSourceDirectory, classLoaderManager.javaClassesDirectory,
+				classLoaderManager.javaLibrariesDirectory);
 	}
 
 }

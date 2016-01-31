@@ -11,7 +11,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-    
+
+
     <dependencies>
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -19,12 +20,30 @@
             <version>3.3.9</version>
         </dependency>
 
-        <!-- dependencies to annotations -->
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
             <version>3.4</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.qwazr</groupId>
+            <artifactId>qwazr-server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>3.4</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
 </project>

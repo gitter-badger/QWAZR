@@ -17,21 +17,20 @@ package com.qwazr.cluster;
 
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.utils.server.AbstractServer;
+import com.qwazr.utils.server.ServerConfiguration;
 import com.qwazr.utils.server.ServiceInterface;
 import com.qwazr.utils.server.ServletApplication;
 import io.undertow.security.idm.IdentityManager;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.ParseException;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.Executors;
 
-public class ClusterServer extends AbstractServer {
+public class ClusterServer extends AbstractServer<ServerConfiguration> {
 
 	private ClusterServer() {
-		super(new ServerDefinition(), Executors.newCachedThreadPool());
+		super(Executors.newCachedThreadPool(), new ServerConfiguration());
 	}
 
 	@Override
@@ -45,13 +44,8 @@ public class ClusterServer extends AbstractServer {
 		return null;
 	}
 
-	public static void main(String[] args) throws IOException, ParseException, ServletException, InstantiationException,
-					IllegalAccessException {
-		new ClusterServer().start(args, true);
-	}
-
-	@Override
-	public void commandLine(CommandLine cmd) throws IOException, ParseException {
+	public static void main(String[] args) throws IOException, ServletException, ReflectiveOperationException {
+		new ClusterServer().start(true);
 	}
 
 }

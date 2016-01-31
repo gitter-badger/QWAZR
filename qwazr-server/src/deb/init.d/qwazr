@@ -21,18 +21,21 @@ if [ -z "$PUBLIC_ADDR" ]; then
     PUBLIC_ADDR=`hostname`
 fi
 
-JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8 -Dlog4j.configuration=file:$QWAZR_DATA/log4j.properties -Dlog4j.hostname=$PUBLIC_ADDR"
+JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8"
+JAVA_OPTS="$JAVA_OPTS -Dlog4j.configuration=file=$QWAZR_DATA/etc/log4j.properties"
+JAVA_OPTS="$JAVA_OPTS -Dlog4j.hostname=$PUBLIC_ADDR"
 
 if [ -z "$QWAZR_LOGS" ]; then
     QWAZR_LOGS=/var/log/qwazr
 fi
 
 QWAZR_JAR=/usr/share/qwazr/qwazr.jar
-QWAZR_OPTS="$JAVA_OPTS -jar $QWAZR_JAR -l $LISTEN_ADDR -a $PUBLIC_ADDR -wp $WEBAPP_PORT -sp $WEBSERVICE_PORT -d $QWAZR_DATA"
+QWAZR_OPTS="$JAVA_OPTS -jar $QWAZR_JAR"
 QWAZR_LOG=$QWAZR_LOGS/server.$PUBLIC_ADDR.out
 QWAZR_PID="/var/run/qwazr.pid"
 
-export QWAZR_MASTERS QWAZR_SERVICES QWAZR_GROUPS QWAZR_PID QWAZR_LOGS QWAZR_ROOT_USER HOSTNAME
+export QWAZR_MASTERS QWAZR_SERVICES QWAZR_GROUPS QWAZR_PID QWAZR_LOGS QWAZR_ROOT_USER QWAZR_DATA
+export LISTEN_ADDR PUBLIC_ADDR WEBSERVICE_PORT HOSTNAME
 
 usage ()
 {

@@ -20,7 +20,7 @@ import java.io.IOException;
 public class ClassLoaderUtils {
 
 	public final static <T> Class<T> findClass(ClassLoader classLoader, String className)
-					throws ClassNotFoundException {
+			throws ClassNotFoundException {
 		if (classLoader != null)
 			return (Class<T>) classLoader.loadClass(className);
 		else
@@ -28,7 +28,7 @@ public class ClassLoaderUtils {
 	}
 
 	public final static <T> Class<T> findClass(ClassLoader classLoader, String[] classPrefixes, String suffix)
-					throws ClassNotFoundException {
+			throws ClassNotFoundException {
 		ClassNotFoundException firstClassException = null;
 		for (String prefix : classPrefixes) {
 			try {
@@ -42,7 +42,7 @@ public class ClassLoaderUtils {
 	}
 
 	public final static <T> Class<T> findClass(ClassLoader classLoader, String classDef, String[] classPrefixes)
-					throws ReflectiveOperationException, IOException {
+			throws ReflectiveOperationException, IOException {
 		if (classDef == null)
 			return null;
 		if (classPrefixes == null)
