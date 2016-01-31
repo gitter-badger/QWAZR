@@ -32,11 +32,13 @@ public class CompilerManager {
 
 	private final static Logger logger = LoggerFactory.getLogger(CompilerManager.class);
 
-	public static void load(ExecutorService executor, File dataDirectory) throws IOException {
+	public static Class<? extends CompilerServiceInterface> load(ExecutorService executor, File dataDirectory)
+			throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
 			INSTANCE = new CompilerManager(executor, dataDirectory);
+			return CompilerServiceImpl.class;
 		} catch (URISyntaxException e) {
 			throw new IOException(e);
 		}
@@ -54,7 +56,6 @@ public class CompilerManager {
 		return INSTANCE;
 	}
 
-	private final File compilerDirectory;
 	private final File javaSourceDirectory;
 	private final File javaResourceDirectory;
 	private final File javaClassesDirectory;
@@ -64,17 +65,16 @@ public class CompilerManager {
 	private final JavaCompiler javaCompiler;
 
 	private CompilerManager(ExecutorService executor, File dataDirectory) throws IOException, URISyntaxException {
-		compilerDirectory = new File(dataDirectory, SERVICE_NAME_COMPILER);
-		if (!compilerDirectory.exists())
-			compilerDirectory.mkdir();
 		javaSourceDirectory = new File(dataDirectory, "src/main/java");
 		javaResourceDirectory = new File(dataDirectory, "src/main/resources");
 		javaClassesDirectory = new File(dataDirectory, "target/classes");
+		if (!javaClassesDirectory.exists())
+			javaClassesDirectory.mkdirs();
 		javaLibrariesDirectory = new File(dataDirectory, "lib");
 		dynamicRestart = new DynamicRestart(executor, javaResourceDirectory, javaClassesDirectory,
-						javaLibrariesDirectory);
+				javaLibrariesDirectory);
 		javaCompiler = JavaCompiler
-						.newInstance(executor, javaSourceDirectory, javaClassesDirectory, javaLibrariesDirectory);
+				.newInstance(executor, javaSourceDirectory, javaClassesDirectory, javaLibrariesDirectory);
 	}
 
 	private void close() {

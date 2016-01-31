@@ -13,26 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.library;
+package com.qwazr.compiler;
 
-import com.qwazr.utils.file.TrackedDirectory;
+public class CompilerServiceImpl implements CompilerServiceInterface {
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
+	@Override
+	public CompilerStatus get() {
+		return new CompilerStatus();
 
-public interface LibraryManager extends Map<String, AbstractLibrary> {
-
-	static void load(File dataDirectory, TrackedDirectory etcTracker) throws IOException {
-		LibraryManagerImpl.load(dataDirectory, etcTracker);
 	}
-
-	static LibraryManager getInstance() {
-		return LibraryManagerImpl.INSTANCE;
-	}
-
-	<T extends AbstractLibrary> T getLibrary(String name);
-
-	Map<String, String> getLibraries();
-
 }

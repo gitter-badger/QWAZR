@@ -46,11 +46,11 @@ public class SchedulerManager implements TrackedInterface.FileChangeConsumer {
 	static SchedulerManager INSTANCE = null;
 
 	public static synchronized Class<? extends SchedulerServiceInterface> load(TrackedDirectory etcTracker,
-			Set<String> confSet, int maxThreads) throws IOException {
+			int maxThreads) throws IOException {
 		if (INSTANCE != null)
 			throw new IOException("Already loaded");
 		try {
-			INSTANCE = new SchedulerManager(etcTracker, confSet, maxThreads);
+			INSTANCE = new SchedulerManager(etcTracker, maxThreads);
 			etcTracker.register(INSTANCE);
 			return SchedulerServiceImpl.class;
 		} catch (ServerException | SchedulerException e) {
@@ -68,15 +68,13 @@ public class SchedulerManager implements TrackedInterface.FileChangeConsumer {
 	private final Map<String, List<ScriptRunStatus>> schedulerStatusMap;
 	private final LockUtils.ReadWriteLock statusMapLock;
 	private final TrackedDirectory etcTracker;
-	private final Set<String> confSet;
 
 	private final LockUtils.ReadWriteLock mapLock;
 	private final Map<File, Map<String, SchedulerDefinition>> schedulerFileMap;
 	private volatile Map<String, SchedulerDefinition> schedulerMap;
 
-	private SchedulerManager(TrackedDirectory etcTracker, Set<String> confSet, int maxThreads)
+	private SchedulerManager(TrackedDirectory etcTracker, int maxThreads)
 			throws IOException, SchedulerException, ServerException {
-		this.confSet = confSet;
 		this.etcTracker = etcTracker;
 		statusMapLock = new LockUtils.ReadWriteLock();
 		mapLock = new LockUtils.ReadWriteLock();
@@ -178,11 +176,6 @@ public class SchedulerManager implements TrackedInterface.FileChangeConsumer {
 
 	@Override
 	public void accept(TrackedInterface.ChangeReason changeReason, File jsonFile) {
-		if (confSet != null) {
-			String filebase = FilenameUtils.removeExtension(jsonFile.getName());
-			if (!confSet.contains(filebase))
-				return;
-		}
 		String extension = FilenameUtils.getExtension(jsonFile.getName());
 		if (!"json".equals(extension))
 			return;

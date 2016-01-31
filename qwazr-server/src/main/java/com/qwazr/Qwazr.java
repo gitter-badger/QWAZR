@@ -109,12 +109,13 @@ public class Qwazr extends AbstractServer {
 		File currentDataDir = getCurrentDataDir();
 		File currentTempDir = new File(currentDataDir, "tmp");
 		File currentEtcDir = new File(currentDataDir, "etc");
-		TrackedDirectory etcTracker = new TrackedDirectory(currentEtcDir);
+		TrackedDirectory etcTracker = new TrackedDirectory(currentEtcDir, serverConfiguration.etcFileFilter);
 
 		ClusterManager.load(executorService, getWebServicePublicAddress(), serverConfiguration.groups);
 
 		if (ServiceEnum.compiler.isActive(serverConfiguration))
-			CompilerManager.load(executorService, currentDataDir);
+			services.add(CompilerManager.load(executorService, currentDataDir));
+
 		services.add(WelcomeServiceImpl.class);
 		services.add(ClusterServiceImpl.class);
 
@@ -122,7 +123,7 @@ public class Qwazr extends AbstractServer {
 			services.add(ParserManager.load());
 
 		if (ServiceEnum.webapps.isActive(serverConfiguration)) {
-			services.add(WebappManager.load(currentDataDir, etcTracker, serverConfiguration.etc, currentTempDir));
+			services.add(WebappManager.load(currentDataDir, etcTracker, currentTempDir));
 			servletApplication = WebappManager.getInstance().getServletApplication();
 		} else
 			servletApplication = null;
@@ -145,13 +146,12 @@ public class Qwazr extends AbstractServer {
 		if (ServiceEnum.table.isActive(serverConfiguration))
 			services.add(TableManager.load(executorService, currentDataDir));
 
-		LibraryManager.load(currentDataDir, etcTracker, serverConfiguration.etc);
+		LibraryManager.load(currentDataDir, etcTracker);
 		services.add(LibraryServiceImpl.class);
 
 		// Scheduler is last, because it may immediatly execute a scripts
 		if (ServiceEnum.schedulers.isActive(serverConfiguration))
-			services.add(SchedulerManager
-					.load(etcTracker, serverConfiguration.etc, serverConfiguration.getSchedulerMaxThreads()));
+			services.add(SchedulerManager.load(etcTracker, serverConfiguration.getSchedulerMaxThreads()));
 
 		etcTracker.check();
 

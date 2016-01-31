@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.library;
+package com.qwazr.compiler;
 
-import com.qwazr.utils.file.TrackedDirectory;
+import com.qwazr.utils.server.ServiceInterface;
+import com.qwazr.utils.server.ServiceName;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Map;
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 
-public interface LibraryManager extends Map<String, AbstractLibrary> {
+@RolesAllowed(CompilerManager.SERVICE_NAME_COMPILER)
+@Path("/compiler")
+@ServiceName(CompilerManager.SERVICE_NAME_COMPILER)
+public interface CompilerServiceInterface extends ServiceInterface {
 
-	static void load(File dataDirectory, TrackedDirectory etcTracker) throws IOException {
-		LibraryManagerImpl.load(dataDirectory, etcTracker);
-	}
-
-	static LibraryManager getInstance() {
-		return LibraryManagerImpl.INSTANCE;
-	}
-
-	<T extends AbstractLibrary> T getLibrary(String name);
-
-	Map<String, String> getLibraries();
+	@GET
+	@Path("/")
+	@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
+	CompilerStatus get();
 
 }

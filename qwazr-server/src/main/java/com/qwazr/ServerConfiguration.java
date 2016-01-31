@@ -16,7 +16,11 @@
 package com.qwazr;
 
 import com.qwazr.utils.StringUtils;
+import org.apache.commons.io.filefilter.AndFileFilter;
+import org.apache.commons.io.filefilter.FileFileFilter;
+import org.apache.commons.io.filefilter.WildcardFileFilter;
 
+import java.io.FileFilter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -59,7 +63,7 @@ public class ServerConfiguration {
 
 	public final Set<ServiceEnum> services;
 	public final Set<String> groups;
-	public final Set<String> etc;
+	public final FileFilter etcFileFilter;
 
 	public final Integer scheduler_max_threads;
 
@@ -67,12 +71,13 @@ public class ServerConfiguration {
 
 		final String etc_env = System.getenv("QWAZR_ETC");
 		if (StringUtils.isEmpty(etc_env)) {
-			etc = null;
+			etcFileFilter = FileFileFilter.FILE;
 		} else {
-			etc = new HashSet<String>();
 			String[] array = StringUtils.split(etc_env, ',');
-			for (String a : array)
-				etc.add(a);
+			if (array != null && array.length > 0)
+				etcFileFilter = new AndFileFilter(FileFileFilter.FILE, new WildcardFileFilter(array));
+			else
+				etcFileFilter = FileFileFilter.FILE;
 		}
 
 		final String services_env = System.getenv("QWAZR_SERVICES");
