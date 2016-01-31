@@ -16,20 +16,36 @@
 package com.qwazr.mavenplugin;
 
 import com.qwazr.Qwazr;
+import com.qwazr.QwazrConfiguration;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+
+import java.util.List;
 
 @Mojo(name = "start")
 public class QwazrStartMojo extends AbstractMojo {
+
+	@Parameter
+	private List<String> etc;
+
+	@Parameter
+	private List<QwazrConfiguration.ServiceEnum> services;
+
+	@Parameter
+	private Integer scheduler_max_threads;
+
+	@Parameter
+	private List<String> groups;
 
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		final Log log = getLog();
 		log.info("Starting QWAZR");
 		try {
-			Qwazr.start(null);
+			Qwazr.start(new QwazrConfiguration(etc, services, groups, scheduler_max_threads));
 		} catch (Exception e) {
 			throw new MojoFailureException("Cannot start QWAZR", e);
 		}
@@ -41,6 +57,7 @@ public class QwazrStartMojo extends AbstractMojo {
 		} catch (InterruptedException e) {
 			log.info("QWAZR interrupted");
 		}
+		log.info("Stopping QWAZR");
 		Qwazr.stop();
 	}
 }

@@ -17,6 +17,14 @@
             <groupId>com.qwazr</groupId>
             <artifactId>qwazr-cluster</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.qwazr</groupId>
+            <artifactId>qwazr-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>fluent-hc</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

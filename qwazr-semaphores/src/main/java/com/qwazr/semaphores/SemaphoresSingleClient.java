@@ -32,7 +32,7 @@ public class SemaphoresSingleClient extends JsonClientAbstract implements Semaph
 
 	public final static TypeReference<Set<String>> SetStringTypeRef = new TypeReference<Set<String>>() {
 	};
-	
+
 	@Override
 	public Set<String> getSemaphores(Boolean local, String group, Integer msTimeout) {
 		UBuilder uriBuilder = new UBuilder(SCRIPT_PREFIX_SEMAPHORES).setParameters(local, group, msTimeout);
