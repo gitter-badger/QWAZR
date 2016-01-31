@@ -21,7 +21,6 @@ import com.qwazr.utils.server.ServerConfiguration;
 import com.qwazr.utils.server.ServiceInterface;
 import com.qwazr.utils.server.ServletApplication;
 import io.undertow.security.idm.IdentityManager;
-import org.apache.commons.cli.ParseException;
 
 import javax.servlet.ServletException;
 import java.io.File;
@@ -48,8 +47,7 @@ public class GraphServer extends AbstractServer<ServerConfiguration> {
 		return null;
 	}
 
-	public static void main(String[] args)
-			throws IOException, ParseException, ServletException, InstantiationException, IllegalAccessException {
+	public static void main(String[] args) throws IOException, ServletException, ReflectiveOperationException {
 		new GraphServer().start(true);
 	}
 

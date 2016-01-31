@@ -66,7 +66,7 @@ public class ServerConfiguration {
 		servletPort = getPropertyOrEnvInt("WEBAPP_PORT", 9090);
 		restPort = getPropertyOrEnvInt("WEBSERVICE_PORT", 9091);
 
-		listenAddress = getPropertyOrEnv("LISTEN_ADDR", "127.0.0.1");
+		listenAddress = getPropertyOrEnv("LISTEN_ADDR", "localhost");
 		publicAddress = getPropertyOrEnv("PUBLIC_ADDR", listenAddress);
 
 	}
