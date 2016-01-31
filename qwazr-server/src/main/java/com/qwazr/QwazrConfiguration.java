@@ -147,6 +147,8 @@ public class QwazrConfiguration extends ServerConfiguration {
 	 * @return the number of allowed threads. The default value is 100.
 	 */
 	private static int buildSchedulerMaxThreads(String value) {
+		if (value == null)
+			return buildSchedulerMaxThreads((Integer) null);
 		return buildSchedulerMaxThreads(Integer.parseInt(value));
 	}
 

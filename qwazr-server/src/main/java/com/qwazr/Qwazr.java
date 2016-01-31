@@ -15,6 +15,7 @@
  **/
 package com.qwazr;
 
+import com.qwazr.classloader.ClassLoaderManager;
 import com.qwazr.cluster.manager.ClusterManager;
 import com.qwazr.cluster.service.ClusterNodeJson;
 import com.qwazr.cluster.service.ClusterServiceImpl;
@@ -87,6 +88,8 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 		TrackedDirectory etcTracker = new TrackedDirectory(currentEtcDir, serverConfiguration.etcFileFilter);
 
 		ClusterManager.load(executorService, getWebServicePublicAddress(), serverConfiguration.groups);
+
+		ClassLoaderManager.load(currentDataDir, Thread.currentThread());
 
 		if (QwazrConfiguration.ServiceEnum.compiler.isActive(serverConfiguration))
 			services.add(CompilerManager.load(executorService, currentDataDir));

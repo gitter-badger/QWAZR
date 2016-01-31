@@ -15,7 +15,7 @@
  */
 package com.qwazr.compiler;
 
-import com.qwazr.utils.IOUtils;
+import com.qwazr.classloader.ClassLoaderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +49,6 @@ public class CompilerManager {
 		if (oldInstance == null)
 			return;
 		INSTANCE = null;
-		oldInstance.close();
 	}
 
 	public static CompilerManager getInstance() {
@@ -57,28 +56,16 @@ public class CompilerManager {
 	}
 
 	private final File javaSourceDirectory;
-	private final File javaResourceDirectory;
-	private final File javaClassesDirectory;
-	private final File javaLibrariesDirectory;
 
-	private final DynamicRestart dynamicRestart;
 	private final JavaCompiler javaCompiler;
 
 	private CompilerManager(ExecutorService executor, File dataDirectory) throws IOException, URISyntaxException {
+		ClassLoaderManager classLoaderManager = ClassLoaderManager.getInstance();
 		javaSourceDirectory = new File(dataDirectory, "src/main/java");
-		javaResourceDirectory = new File(dataDirectory, "src/main/resources");
-		javaClassesDirectory = new File(dataDirectory, "target/classes");
-		if (!javaClassesDirectory.exists())
-			javaClassesDirectory.mkdirs();
-		javaLibrariesDirectory = new File(dataDirectory, "lib");
-		dynamicRestart = new DynamicRestart(executor, javaResourceDirectory, javaClassesDirectory,
-				javaLibrariesDirectory);
-		javaCompiler = JavaCompiler
-				.newInstance(executor, javaSourceDirectory, javaClassesDirectory, javaLibrariesDirectory);
-	}
-
-	private void close() {
-		IOUtils.close(dynamicRestart);
+		if (!classLoaderManager.javaClassesDirectory.exists())
+			classLoaderManager.javaClassesDirectory.mkdirs();
+		javaCompiler = JavaCompiler.newInstance(executor, javaSourceDirectory, classLoaderManager.javaClassesDirectory,
+				classLoaderManager.javaLibrariesDirectory);
 	}
 
 }
