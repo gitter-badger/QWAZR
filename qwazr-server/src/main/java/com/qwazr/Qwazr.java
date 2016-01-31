@@ -32,7 +32,6 @@ import com.qwazr.scripts.ScriptManager;
 import com.qwazr.search.index.IndexManager;
 import com.qwazr.semaphores.SemaphoresManager;
 import com.qwazr.utils.file.TrackedDirectory;
-import com.qwazr.utils.process.ProcessUtils;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServiceInterface;
 import com.qwazr.utils.server.ServiceName;
@@ -42,9 +41,12 @@ import io.undertow.security.idm.IdentityManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.exec.ExecuteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.ServletException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -67,9 +69,9 @@ public class Qwazr extends AbstractServer {
 		serverDefinition.defaultDataDirName = "qwazr";
 	}
 
-	private final static Collection<Class<? extends ServiceInterface>> services = new ArrayList<>();
+	private final Collection<Class<? extends ServiceInterface>> services = new ArrayList<>();
 
-	private static ServerConfiguration serverConfiguration = null;
+	private ServerConfiguration serverConfiguration = null;
 
 	private Qwazr() {
 		super(serverDefinition, Executors.newCachedThreadPool());
@@ -77,7 +79,7 @@ public class Qwazr extends AbstractServer {
 
 	@Path("/")
 	@ServiceName("welcome")
-	public static class WelcomeServiceImpl implements ServiceInterface {
+	public class WelcomeServiceImpl implements ServiceInterface {
 
 		@GET
 		@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
@@ -170,18 +172,35 @@ public class Qwazr extends AbstractServer {
 		return (IdentityManager) library;
 	}
 
+	private void startAll(String[] args)
+			throws InstantiationException, ServletException, IllegalAccessException, ParseException, IOException {
+		super.start(args, true);
+		// Register the services
+		ClusterManager.INSTANCE.registerMe(
+				new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services, serverConfiguration.groups));
+
+	}
+
+	private static Qwazr qwazr = null;
+
+	public static synchronized void start(String[] args)
+			throws IOException, InstantiationException, ServletException, IllegalAccessException, ParseException {
+		if (qwazr != null)
+			throw new ExecuteException("QWAZR is already started", -1);
+		qwazr = new Qwazr();
+		qwazr.startAll(args);
+	}
+
+	public static synchronized void stop() {
+		if (qwazr == null)
+			return;
+		qwazr.stopAll();
+	}
+
 	public static void main(String[] args) {
 		// Start the server
 		try {
-
-			ProcessUtils.Restart.init(Qwazr.class, args);
-
-			final Qwazr server = new Qwazr();
-			server.start(args, true);
-			// Register the services
-			ClusterManager.INSTANCE.registerMe(
-					new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services, serverConfiguration.groups));
-
+			start(args);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 			System.exit(1);
