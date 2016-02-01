@@ -21,6 +21,23 @@ import java.io.File;
 
 public class ServerConfiguration {
 
+	public enum VariablesEnum {
+
+		QWAZR_DATA,
+
+		QWAZR_REALM,
+
+		QWAZR_AUTHTYPE,
+
+		WEBAPP_PORT,
+
+		WEBSERVICE_PORT,
+
+		LISTEN_ADDR,
+
+		PUBLIC_ADDR
+	}
+
 	/**
 	 * The hostname or address uses for the listening socket
 	 */
@@ -59,15 +76,15 @@ public class ServerConfiguration {
 
 	public ServerConfiguration() {
 
-		dataDirectory = buildDataDir(getPropertyOrEnv("QWAZR_DATA"));
-		webServiceRealm = getPropertyOrEnv("QWAZR_REALM");
-		webServiceAuthType = getPropertyOrEnv("QWAZR_AUTHTYPE");
+		dataDirectory = buildDataDir(getPropertyOrEnv(VariablesEnum.QWAZR_DATA));
+		webServiceRealm = getPropertyOrEnv(VariablesEnum.QWAZR_REALM);
+		webServiceAuthType = getPropertyOrEnv(VariablesEnum.QWAZR_AUTHTYPE);
 
-		servletPort = getPropertyOrEnvInt("WEBAPP_PORT", 9090);
-		restPort = getPropertyOrEnvInt("WEBSERVICE_PORT", 9091);
+		servletPort = getPropertyOrEnvInt(VariablesEnum.WEBAPP_PORT, 9090);
+		restPort = getPropertyOrEnvInt(VariablesEnum.WEBSERVICE_PORT, 9091);
 
-		listenAddress = getPropertyOrEnv("LISTEN_ADDR", "localhost");
-		publicAddress = getPropertyOrEnv("PUBLIC_ADDR", listenAddress);
+		listenAddress = getPropertyOrEnv(VariablesEnum.LISTEN_ADDR, "localhost");
+		publicAddress = getPropertyOrEnv(VariablesEnum.PUBLIC_ADDR, listenAddress);
 
 	}
 
@@ -77,21 +94,21 @@ public class ServerConfiguration {
 		return new File(System.getProperty("user.dir"));
 	}
 
-	final protected Integer getPropertyOrEnvInt(String key, Integer defaultValue) {
+	final protected Integer getPropertyOrEnvInt(Enum<?> key, Integer defaultValue) {
 		String value = getPropertyOrEnv(key);
 		return value == null ? defaultValue : Integer.parseInt(value.trim());
 	}
 
-	final protected String getPropertyOrEnv(String key) {
+	final protected String getPropertyOrEnv(Enum<?> key) {
 		return getPropertyOrEnv(key, null);
 	}
 
-	final protected String getPropertyOrEnv(String key, String defaultValue) {
-		return getProperty(key, getEnv(key, defaultValue));
+	final protected String getPropertyOrEnv(Enum<?> key, String defaultValue) {
+		return getProperty(key.name(), getEnv(key, defaultValue));
 	}
 
-	final protected String getEnv(String key, String defaultValue) {
-		return defaultValue(System.getenv(key), defaultValue);
+	final protected String getEnv(Enum<?> key, String defaultValue) {
+		return defaultValue(System.getenv(key.name()), defaultValue);
 	}
 
 	final protected String getProperty(String key, String defaultValue) {

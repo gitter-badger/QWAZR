@@ -17,6 +17,8 @@ package com.qwazr.mavenplugin;
 
 import com.qwazr.Qwazr;
 import com.qwazr.QwazrConfiguration;
+import com.qwazr.utils.StringUtils;
+import com.qwazr.utils.server.ServerConfiguration;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -30,6 +32,21 @@ import java.util.List;
 public class QwazrStartMojo extends AbstractMojo {
 
 	@Parameter
+	private String data_directory;
+
+	@Parameter
+	private String listen_addr;
+
+	@Parameter
+	private String public_addr;
+
+	@Parameter
+	private Integer webapp_port;
+
+	@Parameter
+	private Integer webservice_port;
+
+	@Parameter
 	private List<String> etc;
 
 	@Parameter
@@ -41,10 +58,24 @@ public class QwazrStartMojo extends AbstractMojo {
 	@Parameter
 	private List<String> groups;
 
+	private void setProperty(Enum<?> key, Object value) {
+		if (value == null)
+			return;
+		String str = value.toString();
+		if (StringUtils.isEmpty(str))
+			return;
+		System.setProperty(key.name(), str);
+	}
+
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		final Log log = getLog();
 		log.info("Starting QWAZR");
 		try {
+			setProperty(ServerConfiguration.VariablesEnum.QWAZR_DATA, data_directory);
+			setProperty(ServerConfiguration.VariablesEnum.LISTEN_ADDR, listen_addr);
+			setProperty(ServerConfiguration.VariablesEnum.PUBLIC_ADDR, public_addr);
+			setProperty(ServerConfiguration.VariablesEnum.WEBAPP_PORT, webapp_port);
+			setProperty(ServerConfiguration.VariablesEnum.WEBSERVICE_PORT, webservice_port);
 			Qwazr.start(new QwazrConfiguration(etc, services, groups, scheduler_max_threads));
 		} catch (Exception e) {
 			throw new MojoFailureException("Cannot start QWAZR", e);

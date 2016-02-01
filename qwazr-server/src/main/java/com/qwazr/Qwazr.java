@@ -38,7 +38,6 @@ import com.qwazr.utils.server.ServiceName;
 import com.qwazr.utils.server.ServletApplication;
 import com.qwazr.webapps.transaction.WebappManager;
 import io.undertow.security.idm.IdentityManager;
-import org.apache.commons.cli.Option;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,8 +73,6 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 		}
 
 	}
-
-	public final static Option THREADS_OPTION = new Option("t", "maxthreads", true, "The maximum of threads");
 
 	@Override
 	public ServletApplication load(Collection<Class<? extends ServiceInterface>> classes) throws IOException {
@@ -148,12 +145,12 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 		return (IdentityManager) library;
 	}
 
-	private void startAll()
-			throws ServletException, IllegalAccessException, ParseException, IOException, InstantiationException {
+	private void startAll() throws ServletException, IllegalAccessException, ParseException, IOException,
+					InstantiationException {
 		super.start(true);
 		// Register the services
-		ClusterManager.INSTANCE.registerMe(
-				new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services, serverConfiguration.groups));
+		ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services,
+						serverConfiguration.groups));
 
 	}
 
@@ -169,7 +166,8 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 	 * @throws ParseException
 	 */
 	public static synchronized void start(QwazrConfiguration configuration)
-			throws IOException, InstantiationException, ServletException, IllegalAccessException, ParseException {
+					throws IOException, InstantiationException, ServletException, IllegalAccessException,
+					ParseException {
 		if (qwazr != null)
 			throw new IllegalAccessException("QWAZR is already started");
 		qwazr = new Qwazr(configuration);

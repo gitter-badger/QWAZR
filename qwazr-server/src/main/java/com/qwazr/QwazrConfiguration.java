@@ -28,6 +28,17 @@ import java.util.Set;
 
 public class QwazrConfiguration extends ServerConfiguration {
 
+	public enum VariablesEnum {
+
+		QWAZR_ETC,
+
+		QWAZR_SERVICES,
+
+		QWAZR_GROUPS,
+
+		QWAZR_SCHEDULER_MAX_THREADS
+	}
+
 	public enum ServiceEnum {
 
 		webcrawler,
@@ -69,7 +80,7 @@ public class QwazrConfiguration extends ServerConfiguration {
 	public final Integer scheduler_max_threads;
 
 	public QwazrConfiguration(Collection<String> etcs, Collection<ServiceEnum> services, Collection<String> groups,
-			Integer schedulerMaxThreads) {
+					Integer schedulerMaxThreads) {
 		this.etcFileFilter = buildEtcFileFilter(etcs);
 		this.services = buildServices(services);
 		this.groups = buildGroups(groups);
@@ -77,10 +88,11 @@ public class QwazrConfiguration extends ServerConfiguration {
 	}
 
 	QwazrConfiguration() {
-		this.etcFileFilter = buildEtcFileFilter(getPropertyOrEnv("QWAZR_ETC"));
-		this.services = buildServices(getPropertyOrEnv("QWAZR_SERVICES"));
-		this.groups = buildGroups(getPropertyOrEnv("QWAZR_GROUPS"));
-		this.scheduler_max_threads = buildSchedulerMaxThreads(getPropertyOrEnv("QWAZR_SCHEDULER_MAX_THREADS"));
+		this.etcFileFilter = buildEtcFileFilter(getPropertyOrEnv(VariablesEnum.QWAZR_ETC));
+		this.services = buildServices(getPropertyOrEnv(VariablesEnum.QWAZR_SERVICES));
+		this.groups = buildGroups(getPropertyOrEnv(VariablesEnum.QWAZR_GROUPS));
+		this.scheduler_max_threads = buildSchedulerMaxThreads(
+						getPropertyOrEnv(VariablesEnum.QWAZR_SCHEDULER_MAX_THREADS));
 	}
 
 	private static FileFilter buildEtcFileFilter(String etc) {
