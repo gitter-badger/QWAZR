@@ -22,7 +22,7 @@ if [ -z "$PUBLIC_ADDR" ]; then
 fi
 
 JAVA_OPTS="$JAVA_OPTS -Dfile.encoding=UTF-8"
-JAVA_OPTS="$JAVA_OPTS -Dlog4j.configuration=file=$QWAZR_DATA/etc/log4j.properties"
+JAVA_OPTS="$JAVA_OPTS -Dlog4j.configuration=file:$QWAZR_DATA/etc/log4j.properties"
 JAVA_OPTS="$JAVA_OPTS -Dlog4j.hostname=$PUBLIC_ADDR"
 
 if [ -z "$QWAZR_LOGS" ]; then
