@@ -5,6 +5,7 @@
     <artifactId>qwazr-maven-plugin</artifactId>
     <name>QWAZR Maven Plugin</name>
     <packaging>maven-plugin</packaging>
+    <description>The QWAZR Maven Plugin provides goals to manipulate projects within the QWAZR container.</description>
 
     <parent>
         <groupId>com.qwazr</groupId>
