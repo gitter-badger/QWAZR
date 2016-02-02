@@ -16,8 +16,8 @@
 package com.qwazr.scheduler;
 
 import com.qwazr.cluster.manager.ClusterManager;
-import com.qwazr.scripts.ScriptManager;
 import com.qwazr.scripts.ScriptRunStatus;
+import com.qwazr.scripts.ScriptServiceInterface;
 import com.qwazr.utils.LockUtils;
 import com.qwazr.utils.file.TrackedDirectory;
 import com.qwazr.utils.file.TrackedInterface;
@@ -154,7 +154,7 @@ public class SchedulerManager implements TrackedInterface.FileChangeConsumer {
 		if (logger.isInfoEnabled())
 			logger.info("execute " + scheduler_name + " / " + scheduler.script_path);
 		long startTime = System.currentTimeMillis();
-		List<ScriptRunStatus> statusList = ScriptManager.getInstance().getNewClient(scheduler.group, null)
+		List<ScriptRunStatus> statusList = ScriptServiceInterface.getClient(false, scheduler.group, null)
 				.runScriptVariables(scheduler.script_path, false, scheduler.group, scheduler.timeout, scheduler.rule,
 						scheduler.variables);
 		if (statusList != null) {
