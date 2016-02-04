@@ -31,6 +31,7 @@
             <groupId>com.qwazr</groupId>
             <artifactId>qwazr-server</artifactId>
         </dependency>
+
     </dependencies>
 
 </project>
