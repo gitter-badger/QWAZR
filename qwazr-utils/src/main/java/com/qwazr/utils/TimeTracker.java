@@ -15,22 +15,28 @@
  */
 package com.qwazr.utils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.Date;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class TimeTracker {
 
-	private final long start_time;
-	private long time;
+	private final long startTime;
+	private volatile long time;
+	private volatile long unknownTime;
 
-	private final LinkedHashMap<String, Long> timerMap;
+	private final LinkedHashMap<String, Long> entries;
+	private volatile LinkedHashMap<String, Long> cachedEntries;
 
 	/**
 	 * Initiate the time tracker and collect the starting time.
 	 */
 	public TimeTracker() {
-		timerMap = new LinkedHashMap<String, Long>();
-		start_time = time = System.currentTimeMillis();
+		entries = new LinkedHashMap<>();
+		startTime = time = System.currentTimeMillis();
+		unknownTime = 0;
+		cachedEntries = null;
 	}
 
 	/**
@@ -39,19 +45,57 @@ public class TimeTracker {
 	 * @param name the name of the time entry
 	 */
 	public synchronized void next(String name) {
-		long t = System.currentTimeMillis();
-		timerMap.put(name, t - time);
+		final long t = System.currentTimeMillis();
+		final long elapsed = t - time;
+		if (name != null) {
+			Long duration = entries.get(name);
+			if (duration == null)
+				duration = elapsed;
+			else
+				duration += elapsed;
+			entries.put(name, duration);
+			cachedEntries = null;
+		} else
+			unknownTime += elapsed;
 		time = t;
 	}
 
 	/**
 	 * @return the backed map
 	 */
-	public LinkedHashMap<String, Long> getMap() {
-		return timerMap;
+	private synchronized LinkedHashMap<String, Long> buildCache() {
+		if (cachedEntries == null)
+			cachedEntries = new LinkedHashMap<>(entries);
+		return cachedEntries;
 	}
 
-	public long getTotalTime() {
-		return time - start_time;
+	public Status getStatus() {
+		return new Status(this);
+	}
+
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public static class Status {
+
+		final public Date start_time;
+
+		final public Long total_time;
+
+		final public Long unknown_time;
+
+		final public LinkedHashMap<String, Long> durations;
+
+		public Status() {
+			start_time = null;
+			total_time = null;
+			unknown_time = null;
+			durations = null;
+		}
+
+		private Status(TimeTracker timeTracker) {
+			start_time = new Date(timeTracker.startTime);
+			total_time = timeTracker.time - timeTracker.startTime;
+			unknown_time = timeTracker.unknownTime;
+			durations = timeTracker.buildCache();
+		}
 	}
 }
