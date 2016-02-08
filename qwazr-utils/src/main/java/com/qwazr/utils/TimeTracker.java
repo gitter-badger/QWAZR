@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class TimeTracker {
 
@@ -96,6 +97,22 @@ public class TimeTracker {
 			total_time = timeTracker.time - timeTracker.startTime;
 			unknown_time = timeTracker.unknownTime;
 			durations = timeTracker.buildCache();
+		}
+
+		public Date getStart_time() {
+			return start_time;
+		}
+
+		public Long getTotal_time() {
+			return total_time;
+		}
+
+		public Long getUnknown_time() {
+			return unknown_time;
+		}
+
+		public Map<String, Long> getDurations() {
+			return durations;
 		}
 	}
 }
