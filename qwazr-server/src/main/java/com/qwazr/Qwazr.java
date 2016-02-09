@@ -22,7 +22,7 @@ import com.qwazr.cluster.service.ClusterServiceImpl;
 import com.qwazr.compiler.CompilerManager;
 import com.qwazr.crawler.web.manager.WebCrawlerManager;
 import com.qwazr.database.TableManager;
-import com.qwazr.extractor.ParserManager;
+import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.graph.GraphManager;
 import com.qwazr.library.AbstractLibrary;
 import com.qwazr.library.LibraryManager;
@@ -95,7 +95,7 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 		services.add(ClusterServiceImpl.class);
 
 		if (QwazrConfiguration.ServiceEnum.extractor.isActive(serverConfiguration))
-			services.add(ParserManager.load());
+			services.add(ExtractorManager.load());
 
 		if (QwazrConfiguration.ServiceEnum.webapps.isActive(serverConfiguration)) {
 			services.add(WebappManager.load(currentDataDir, etcTracker, currentTempDir));
@@ -145,12 +145,12 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 		return (IdentityManager) library;
 	}
 
-	private void startAll() throws ServletException, IllegalAccessException, ParseException, IOException,
-					InstantiationException {
+	private void startAll()
+			throws ServletException, IllegalAccessException, ParseException, IOException, InstantiationException {
 		super.start(true);
 		// Register the services
-		ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services,
-						serverConfiguration.groups));
+		ClusterManager.INSTANCE.registerMe(
+				new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services, serverConfiguration.groups));
 
 	}
 
@@ -166,8 +166,7 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 	 * @throws ParseException
 	 */
 	public static synchronized void start(QwazrConfiguration configuration)
-					throws IOException, InstantiationException, ServletException, IllegalAccessException,
-					ParseException {
+			throws IOException, InstantiationException, ServletException, IllegalAccessException, ParseException {
 		if (qwazr != null)
 			throw new IllegalAccessException("QWAZR is already started");
 		qwazr = new Qwazr(configuration);
