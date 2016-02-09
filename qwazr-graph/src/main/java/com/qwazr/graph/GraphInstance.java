@@ -593,6 +593,14 @@ public class GraphInstance {
 			return Double.compare(o.score, score);
 		}
 
+		public boolean equals(final Object o) {
+			if (o == null)
+				return false;
+			if (!(o instanceof NodeScore))
+				return false;
+			return compareTo((NodeScore) o) == 0;
+		}
+
 	}
 
 	public int getSize() throws IOException {

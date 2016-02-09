@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package com.qwazr.utils.bitset;
 
-public class NativeBitSet implements BitSetInterface {
+public class NativeBitSet implements BitSetInterface, Cloneable {
 
 	private long bitSetRef;
 
@@ -38,9 +38,10 @@ public class NativeBitSet implements BitSetInterface {
 	final private native void free(final long ref);
 
 	@Override
-	protected void finalize() {
+	protected void finalize() throws Throwable {
 		free(bitSetRef);
 		bitSetRef = 0;
+		super.finalize();
 	}
 
 	final private void flushBuffer() {
@@ -76,7 +77,7 @@ public class NativeBitSet implements BitSetInterface {
 	final private native long clone(final long ref);
 
 	@Override
-	public BitSetInterface clone() {
+	final public BitSetInterface clone() {
 		if (bufferSize > 0)
 			flushBuffer();
 		NativeBitSet bitSet = new NativeBitSet();
@@ -84,16 +85,14 @@ public class NativeBitSet implements BitSetInterface {
 		return bitSet;
 	}
 
-	final private native void set(final long ref, final int[] bits,
-			final int length);
+	final private native void set(final long ref, final int[] bits, final int length);
 
 	@Override
 	public void set(final int[] bits) {
 		set(bitSetRef, bits, bits.length);
 	}
 
-	final private native void set(final long ref, final long[] buffer,
-			final int length);
+	final private native void set(final long ref, final long[] buffer, final int length);
 
 	@Override
 	public void set(final long[] bits) {
@@ -109,8 +108,7 @@ public class NativeBitSet implements BitSetInterface {
 		return cardinality(bitSetRef);
 	}
 
-	final private native void flip(final long ref, final long startPos,
-			final long endPos);
+	final private native void flip(final long ref, final long startPos, final long endPos);
 
 	@Override
 	public void flip(final long startPos, final long endPos) {

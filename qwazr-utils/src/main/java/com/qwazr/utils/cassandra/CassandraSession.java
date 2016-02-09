@@ -53,8 +53,9 @@ public class CassandraSession implements Closeable {
 	}
 
 	@Override
-	public void finalize() {
+	public void finalize() throws Throwable {
 		closeNoLock();
+		super.finalize();
 	}
 
 	private void closeNoLock() {
@@ -109,9 +110,8 @@ public class CassandraSession implements Closeable {
 	}
 
 	private SimpleStatement getStatement(Session session, String cql, Integer fetchSize, Object... values) {
-		SimpleStatement statement = values != null && values.length > 0 ?
-						new SimpleStatement(cql, values) :
-						new SimpleStatement(cql);
+		SimpleStatement statement =
+				values != null && values.length > 0 ? new SimpleStatement(cql, values) : new SimpleStatement(cql);
 		if (fetchSize != null)
 			statement.setFetchSize(fetchSize);
 		return statement;

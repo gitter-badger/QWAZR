@@ -16,14 +16,14 @@
  */
 package com.qwazr.utils.jdbc.connection;
 
+import com.qwazr.utils.jdbc.Transaction;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.qwazr.utils.jdbc.Transaction;
 
 /**
  * The abstract class for all ConnectionManager.
@@ -34,7 +34,7 @@ public abstract class ConnectionManager {
 	 * Use com.jaeksoft.pojodbc.connection.ConnectionManager to manager the log
 	 * level.
 	 */
-	static protected Logger logger = Logger.getLogger(ConnectionManager.class
+	final static protected Logger logger = Logger.getLogger(ConnectionManager.class
 			.getCanonicalName());
 
 	/**

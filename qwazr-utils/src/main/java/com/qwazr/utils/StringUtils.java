@@ -255,4 +255,20 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		return split(str, System.lineSeparator());
 	}
 
+	/**
+	 * Ensure the string ends with the given suffix
+	 *
+	 * @param str
+	 * @param suffix
+	 * @return a string
+	 */
+	public static String ensureSuffix(String str, String suffix) {
+		if (suffix == null)
+			return str;
+		if (str == null)
+			return null;
+		if (str.endsWith(suffix))
+			return str;
+		return str + suffix;
+	}
 }

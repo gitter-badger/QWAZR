@@ -3,6 +3,7 @@ package com.qwazr.utils;
 import org.apache.commons.lang3.RandomUtils;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class RandomArrayIterator<T> implements Iterator<T> {
 
@@ -30,6 +31,8 @@ public class RandomArrayIterator<T> implements Iterator<T> {
 
 	@Override
 	public T next() {
+		if (count == 0)
+			throw new NoSuchElementException();
 		final T object = objects[pos++];
 		if (pos == objects.length)
 			pos = 0;
