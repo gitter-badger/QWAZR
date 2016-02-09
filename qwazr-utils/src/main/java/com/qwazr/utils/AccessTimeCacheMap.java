@@ -66,7 +66,7 @@ public class AccessTimeCacheMap<K, V> {
 				size = entryMap.size();
 				rwl.w.unlock();
 				entry.setValue(supplier);
-				return value;
+				return entry.value;
 			} finally {
 				rwl.w.unlock();
 				rwl.r.unlock();
@@ -109,22 +109,22 @@ public class AccessTimeCacheMap<K, V> {
 
 	}
 
-	private class AccessTimeCacheEntry<V> {
+	private class AccessTimeCacheEntry<T> {
 
 		private volatile long expirationTime;
 
-		private V value;
+		private T value;
 
 		AccessTimeCacheEntry(long newExpirationTime) {
 			this.expirationTime = newExpirationTime;
 			this.value = null;
 		}
 
-		void setValue(Supplier<V> supplier) {
+		void setValue(Supplier<T> supplier) {
 			value = supplier.get();
 		}
 
-		V getValue(long newExpirationTime) {
+		T getValue(long newExpirationTime) {
 			expirationTime = newExpirationTime;
 			return value;
 		}

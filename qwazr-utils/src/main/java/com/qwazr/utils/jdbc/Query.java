@@ -74,7 +74,7 @@ public class Query {
 	private int firstResult;
 	private int maxResults;
 
-	static protected Logger logger = Logger.getLogger(Query.class.getCanonicalName());
+	final static protected Logger logger = Logger.getLogger(Query.class.getCanonicalName());
 
 	protected Query(PreparedStatement statement) {
 		this.statement = statement;
