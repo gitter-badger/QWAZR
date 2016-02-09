@@ -58,18 +58,15 @@ public class AccessTimeCacheMap<K, V> {
 		synchronized (entry) {
 			rwl.w.lock();
 			try {
-				rwl.r.lock();
 				V value = getSynchronizedValue(key, nextExpirationTime);
 				if (value != null)
 					return value;
 				entryMap.put(key, entry);
 				size = entryMap.size();
-				rwl.w.unlock();
 				entry.setValue(supplier);
 				return entry.value;
 			} finally {
 				rwl.w.unlock();
-				rwl.r.unlock();
 			}
 		}
 	}
