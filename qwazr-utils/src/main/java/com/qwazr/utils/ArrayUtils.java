@@ -71,4 +71,13 @@ public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 		return Arrays.toString(collection.toArray());
 	}
 
+	public static String[] toArray(Collection<String> collection) {
+		if (collection == null)
+			return null;
+		String[] array = new String[collection.size()];
+		int i = 0;
+		for (String val : collection)
+			array[i++] = val;
+		return array;
+	}
 }
