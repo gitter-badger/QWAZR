@@ -31,6 +31,7 @@ import com.qwazr.scheduler.SchedulerManager;
 import com.qwazr.scripts.ScriptManager;
 import com.qwazr.search.index.IndexManager;
 import com.qwazr.semaphores.SemaphoresManager;
+import com.qwazr.utils.AnnotationsUtils;
 import com.qwazr.utils.file.TrackedDirectory;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServiceInterface;
@@ -145,12 +146,12 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 		return (IdentityManager) library;
 	}
 
-	private void startAll()
-			throws ServletException, IllegalAccessException, ParseException, IOException, InstantiationException {
+	private void startAll() throws ServletException, IllegalAccessException, ParseException, IOException,
+					InstantiationException {
 		super.start(true);
 		// Register the services
-		ClusterManager.INSTANCE.registerMe(
-				new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services, serverConfiguration.groups));
+		ClusterManager.INSTANCE.registerMe(new ClusterNodeJson(ClusterManager.INSTANCE.myAddress, services,
+						serverConfiguration.groups));
 
 	}
 
@@ -166,7 +167,8 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 	 * @throws ParseException
 	 */
 	public static synchronized void start(QwazrConfiguration configuration)
-			throws IOException, InstantiationException, ServletException, IllegalAccessException, ParseException {
+					throws IOException, InstantiationException, ServletException, IllegalAccessException,
+					ParseException {
 		if (qwazr != null)
 			throw new IllegalAccessException("QWAZR is already started");
 		qwazr = new Qwazr(configuration);
@@ -189,6 +191,12 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 			logger.error(e.getMessage(), e);
 			System.exit(1);
 		}
-
 	}
+
+	public static void inject(Object object) {
+		if (object == null)
+			return;
+		AnnotationsUtils.injectRecursive(object, new QwazrInjector(object));
+	}
+
 }
