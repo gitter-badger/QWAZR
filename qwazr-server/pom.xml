@@ -226,6 +226,7 @@
                                     <type>template</type>
                                     <paths>
                                         <path>/var/lib/qwazr</path>
+                                        <path>/var/lib/qwazr/etc</path>
                                         <path>/var/log/qwazr</path>
                                         <path>/var/run/qwazr</path>
                                     </paths>
@@ -241,7 +242,7 @@
                                     <conffile>true</conffile>
                                     <mapper>
                                         <type>perm</type>
-                                        <prefix>/var/lib/qwazr</prefix>
+                                        <prefix>/var/lib/qwazr/etc</prefix>
                                     </mapper>
                                 </data>
                             </dataSet>
@@ -287,9 +288,15 @@
                         <mapping>
                             <directory>/var/log/qwazr</directory>
                             <username>qwazr</username>
+                            <groupname>daemon</groupname>
                         </mapping>
                         <mapping>
                             <directory>/var/lib/qwazr</directory>
+                            <username>qwazr</username>
+                            <groupname>daemon</groupname>
+                        </mapping>
+                        <mapping>
+                            <directory>/var/lib/qwazr/etc</directory>
                             <username>qwazr</username>
                             <groupname>daemon</groupname>
                             <configuration>noreplace</configuration>
