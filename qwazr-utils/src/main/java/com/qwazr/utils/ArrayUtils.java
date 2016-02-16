@@ -80,4 +80,14 @@ public class ArrayUtils extends org.apache.commons.lang3.ArrayUtils {
 			array[i++] = val;
 		return array;
 	}
+
+	public static String[] toStringArray(Collection<Object> collection) {
+		if (collection == null)
+			return null;
+		String[] array = new String[collection.size()];
+		int i = 0;
+		for (Object val : collection)
+			array[i++] = val == null ? null : val.toString();
+		return array;
+	}
 }
