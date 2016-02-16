@@ -23,6 +23,7 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class StringUtils extends org.apache.commons.lang3.StringUtils {
@@ -270,5 +271,18 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		if (str.endsWith(suffix))
 			return str;
 		return str + suffix;
+	}
+
+	/**
+	 * @param text
+	 * @param replacements
+	 * @return
+	 */
+	public static String replaceEach(String text, Map<String, Object> replacements) {
+		if (replacements == null)
+			return text;
+		String[] search = ArrayUtils.toArray(replacements.keySet());
+		String[] replace = ArrayUtils.toStringArray(replacements.values());
+		return replaceEach(text, search, replace);
 	}
 }
