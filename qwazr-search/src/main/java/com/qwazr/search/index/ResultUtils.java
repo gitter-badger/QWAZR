@@ -18,10 +18,6 @@ package com.qwazr.search.index;
 import com.qwazr.search.field.FieldDefinition;
 import com.qwazr.search.field.FieldUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.facet.FacetResult;
-import org.apache.lucene.facet.Facets;
-import org.apache.lucene.facet.LabelAndValue;
-import org.apache.lucene.facet.sortedset.SortedSetDocValuesReaderState;
 import org.apache.lucene.index.*;
 
 import java.io.IOException;
@@ -52,51 +48,24 @@ class ResultUtils {
 		return fields;
 	}
 
-	final static void addDocValues(final int docId, Map<String, DocValueUtils.DVConverter> sources,
-			final Map<String, Object> dest) {
+	final static void addDocValues(final int docId, Map<String, ValueUtils.DVConverter> sources,
+					final Map<String, Object> dest) {
 		if (sources == null)
 			return;
-		for (Map.Entry<String, DocValueUtils.DVConverter> entry : sources.entrySet()) {
+		for (Map.Entry<String, ValueUtils.DVConverter> entry : sources.entrySet()) {
 			Object o = entry.getValue().convert(docId);
 			if (o != null)
 				dest.put(entry.getKey(), o);
 		}
 	}
 
-	final static Map<String, Map<String, Number>> buildFacets(final SortedSetDocValuesReaderState state,
-			final Map<String, QueryDefinition.Facet> facetsDef, final Facets facets) throws IOException {
-		Map<String, Map<String, Number>> facetResults = new LinkedHashMap<String, Map<String, Number>>();
-		for (Map.Entry<String, QueryDefinition.Facet> entry : facetsDef.entrySet()) {
-			String dim = entry.getKey();
-			if (state.getOrdRange(dim) == null)
-				continue;
-			Map<String, Number> facetMap = buildFacet(dim, entry.getValue(), facets);
-			if (facetMap != null)
-				facetResults.put(dim, facetMap);
-		}
-		return facetResults;
-	}
-
-	final static Map<String, Number> buildFacet(String dim, QueryDefinition.Facet facet, Facets facets)
-			throws IOException {
-		int top = facet.top == null ? 10 : facet.top;
-		LinkedHashMap<String, Number> facetMap = new LinkedHashMap<String, Number>();
-		FacetResult facetResult = facets.getTopChildren(top, dim);
-		if (facetResult == null || facetResult.labelValues == null)
-			return null;
-		for (LabelAndValue lv : facetResult.labelValues)
-			facetMap.put(lv.label, lv.value);
-		return facetMap;
-	}
-
-	final static Map<String, DocValueUtils.DVConverter> extractDocValuesFields(
-			final Map<String, FieldDefinition> fieldMap, final IndexReader indexReader,
-			final Set<String> returned_fields) throws IOException {
+	final static Map<String, ValueUtils.DVConverter> extractDocValuesFields(final Map<String, FieldDefinition> fieldMap,
+					final IndexReader indexReader, final Set<String> returned_fields) throws IOException {
 		if (returned_fields == null)
 			return null;
-		FieldInfos fieldInfos = MultiFields.getMergedFieldInfos(indexReader);
+		//FieldInfos fieldInfos = MultiFields.getMergedFieldInfos(indexReader);
 		LeafReader dvReader = SlowCompositeReaderWrapper.wrap(indexReader);
-		Map<String, DocValueUtils.DVConverter> map = new LinkedHashMap<String, DocValueUtils.DVConverter>();
+		Map<String, ValueUtils.DVConverter> map = new LinkedHashMap<String, ValueUtils.DVConverter>();
 		for (String field : returned_fields) {
 			FieldInfo fieldInfo = dvReader.getFieldInfos().fieldInfo(field);
 			if (fieldInfo == null)
@@ -104,7 +73,7 @@ class ResultUtils {
 			FieldDefinition fieldDef = fieldMap.get(field);
 			if (fieldDef == null)
 				continue;
-			DocValueUtils.DVConverter converter = DocValueUtils.newConverter(fieldDef, dvReader, fieldInfo);
+			ValueUtils.DVConverter converter = ValueUtils.newConverter(fieldDef, dvReader, fieldInfo);
 			if (converter == null)
 				continue;
 			map.put(field, converter);
@@ -113,7 +82,7 @@ class ResultUtils {
 	}
 
 	final static List<ResultDefinition.Function> buildFunctions(
-			final Collection<FunctionCollector> functionsCollector) {
+					final Collection<FunctionCollector> functionsCollector) {
 		if (functionsCollector == null)
 			return null;
 		List<ResultDefinition.Function> functions = new ArrayList<ResultDefinition.Function>(functionsCollector.size());

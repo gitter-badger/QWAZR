@@ -15,6 +15,7 @@
  */
 package com.qwazr.search.query;
 
+import com.qwazr.search.analysis.AnalyzerUtils;
 import com.qwazr.search.index.QueryContext;
 import org.apache.lucene.analysis.tokenattributes.*;
 import org.apache.lucene.index.Term;
@@ -22,7 +23,6 @@ import org.apache.lucene.search.Query;
 
 import java.io.IOException;
 
-import static com.qwazr.search.analysis.AnalyzerUtils.TermConsumer;
 import static com.qwazr.search.analysis.AnalyzerUtils.forEachTerm;
 
 public class TermQuery extends AbstractQuery {
@@ -39,17 +39,11 @@ public class TermQuery extends AbstractQuery {
 	}
 
 	public TermQuery(String field, String text) {
-		super(null);
-		this.field = field;
-		this.text = text;
-		this.apply_analyzer = null;
+		this(null, field, text, null);
 	}
 
 	public TermQuery(Float boost, String field, String text) {
-		super(boost);
-		this.field = field;
-		this.text = text;
-		this.apply_analyzer = null;
+		this(boost, field, text, null);
 	}
 
 	public TermQuery(Float boost, String field, String text, Boolean apply_analyzer) {
@@ -79,7 +73,7 @@ public class TermQuery extends AbstractQuery {
 		final String sourceText = text == null ? queryContext.queryString : text;
 		final String term;
 		if (apply_analyzer != null && apply_analyzer) {
-			forEachTerm(queryContext.analyzer, field, queryContext.queryString, new TermConsumer() {
+			forEachTerm(queryContext.analyzer, field, queryContext.queryString, new AnalyzerUtils.TermConsumer() {
 				@Override
 				public boolean apply(CharTermAttribute charTermAttr, FlagsAttribute flagsAttr,
 								OffsetAttribute offsetAttr, PositionIncrementAttribute posIncAttr,
