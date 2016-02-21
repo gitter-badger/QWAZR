@@ -17,12 +17,11 @@ package com.qwazr.search.analysis;
 
 import com.qwazr.classloader.ClassLoaderManager;
 import com.qwazr.search.field.FieldDefinition;
-import com.qwazr.search.field.FieldUtils;
+import com.qwazr.search.field.FieldTypeInterface;
 import com.qwazr.utils.ClassLoaderUtils;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.server.ServerException;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.Field;
 import org.apache.lucene.facet.FacetsConfig;
 
 import javax.ws.rs.core.Response;
@@ -33,14 +32,14 @@ import java.util.Map;
 
 public class AnalyzerContext {
 
-	public final Map<String, FieldDefinition> fields;
+	public final Map<String, FieldTypeInterface> fieldTypes;
 	public final FacetsConfig facetsConfig;
 	public final Map<String, Analyzer> indexAnalyzerMap;
 	public final Map<String, Analyzer> queryAnalyzerMap;
 
 	public AnalyzerContext(Map<String, AnalyzerDefinition> analyzerMap, Map<String, FieldDefinition> fields)
 			throws ServerException {
-		this.fields = fields;
+		this.fieldTypes = new HashMap<String, FieldTypeInterface>();
 		this.facetsConfig = new FacetsConfig();
 		if (fields == null || fields.size() == 0) {
 			this.indexAnalyzerMap = Collections.<String, Analyzer>emptyMap();
@@ -51,8 +50,10 @@ public class AnalyzerContext {
 		this.queryAnalyzerMap = new HashMap<String, Analyzer>();
 
 		for (Map.Entry<String, FieldDefinition> field : fields.entrySet()) {
-			String fieldName = field.getKey();
-			FieldDefinition fieldDef = field.getValue();
+			final String fieldName = field.getKey();
+			final FieldDefinition fieldDef = field.getValue();
+			FieldTypeInterface fieldType = FieldTypeInterface.getInstance(fieldName, fieldDef, facetsConfig);
+			fieldTypes.put(fieldName, fieldType);
 			if (fieldDef.template != null) {
 				switch (fieldDef.template) {
 				case FacetField:
@@ -64,14 +65,6 @@ public class AnalyzerContext {
 				case SortedSetMultiDocValuesFacetField:
 					facetsConfig.setMultiValued(fieldName, true);
 					facetsConfig.setHierarchical(fieldName, false);
-					break;
-				case HierarchicalFacetField:
-					facetsConfig.setMultiValued(fieldName, false);
-					facetsConfig.setHierarchical(fieldName, true);
-					break;
-				case HierarchicalMultiFacetField:
-					facetsConfig.setMultiValued(fieldName, true);
-					facetsConfig.setHierarchical(fieldName, true);
 					break;
 				}
 			}
@@ -94,13 +87,6 @@ public class AnalyzerContext {
 						"Class " + fieldDef.analyzer + " not known for the field " + fieldName, e);
 			}
 		}
-	}
-
-	public final Field getNewLuceneField(String fieldName, Object value) throws IOException {
-		FieldDefinition fieldDef = fields == null ? null : fields.get(fieldName);
-		if (fieldDef == null)
-			throw new IOException("No field definition for the field: " + fieldName);
-		return FieldUtils.newLuceneField(fieldDef, fieldName, value);
 	}
 
 	final static String[] analyzerClassPrefixes = { "", "org.apache.lucene.analysis." };

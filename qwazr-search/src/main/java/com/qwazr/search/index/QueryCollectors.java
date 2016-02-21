@@ -16,7 +16,7 @@
 
 package com.qwazr.search.index;
 
-import com.qwazr.search.field.FieldDefinition;
+import com.qwazr.search.field.FieldTypeInterface;
 import com.qwazr.utils.server.ServerException;
 import org.apache.lucene.facet.FacetsCollector;
 import org.apache.lucene.search.*;
@@ -39,8 +39,8 @@ class QueryCollectors {
 
 	final Collector finalCollector;
 
-	QueryCollectors(boolean bNeedScore, Sort sort, int numHits, LinkedHashMap<String, QueryDefinition.Facet> facets,
-			Collection<QueryDefinition.Function> functions, Map<String, FieldDefinition> fields)
+	QueryCollectors(boolean bNeedScore, Sort sort, int numHits, final LinkedHashMap<String, QueryDefinition.Facet> facets,
+			Collection<QueryDefinition.Function> functions, final Map<String, FieldTypeInterface> fields)
 			throws ServerException, IOException {
 		collectors = new ArrayList<Collector>();
 		facetsCollector = buildFacetsCollector(facets);
@@ -72,18 +72,18 @@ class QueryCollectors {
 		return add(new FacetsCollector());
 	}
 
-	private final Collection<FunctionCollector> buildFunctionsCollectors(Map<String, FieldDefinition> fields,
+	private final Collection<FunctionCollector> buildFunctionsCollectors(Map<String, FieldTypeInterface> fields,
 			Collection<QueryDefinition.Function> functions) throws ServerException {
 		if (functions == null || functions.isEmpty())
 			return null;
 		Collection<FunctionCollector> functionsCollectors = new ArrayList<FunctionCollector>();
 		for (QueryDefinition.Function function : functions) {
-			FieldDefinition fieldDef = fields.get(function.field);
-			if (fieldDef == null)
+			FieldTypeInterface fieldType = fields.get(function.field);
+			if (fieldType == null)
 				throw new ServerException(Response.Status.NOT_ACCEPTABLE,
 						"Cannot compute the function " + function.function + " because the field is unknown: "
 								+ function.field);
-			functionsCollectors.add(new FunctionCollector(function, fieldDef));
+			functionsCollectors.add(new FunctionCollector(function, fieldType));
 		}
 		collectors.addAll(functionsCollectors);
 		return functionsCollectors;
