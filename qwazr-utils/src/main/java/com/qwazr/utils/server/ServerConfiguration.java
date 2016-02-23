@@ -21,21 +21,26 @@ import java.io.File;
 
 public class ServerConfiguration {
 
+	public enum PrefixEnum {
+
+		WEBAPP,
+
+		WEBSERVICE
+	}
+
 	public enum VariablesEnum {
 
 		QWAZR_DATA,
 
-		QWAZR_REALM,
-
-		QWAZR_AUTHTYPE,
-
-		WEBAPP_PORT,
-
-		WEBSERVICE_PORT,
-
 		LISTEN_ADDR,
 
-		PUBLIC_ADDR
+		PUBLIC_ADDR,
+
+		REALM,
+
+		AUTHTYPE,
+
+		PORT
 	}
 
 	/**
@@ -49,43 +54,42 @@ public class ServerConfiguration {
 	 */
 	final String publicAddress;
 
-	/**
-	 * The port TCP port used by the listening socket
-	 */
-	final int servletPort;
+	final class Connector {
 
-	/**
-	 * The port TCP port used by the listening socket
-	 */
-	final int restPort;
+		/**
+		 * The port TCP port used by the listening socket
+		 */
+		final int port;
 
-	/**
-	 *
-	 */
-	final String webServiceRealm;
+		final String realm;
 
-	/**
-	 *
-	 */
-	final String webServiceAuthType;
+		final String authType;
+
+		private Connector(PrefixEnum prefix, int defaultPort) {
+			port = getPropertyOrEnvInt(prefix, VariablesEnum.PORT, defaultPort);
+			realm = getPropertyOrEnv(prefix, VariablesEnum.REALM);
+			authType = getPropertyOrEnv(prefix, VariablesEnum.AUTHTYPE);
+		}
+	}
 
 	/**
 	 * The data directory
 	 */
 	final File dataDirectory;
 
+	final Connector webServiceConnector;
+
+	final Connector webAppConnector;
+
 	public ServerConfiguration() {
 
-		dataDirectory = buildDataDir(getPropertyOrEnv(VariablesEnum.QWAZR_DATA));
-		webServiceRealm = getPropertyOrEnv(VariablesEnum.QWAZR_REALM);
-		webServiceAuthType = getPropertyOrEnv(VariablesEnum.QWAZR_AUTHTYPE);
+		dataDirectory = buildDataDir(getPropertyOrEnv(null, VariablesEnum.QWAZR_DATA));
 
-		servletPort = getPropertyOrEnvInt(VariablesEnum.WEBAPP_PORT, 9090);
-		restPort = getPropertyOrEnvInt(VariablesEnum.WEBSERVICE_PORT, 9091);
+		webAppConnector = new Connector(PrefixEnum.WEBAPP, 9090);
+		webServiceConnector = new Connector(PrefixEnum.WEBSERVICE, 9091);
 
-		listenAddress = getPropertyOrEnv(VariablesEnum.LISTEN_ADDR, "localhost");
-		publicAddress = getPropertyOrEnv(VariablesEnum.PUBLIC_ADDR, listenAddress);
-
+		listenAddress = getPropertyOrEnv(null, VariablesEnum.LISTEN_ADDR, "localhost");
+		publicAddress = getPropertyOrEnv(null, VariablesEnum.PUBLIC_ADDR, listenAddress);
 	}
 
 	private static File buildDataDir(String path) {
@@ -94,25 +98,29 @@ public class ServerConfiguration {
 		return new File(System.getProperty("user.dir"));
 	}
 
-	final protected Integer getPropertyOrEnvInt(Enum<?> key, Integer defaultValue) {
-		String value = getPropertyOrEnv(key);
+	final protected Integer getPropertyOrEnvInt(PrefixEnum prefix, Enum<?> key, Integer defaultValue) {
+		String value = getPropertyOrEnv(prefix, key);
 		return value == null ? defaultValue : Integer.parseInt(value.trim());
 	}
 
-	final protected String getPropertyOrEnv(Enum<?> key) {
-		return getPropertyOrEnv(key, null);
+	final protected String getPropertyOrEnv(PrefixEnum prefix, Enum<?> key) {
+		return getPropertyOrEnv(prefix, key, null);
 	}
 
-	final protected String getPropertyOrEnv(Enum<?> key, String defaultValue) {
-		return getProperty(key.name(), getEnv(key, defaultValue));
+	final protected String getPropertyOrEnv(PrefixEnum prefix, Enum<?> key, String defaultValue) {
+		return getProperty(prefix, key, getEnv(prefix, key, defaultValue));
 	}
 
-	final protected String getEnv(Enum<?> key, String defaultValue) {
-		return defaultValue(System.getenv(key.name()), defaultValue);
+	final public static String getKey(PrefixEnum prefix, Enum<?> key) {
+		return prefix == null ? key.name() : prefix.name() + '_' + key.name();
 	}
 
-	final protected String getProperty(String key, String defaultValue) {
-		return defaultValue(System.getProperty(key), defaultValue);
+	final protected String getEnv(PrefixEnum prefix, Enum<?> key, String defaultValue) {
+		return defaultValue(System.getenv(getKey(prefix, key)), defaultValue);
+	}
+
+	final protected String getProperty(PrefixEnum prefix, Enum<?> key, String defaultValue) {
+		return defaultValue(System.getProperty(getKey(prefix, key)), defaultValue);
 	}
 
 	final protected String defaultValue(String value, String defaultValue) {

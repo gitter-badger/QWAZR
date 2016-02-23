@@ -32,7 +32,6 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.LoginConfig;
-import io.undertow.servlet.api.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,6 +95,37 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 			undertow.stop();
 	}
 
+	private final IdentityManager getIdentityManager(ServerConfiguration.Connector connector,
+					DeploymentInfo deploymentInfo) throws IOException {
+		if (connector == null)
+			return null;
+		if (connector.realm == null)
+			return null;
+		IdentityManager identityManager = getIdentityManager(connector.realm);
+		if (identityManager == null)
+			return null;
+		deploymentInfo.setIdentityManager(identityManager)
+						.setLoginConfig(new LoginConfig(connector.authType == null ? "BASIC" : connector.authType,
+										connector.realm));
+		return identityManager;
+	}
+
+	private final void startServer(ServerConfiguration.Connector connector, DeploymentInfo deploymentInfo, String path)
+					throws IOException, ServletException {
+		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
+		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
+		manager.deploy();
+		HttpHandler httpHandler = start(manager);
+		if (identityManager != null)
+			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
+		PathHandler pathHandler = new PathHandler();
+		pathHandler.addPrefixPath(path, httpHandler);
+		logger.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
+		Builder servletBuilder = Undertow.builder().addHttpListener(connector.port, serverConfiguration.listenAddress)
+						.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
+		start(servletBuilder.build());
+	}
+
 	/**
 	 * Call this method to start the server
 	 *
@@ -103,7 +133,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 	 * @throws ServletException if the servlet configuration failed
 	 */
 	final public void start(boolean shutdownHook)
-			throws IOException, ServletException, IllegalAccessException, InstantiationException {
+					throws IOException, ServletException, IllegalAccessException, InstantiationException {
 
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 
@@ -116,45 +146,13 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		ServletApplication servletApplication = load(services);
 
 		// Launch the servlet application if any
-		if (servletApplication != null) {
-			DeploymentInfo deploymentInfo = servletApplication.getDeploymentInfo();
-			DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
-			manager.deploy();
-			PathHandler pathHandler = new PathHandler();
-			pathHandler.addPrefixPath(servletApplication.getApplicationPath(), start(manager));
-			logger.info("Start the WEB server " + serverConfiguration.listenAddress + ":"
-					+ serverConfiguration.servletPort);
-			Builder servletBuilder = Undertow.builder()
-					.addHttpListener(serverConfiguration.servletPort, serverConfiguration.listenAddress)
-					.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(pathHandler);
-			start(servletBuilder.build());
-		}
+		if (servletApplication != null)
+			startServer(serverConfiguration.webAppConnector, servletApplication.getDeploymentInfo(),
+							servletApplication.getApplicationPath());
 
 		// Launch the jaxrs application if any
-		if (!services.isEmpty()) {
-			DeploymentInfo deploymentInfo = RestApplication.getDeploymentInfo();
-			IdentityManager identityManager = null;
-			if (serverConfiguration.webServiceRealm != null) {
-				identityManager = getIdentityManager(serverConfiguration.webServiceRealm);
-				deploymentInfo.setIdentityManager(identityManager)
-						.setLoginConfig(new LoginConfig("BASIC", serverConfiguration.webServiceRealm));
-				deploymentInfo.addInitParameter("resteasy.role.based.security", "true");
-			}
-			ServletContainer container = Servlets.defaultContainer();
-			DeploymentManager manager = container.addDeployment(deploymentInfo);
-			manager.deploy();
-			HttpHandler httpHandler = start(manager);
-			if (identityManager != null)
-				httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webServiceRealm);
-			PathHandler pathHandler = new PathHandler();
-			pathHandler.addPrefixPath("/", httpHandler);
-			logger.info(
-					"Start the REST server " + serverConfiguration.listenAddress + ":" + serverConfiguration.restPort);
-			Builder restBuilder = Undertow.builder()
-					.addHttpListener(serverConfiguration.restPort, serverConfiguration.listenAddress)
-					.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
-			start(restBuilder.build());
-		}
+		if (!services.isEmpty())
+			startServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(), "/");
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -169,28 +167,28 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		handler = new AuthenticationCallHandler(handler);
 		handler = new AuthenticationConstraintHandler(handler);
 		final List<AuthenticationMechanism> mechanisms = Collections.<AuthenticationMechanism>singletonList(
-				new BasicAuthenticationMechanism(realm));
+						new BasicAuthenticationMechanism(realm));
 		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;
 	}
 
 	protected abstract ServletApplication load(Collection<Class<? extends ServiceInterface>> serviceClasses)
-			throws IOException;
+					throws IOException;
 
 	/**
 	 * @return the hostname and port on which the web application can be
 	 * contacted
 	 */
 	public String getWebApplicationPublicAddress() {
-		return serverConfiguration.publicAddress + ':' + serverConfiguration.servletPort;
+		return serverConfiguration.publicAddress + ':' + serverConfiguration.webAppConnector.port;
 	}
 
 	/**
 	 * @return the hostname and port on which the web service can be contacted
 	 */
 	public String getWebServicePublicAddress() {
-		return serverConfiguration.publicAddress + ':' + serverConfiguration.restPort;
+		return serverConfiguration.publicAddress + ':' + serverConfiguration.webServiceConnector.port;
 	}
 
 	/**

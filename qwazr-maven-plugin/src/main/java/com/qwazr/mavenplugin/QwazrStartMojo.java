@@ -47,6 +47,12 @@ public class QwazrStartMojo extends AbstractMojo {
 	private Integer webservice_port;
 
 	@Parameter
+	private Integer webapp_realm;
+
+	@Parameter
+	private Integer webservice_realm;
+
+	@Parameter
 	private List<String> etc;
 
 	@Parameter
@@ -59,12 +65,16 @@ public class QwazrStartMojo extends AbstractMojo {
 	private List<String> groups;
 
 	private void setProperty(Enum<?> key, Object value) {
+		setProperty(key.name(), value);
+	}
+
+	private void setProperty(String key, Object value) {
 		if (value == null)
 			return;
 		String str = value.toString();
 		if (StringUtils.isEmpty(str))
 			return;
-		System.setProperty(key.name(), str);
+		System.setProperty(key, str);
 	}
 
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -74,8 +84,10 @@ public class QwazrStartMojo extends AbstractMojo {
 			setProperty(ServerConfiguration.VariablesEnum.QWAZR_DATA, data_directory);
 			setProperty(ServerConfiguration.VariablesEnum.LISTEN_ADDR, listen_addr);
 			setProperty(ServerConfiguration.VariablesEnum.PUBLIC_ADDR, public_addr);
-			setProperty(ServerConfiguration.VariablesEnum.WEBAPP_PORT, webapp_port);
-			setProperty(ServerConfiguration.VariablesEnum.WEBSERVICE_PORT, webservice_port);
+			setProperty("WEBAPP_PORT", webapp_port);
+			setProperty("WEBSERVICE_PORT", webservice_port);
+			setProperty("WEBAPP_REALM", webapp_realm);
+			setProperty("WEBSERVICE_REALM", webservice_realm);
 			Qwazr.start(new QwazrConfiguration(etc, services, groups, scheduler_max_threads));
 		} catch (Exception e) {
 			throw new MojoFailureException("Cannot start QWAZR", e);
