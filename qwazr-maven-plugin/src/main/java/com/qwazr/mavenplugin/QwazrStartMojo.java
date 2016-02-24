@@ -47,10 +47,10 @@ public class QwazrStartMojo extends AbstractMojo {
 	private Integer webservice_port;
 
 	@Parameter
-	private Integer webapp_realm;
+	private String webapp_realm;
 
 	@Parameter
-	private Integer webservice_realm;
+	private String webservice_realm;
 
 	@Parameter
 	private List<String> etc;
