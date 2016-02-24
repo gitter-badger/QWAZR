@@ -307,9 +307,6 @@
                             </sources>
                         </mapping>
                     </mappings>
-                    <requires>
-                        <require>java-headless &gt;= 1.8.0</require>
-                    </requires>
                     <preinstallScriptlet>
                         <scriptFile>src/rpm/preinst</scriptFile>
                     </preinstallScriptlet>
