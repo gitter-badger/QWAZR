@@ -1,12 +1,12 @@
 /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,21 +39,13 @@ public class ThreadUtils {
 
 	public static Thread[] getThreadArray(ThreadGroup group) {
 		Thread[] threads = new Thread[group.activeCount()];
-		for (;;) {
+		for (; ; ) {
 			int l = group.enumerate(threads);
 			if (l == threads.length)
 				break;
 			threads = new Thread[l];
 		}
 		return threads;
-	}
-
-	public final static void sleepMs(long millis) {
-		try {
-			Thread.sleep(millis);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 	}
 
 	public interface WaitInterface {
@@ -63,7 +55,7 @@ public class ThreadUtils {
 		boolean abort();
 	}
 
-	public static boolean waitUntil(long secTimeOut, WaitInterface waiter) {
+	public static boolean waitUntil(long secTimeOut, WaitInterface waiter) throws InterruptedException {
 		long finalTime = System.currentTimeMillis() + secTimeOut * 1000;
 		while (!waiter.done()) {
 			if (waiter.abort())
@@ -71,13 +63,12 @@ public class ThreadUtils {
 			if (secTimeOut != 0)
 				if (System.currentTimeMillis() > finalTime)
 					return false;
-			sleepMs(200);
+			Thread.sleep(200);
 		}
 		return true;
 	}
 
-	public static abstract class CallableExceptionCatcher<T> implements
-			Callable<T> {
+	public static abstract class CallableExceptionCatcher<T> implements Callable<T> {
 
 		protected Exception exception = null;
 
@@ -87,8 +78,7 @@ public class ThreadUtils {
 		}
 	}
 
-	public static abstract class FunctionExceptionCatcher<T> extends
-			CallableExceptionCatcher<T> {
+	public static abstract class FunctionExceptionCatcher<T> extends CallableExceptionCatcher<T> {
 
 		private T result = null;
 
@@ -109,8 +99,7 @@ public class ThreadUtils {
 		}
 	}
 
-	public static abstract class ProcedureExceptionCatcher extends
-			CallableExceptionCatcher<Object> {
+	public static abstract class ProcedureExceptionCatcher extends CallableExceptionCatcher<Object> {
 
 		public abstract void execute() throws Exception;
 
@@ -127,21 +116,18 @@ public class ThreadUtils {
 	}
 
 	public static <T> void invokeAndJoin(ExecutorService executor,
-			Collection<? extends CallableExceptionCatcher<T>> callables)
-			throws Exception {
+			Collection<? extends CallableExceptionCatcher<T>> callables) throws Exception {
 		executor.invokeAll(callables);
 		checkException(callables);
 	}
 
-	public static <T> void checkException(
-			Collection<? extends CallableExceptionCatcher<T>> callables)
+	public static <T> void checkException(Collection<? extends CallableExceptionCatcher<T>> callables)
 			throws Exception {
 		for (CallableExceptionCatcher<?> callable : callables)
 			callable.checkException();
 	}
 
-	public static <T> T getFirstResult(
-			Collection<? extends FunctionExceptionCatcher<T>> callables) {
+	public static <T> T getFirstResult(Collection<? extends FunctionExceptionCatcher<T>> callables) {
 		for (FunctionExceptionCatcher<T> callable : callables)
 			if (callable.getResult() != null)
 				return callable.getResult();
