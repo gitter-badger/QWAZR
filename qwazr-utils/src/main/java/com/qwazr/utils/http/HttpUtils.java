@@ -22,18 +22,26 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.TrustStrategy;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 public class HttpUtils {
 
@@ -58,7 +66,7 @@ public class HttpUtils {
 			if (code == statusCode)
 				return code;
 		throw new HttpResponseEntityException(response,
-				StringUtils.fastConcat("Unexpected HTTP status code: ", statusCode));
+						StringUtils.fastConcat("Unexpected HTTP status code: ", statusCode));
 	}
 
 	/**
@@ -71,7 +79,7 @@ public class HttpUtils {
 	 * @throws ClientProtocolException if the response does not contains any entity
 	 */
 	public static HttpEntity checkIsEntity(HttpResponse response, ContentType expectedContentType)
-			throws ClientProtocolException {
+					throws ClientProtocolException {
 		if (response == null)
 			throw new ClientProtocolException("No response");
 		HttpEntity entity = response.getEntity();
@@ -84,7 +92,7 @@ public class HttpUtils {
 			throw new HttpResponseEntityException(response, "Unknown content type");
 		if (!expectedContentType.getMimeType().equals(contentType.getMimeType()))
 			throw new HttpResponseEntityException(response,
-					StringUtils.fastConcat("Wrong content type: ", contentType.getMimeType()));
+							StringUtils.fastConcat("Wrong content type: ", contentType.getMimeType()));
 		return entity;
 	}
 
@@ -109,13 +117,27 @@ public class HttpUtils {
 	}
 
 	public static CloseableHttpClient createHttpClient_AcceptsUntrustedCerts()
-			throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
-		HttpClientBuilder hcBuilder = HttpClientBuilder.create();
+					throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+		HttpClientBuilder builder = HttpClientBuilder.create();
 
-		final SSLContextBuilder sslBuilder = new SSLContextBuilder();
-		sslBuilder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-		final SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(sslBuilder.build(),
-				NoopHostnameVerifier.INSTANCE);
-		return HttpClientBuilder.create().setSSLSocketFactory(sslsf).build();
+		SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+			public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+				return true;
+			}
+		}).build();
+
+		builder.setSSLContext(sslContext);
+
+		SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext,
+						NoopHostnameVerifier.INSTANCE);
+		Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+						.register("http", PlainConnectionSocketFactory.getSocketFactory())
+						.register("https", sslSocketFactory).build();
+
+		PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+		builder.setConnectionManager(connMgr);
+
+		return builder.build();
 	}
+
 }
