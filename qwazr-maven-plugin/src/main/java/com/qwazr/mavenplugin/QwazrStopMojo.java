@@ -30,6 +30,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 
 @Mojo(name = "stop")
 public class QwazrStopMojo extends AbstractMojo {
@@ -69,13 +72,14 @@ public class QwazrStopMojo extends AbstractMojo {
 		wait_ms = getProperty(webservice_port, null, 5000);
 
 		CloseableHttpResponse response = null;
-		CloseableHttpClient httpClient = HttpUtils.createHttpClient_AcceptsUntrustedCerts();
+		CloseableHttpClient httpClient = null;
 		try {
+			httpClient = HttpUtils.createHttpClient_AcceptsUntrustedCerts();
 			URI uri = new URI("http", null, public_addr, webservice_port, "/shutdown", null, null);
 			log.info("Post HTTP Delete on: " + uri);
 			response = httpClient.execute(new HttpDelete(uri));
 			log.info("HTTP Status Code: " + response.getStatusLine().getStatusCode());
-		} catch (IOException | URISyntaxException e) {
+		} catch (IOException | URISyntaxException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
 			if (fault_tolerant == null || fault_tolerant)
 				log.warn(e);
 			else
