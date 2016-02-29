@@ -35,7 +35,6 @@ import com.qwazr.utils.AnnotationsUtils;
 import com.qwazr.utils.file.TrackedDirectory;
 import com.qwazr.utils.server.AbstractServer;
 import com.qwazr.utils.server.ServiceInterface;
-import com.qwazr.utils.server.ServiceName;
 import com.qwazr.utils.server.ServletApplication;
 import com.qwazr.webapps.transaction.WebappManager;
 import io.undertow.security.idm.IdentityManager;
@@ -44,9 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,22 +53,10 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 
 	static final Logger logger = LoggerFactory.getLogger(Qwazr.class);
 
-	private final Collection<Class<? extends ServiceInterface>> services = new ArrayList<>();
+	final Collection<Class<? extends ServiceInterface>> services = new ArrayList<>();
 
 	private Qwazr(QwazrConfiguration configuration) {
 		super(Executors.newCachedThreadPool(), configuration);
-	}
-
-	@Path("/")
-	@ServiceName("welcome")
-	public static class WelcomeServiceImpl implements ServiceInterface {
-
-		@GET
-		@Produces(ServiceInterface.APPLICATION_JSON_UTF8)
-		public WelcomeStatus welcome() {
-			return new WelcomeStatus(qwazr.services);
-		}
-
 	}
 
 	@Override
@@ -155,7 +139,7 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 
 	}
 
-	private static Qwazr qwazr = null;
+	static Qwazr qwazr = null;
 
 	/**
 	 * Start the server
