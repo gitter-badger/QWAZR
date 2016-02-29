@@ -16,7 +16,6 @@
 package com.qwazr.mavenplugin;
 
 import com.qwazr.utils.IOUtils;
-import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.http.HttpUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -42,26 +41,52 @@ public class QwazrStopMojo extends AbstractMojo {
 	private Integer webservice_port;
 
 	@Parameter
+	private Integer wait_ms;
+
+	@Parameter
 	private Boolean fault_tolerant;
+
+	static String getProperty(String currentValue, String env, String defaultValue) {
+		if (currentValue != null)
+			return currentValue;
+		String value = env == null ? null : System.getProperty(env);
+		return value != null ? null : defaultValue;
+	}
+
+	static Integer getProperty(Integer currentValue, String env, Integer defaultValue) {
+		if (currentValue != null)
+			return currentValue;
+		String value = env == null ? null : System.getProperty(env);
+		return value != null ? Integer.parseInt(value) : defaultValue;
+	}
 
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		final Log log = getLog();
 		log.info("Stopping QWAZR");
+
+		public_addr = getProperty(public_addr, "PUBLIC_ADDR", "localhost");
+		webservice_port = getProperty(webservice_port, "WEBSERVICE_PORT", 9091);
+		wait_ms = getProperty(webservice_port, null, 5000);
+
 		CloseableHttpResponse response = null;
 		CloseableHttpClient httpClient = HttpUtils.createHttpClient_AcceptsUntrustedCerts();
 		try {
-			URI uri = new URI("http", null, StringUtils.isEmpty(public_addr) ? "localhost" : public_addr,
-							webservice_port == null ? 9091 : webservice_port, "/shutdown", null, null);
+			URI uri = new URI("http", null, public_addr, webservice_port, "/shutdown", null, null);
 			log.info("Post HTTP Delete on: " + uri);
 			response = httpClient.execute(new HttpDelete(uri));
 			log.info("HTTP Status Code: " + response.getStatusLine().getStatusCode());
 		} catch (IOException | URISyntaxException e) {
 			if (fault_tolerant == null || fault_tolerant)
-				log.warn(e.getMessage(), e);
+				log.warn(e);
 			else
 				throw new MojoExecutionException(e.getMessage(), e);
 		} finally {
 			IOUtils.close(httpClient, response);
+		}
+		try {
+			Thread.sleep(wait_ms);
+		} catch (InterruptedException e) {
+			log.warn(e);
 		}
 	}
 }
