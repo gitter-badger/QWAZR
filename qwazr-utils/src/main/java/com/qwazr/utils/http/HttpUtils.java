@@ -66,7 +66,7 @@ public class HttpUtils {
 			if (code == statusCode)
 				return code;
 		throw new HttpResponseEntityException(response,
-						StringUtils.fastConcat("Unexpected HTTP status code: ", statusCode));
+				StringUtils.fastConcat("Unexpected HTTP status code: ", statusCode));
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class HttpUtils {
 	 * @throws ClientProtocolException if the response does not contains any entity
 	 */
 	public static HttpEntity checkIsEntity(HttpResponse response, ContentType expectedContentType)
-					throws ClientProtocolException {
+			throws ClientProtocolException {
 		if (response == null)
 			throw new ClientProtocolException("No response");
 		HttpEntity entity = response.getEntity();
@@ -92,7 +92,7 @@ public class HttpUtils {
 			throw new HttpResponseEntityException(response, "Unknown content type");
 		if (!expectedContentType.getMimeType().equals(contentType.getMimeType()))
 			throw new HttpResponseEntityException(response,
-							StringUtils.fastConcat("Wrong content type: ", contentType.getMimeType()));
+					StringUtils.fastConcat("Wrong content type: ", contentType.getMimeType()));
 		return entity;
 	}
 
@@ -116,34 +116,35 @@ public class HttpUtils {
 			return IOUtils.toString(entity.getContent(), encoding);
 	}
 
-	private final static HttpClientBuilder unsecureHttpClientBuilder;
+	/**
+	 * Create a new HttpClient which accept untrusted SSL certificates
+	 *
+	 * @return a new HttpClient
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws KeyManagementException
+	 */
+	public static CloseableHttpClient createHttpClient_AcceptsUntrustedCerts()
+			throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
 
-	static {
-		try {
-			unsecureHttpClientBuilder = HttpClientBuilder.create();
+		final HttpClientBuilder unsecureHttpClientBuilder = HttpClientBuilder.create();
 
-			SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
-				public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-					return true;
-				}
-			}).build();
+		SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+			public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+				return true;
+			}
+		}).build();
 
-			unsecureHttpClientBuilder.setSSLContext(sslContext);
+		unsecureHttpClientBuilder.setSSLContext(sslContext);
 
-			SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext,
-							NoopHostnameVerifier.INSTANCE);
-			Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-							.register("http", PlainConnectionSocketFactory.getSocketFactory())
-							.register("https", sslSocketFactory).build();
+		SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext,
+				NoopHostnameVerifier.INSTANCE);
+		Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+				.register("http", PlainConnectionSocketFactory.getSocketFactory()).register("https", sslSocketFactory)
+				.build();
 
-			PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-			unsecureHttpClientBuilder.setConnectionManager(connMgr);
-		} catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	public static CloseableHttpClient createHttpClient_AcceptsUntrustedCerts() {
+		PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+		unsecureHttpClientBuilder.setConnectionManager(connMgr);
 		return unsecureHttpClientBuilder.build();
 	}
 }
