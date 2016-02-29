@@ -49,14 +49,14 @@ public class QwazrStopMojo extends AbstractMojo {
 	static String getProperty(String currentValue, String env, String defaultValue) {
 		if (currentValue != null)
 			return currentValue;
-		String value = env == null ? null : System.getProperty(env);
+		String value = env == null ? null : System.getenv(env);
 		return value != null ? null : defaultValue;
 	}
 
 	static Integer getProperty(Integer currentValue, String env, Integer defaultValue) {
 		if (currentValue != null)
 			return currentValue;
-		String value = env == null ? null : System.getProperty(env);
+		String value = env == null ? null : System.getenv(env);
 		return value != null ? Integer.parseInt(value) : defaultValue;
 	}
 
