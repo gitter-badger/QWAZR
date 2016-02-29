@@ -64,11 +64,11 @@ public class QwazrStartMojo extends AbstractMojo {
 	@Parameter
 	private List<String> groups;
 
-	private void setProperty(Enum<?> key, Object value) {
+	static void setProperty(Enum<?> key, Object value) {
 		setProperty(key.name(), value);
 	}
 
-	private void setProperty(String key, Object value) {
+	static void setProperty(String key, Object value) {
 		if (value == null)
 			return;
 		String str = value.toString();

@@ -116,28 +116,34 @@ public class HttpUtils {
 			return IOUtils.toString(entity.getContent(), encoding);
 	}
 
-	public static CloseableHttpClient createHttpClient_AcceptsUntrustedCerts()
-					throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
-		HttpClientBuilder builder = HttpClientBuilder.create();
+	private final static HttpClientBuilder unsecureHttpClientBuilder;
 
-		SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
-			public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-				return true;
-			}
-		}).build();
+	static {
+		try {
+			unsecureHttpClientBuilder = HttpClientBuilder.create();
 
-		builder.setSSLContext(sslContext);
+			SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
+				public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+					return true;
+				}
+			}).build();
 
-		SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext,
-						NoopHostnameVerifier.INSTANCE);
-		Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-						.register("http", PlainConnectionSocketFactory.getSocketFactory())
-						.register("https", sslSocketFactory).build();
+			unsecureHttpClientBuilder.setSSLContext(sslContext);
 
-		PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-		builder.setConnectionManager(connMgr);
+			SSLConnectionSocketFactory sslSocketFactory = new SSLConnectionSocketFactory(sslContext,
+							NoopHostnameVerifier.INSTANCE);
+			Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+							.register("http", PlainConnectionSocketFactory.getSocketFactory())
+							.register("https", sslSocketFactory).build();
 
-		return builder.build();
+			PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+			unsecureHttpClientBuilder.setConnectionManager(connMgr);
+		} catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
+	public static CloseableHttpClient createHttpClient_AcceptsUntrustedCerts() {
+		return unsecureHttpClientBuilder.build();
+	}
 }
