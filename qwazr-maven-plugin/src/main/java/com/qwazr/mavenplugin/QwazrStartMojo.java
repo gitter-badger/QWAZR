@@ -19,17 +19,34 @@ import com.qwazr.Qwazr;
 import com.qwazr.QwazrConfiguration;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.server.ServerConfiguration;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 
+import javax.servlet.ServletException;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
-@Mojo(name = "start")
+@Mojo(name = "start", requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class QwazrStartMojo extends AbstractMojo {
+
+	@Parameter(defaultValue = "${project}", readonly = true)
+	private MavenProject project;
 
 	@Parameter
 	private String data_directory;
@@ -64,43 +81,114 @@ public class QwazrStartMojo extends AbstractMojo {
 	@Parameter
 	private List<String> groups;
 
-	static void setProperty(Enum<?> key, Object value) {
-		setProperty(key.name(), value);
-	}
-
-	static void setProperty(String key, Object value) {
-		if (value == null)
-			return;
-		String str = value.toString();
-		if (StringUtils.isEmpty(str))
-			return;
-		System.setProperty(key, str);
-	}
+	@Parameter
+	private Boolean daemon;
 
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		final Log log = getLog();
 		log.info("Starting QWAZR");
+		final Launcher launcher = new Launcher();
+
 		try {
-			setProperty(ServerConfiguration.VariablesEnum.QWAZR_DATA, data_directory);
-			setProperty(ServerConfiguration.VariablesEnum.LISTEN_ADDR, listen_addr);
-			setProperty(ServerConfiguration.VariablesEnum.PUBLIC_ADDR, public_addr);
-			setProperty("WEBAPP_PORT", webapp_port);
-			setProperty("WEBSERVICE_PORT", webservice_port);
-			setProperty("WEBAPP_REALM", webapp_realm);
-			setProperty("WEBSERVICE_REALM", webservice_realm);
-			Qwazr.start(new QwazrConfiguration(etc, services, groups, scheduler_max_threads));
+			if (daemon == null || !daemon)
+				launcher.startEmbedded(log);
+			else
+				launcher.startAsDaemon(log);
 		} catch (Exception e) {
 			throw new MojoFailureException("Cannot start QWAZR", e);
 		}
-		log.info("QWAZR started");
+	}
 
-		try {
-			for (; ; )
-				Thread.sleep(30000);
-		} catch (InterruptedException e) {
-			log.info("QWAZR interrupted");
+	private class Launcher {
+
+		private final Map<String, String> parameters = new HashMap<>();
+
+		private Launcher() {
+			setParameter(ServerConfiguration.VariablesEnum.QWAZR_DATA, data_directory);
+			setParameter(ServerConfiguration.VariablesEnum.LISTEN_ADDR, listen_addr);
+			setParameter(ServerConfiguration.VariablesEnum.PUBLIC_ADDR, public_addr);
+			setParameter("WEBAPP_PORT", webapp_port);
+			setParameter("WEBSERVICE_PORT", webservice_port);
+			setParameter("WEBAPP_REALM", webapp_realm);
+			setParameter("WEBSERVICE_REALM", webservice_realm);
 		}
-		log.info("Stopping QWAZR");
-		Qwazr.stop();
+
+		private void setParameter(Enum<?> key, Object value) {
+			setParameter(key.name(), value);
+		}
+
+		private void setParameter(String key, Object value) {
+			if (value == null)
+				return;
+			String str = value.toString();
+			if (StringUtils.isEmpty(str))
+				return;
+			System.setProperty(key, str);
+			parameters.put(key, str);
+		}
+
+		private String buildClassPass() throws DependencyResolutionRequiredException {
+			final StringBuilder sb = new StringBuilder();
+
+			// Build the runtime classpath
+			List<String> classPathList = project.getRuntimeClasspathElements();
+			classPathList.forEach(new Consumer<String>() {
+				@Override
+				public void accept(String path) {
+					sb.append(path);
+					sb.append(File.pathSeparatorChar);
+				}
+			});
+
+			// Build the artifacts classpath
+			Set<Artifact> artifacts = project.getArtifacts();
+			if (artifacts != null)
+				artifacts.forEach(new Consumer<Artifact>() {
+					@Override
+					public void accept(Artifact artifact) {
+						sb.append(artifact.getFile().getPath());
+						sb.append(File.pathSeparatorChar);
+					}
+				});
+			return sb.toString();
+		}
+
+		private void startAsDaemon(final Log log) throws MojoFailureException, IOException, InterruptedException,
+						DependencyResolutionRequiredException {
+
+			final File javaBinFile = new File(System.getProperty("java.home"),
+							File.separator + "bin" + File.separator + (SystemUtils.IS_OS_WINDOWS ?
+											"java.exe" :
+											"java"));
+			if (!javaBinFile.exists())
+				throw new MojoFailureException("Cannot find JAVA: " + javaBinFile);
+
+			final String classpath = buildClassPass();
+			parameters.put("CLASSPATH", classpath);
+
+			final String className = Qwazr.class.getCanonicalName();
+			final ProcessBuilder builder = new ProcessBuilder(javaBinFile.getCanonicalPath(), className);
+
+			builder.environment().putAll(parameters);
+			builder.inheritIO();
+			Process process = builder.start();
+			log.info("QWAZR started (Daemon)");
+			process.waitFor(5000, TimeUnit.MILLISECONDS);
+		}
+
+		private void startEmbedded(final Log log)
+						throws ParseException, InstantiationException, IllegalAccessException, ServletException,
+						IOException {
+			Qwazr.start(new QwazrConfiguration(etc, services, groups, scheduler_max_threads));
+			log.info("QWAZR started (Embedded)");
+			try {
+				for (; ; )
+					Thread.sleep(30000);
+			} catch (InterruptedException e) {
+				log.info("QWAZR interrupted");
+			}
+			log.info("Stopping QWAZR");
+			Qwazr.stop();
+		}
 	}
 }
