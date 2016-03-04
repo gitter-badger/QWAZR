@@ -37,16 +37,16 @@ import java.security.NoSuchAlgorithmException;
 @Mojo(name = "stop")
 public class QwazrStopMojo extends AbstractMojo {
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.public_addr}")
 	private String public_addr;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.webservice_port}")
 	private Integer webservice_port;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.wait_ms}")
 	private Integer wait_ms;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.fault_tolerant}")
 	private Boolean fault_tolerant;
 
 	static String getProperty(String currentValue, String env, String defaultValue) {

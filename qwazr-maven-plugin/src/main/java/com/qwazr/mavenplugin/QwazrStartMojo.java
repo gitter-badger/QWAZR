@@ -48,40 +48,40 @@ public class QwazrStartMojo extends AbstractMojo {
 	@Parameter(defaultValue = "${project}", readonly = true)
 	private MavenProject project;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.data}")
 	private String data_directory;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.listen_addr}")
 	private String listen_addr;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.public_addr}")
 	private String public_addr;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.webapp_port}")
 	private Integer webapp_port;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.webservice_port}")
 	private Integer webservice_port;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.webapp_realm}")
 	private String webapp_realm;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.webservice_realm}")
 	private String webservice_realm;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.etc}")
 	private List<String> etc;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.services}")
 	private List<QwazrConfiguration.ServiceEnum> services;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.scheduler_max_threads}")
 	private Integer scheduler_max_threads;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.groups}")
 	private List<String> groups;
 
-	@Parameter
+	@Parameter(defaultValue = "${qwazr.daemon}")
 	private Boolean daemon;
 
 	public void execute() throws MojoExecutionException, MojoFailureException {
