@@ -39,7 +39,6 @@ public class WelcomeServiceImpl implements ServiceInterface {
 			} catch (InterruptedException e) {
 				Qwazr.logger.warn(e.getMessage(), e);
 			}
-			Qwazr.qwazr.stopAll();
 			System.exit(0);
 		}
 	}
