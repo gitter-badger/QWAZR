@@ -23,7 +23,6 @@ public class WelcomeServiceImpl implements ServiceInterface {
 	@DELETE
 	@Path("/shutdown")
 	public void shutdown() {
-		Qwazr.qwazr.stopAll();
 		System.exit(0);
 	}
 }
