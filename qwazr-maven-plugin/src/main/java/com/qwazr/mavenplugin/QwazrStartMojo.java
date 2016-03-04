@@ -166,6 +166,15 @@ public class QwazrStartMojo extends AbstractMojo {
 			final String classpath = buildClassPass();
 			parameters.put("CLASSPATH", classpath);
 
+			if (etc != null && !etc.isEmpty())
+				parameters.put(QwazrConfiguration.VariablesEnum.QWAZR_ETC.name(), StringUtils.join(etc, ","));
+
+			if (groups != null && !groups.isEmpty())
+				parameters.put(QwazrConfiguration.VariablesEnum.QWAZR_GROUPS.name(), StringUtils.join(groups, ","));
+
+			if (services != null && !services.isEmpty())
+				parameters.put(QwazrConfiguration.VariablesEnum.QWAZR_SERVICES.name(), StringUtils.join(services, ","));
+
 			final String className = Qwazr.class.getCanonicalName();
 			final ProcessBuilder builder = new ProcessBuilder(javaBinFile.getCanonicalPath(), "-Dfile.encoding=UTF-8",
 							className);
