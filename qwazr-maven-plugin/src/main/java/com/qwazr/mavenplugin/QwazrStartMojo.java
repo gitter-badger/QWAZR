@@ -167,7 +167,8 @@ public class QwazrStartMojo extends AbstractMojo {
 			parameters.put("CLASSPATH", classpath);
 
 			final String className = Qwazr.class.getCanonicalName();
-			final ProcessBuilder builder = new ProcessBuilder(javaBinFile.getCanonicalPath(), className);
+			final ProcessBuilder builder = new ProcessBuilder(javaBinFile.getCanonicalPath(), "-Dfile.encoding=UTF-8",
+							className);
 
 			builder.environment().putAll(parameters);
 			builder.inheritIO();
