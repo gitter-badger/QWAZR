@@ -23,6 +23,24 @@ public class WelcomeServiceImpl implements ServiceInterface {
 	@DELETE
 	@Path("/shutdown")
 	public void shutdown() {
-		System.exit(0);
+		new ShutdownThread();
+	}
+
+	private static class ShutdownThread implements Runnable {
+
+		private ShutdownThread() {
+			new Thread(this).start();
+		}
+
+		@Override
+		public void run() {
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				Qwazr.logger.warn(e.getMessage(), e);
+			}
+			Qwazr.qwazr.stopAll();
+			System.exit(0);
+		}
 	}
 }
