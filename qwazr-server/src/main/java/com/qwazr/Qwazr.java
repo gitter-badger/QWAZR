@@ -39,6 +39,7 @@ import com.qwazr.utils.server.ServletApplication;
 import com.qwazr.webapps.transaction.WebappManager;
 import io.undertow.security.idm.IdentityManager;
 import org.apache.commons.cli.ParseException;
+import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +69,11 @@ public class Qwazr extends AbstractServer<QwazrConfiguration> {
 		File currentTempDir = new File(currentDataDir, "tmp");
 		File currentEtcDir = new File(currentDataDir, "etc");
 		TrackedDirectory etcTracker = new TrackedDirectory(currentEtcDir, serverConfiguration.etcFileFilter);
+		if (currentEtcDir.exists()) {
+			File log4jFile = new File(currentEtcDir, "log4j.properties");
+			if (log4jFile.exists() && log4jFile.isFile())
+				PropertyConfigurator.configureAndWatch(log4jFile.getAbsolutePath(), 60000);
+		}
 
 		ClusterManager.load(executorService, getWebServicePublicAddress(), serverConfiguration.groups);
 
