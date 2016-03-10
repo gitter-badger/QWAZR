@@ -38,11 +38,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MarkdownDocumentationServlet extends HttpServlet {
+public class DocumentationServlet extends HttpServlet {
 
 	protected String remotePrefix = "documentation/";
 
-	protected String indexFileName = "README.md";
+	protected String[] indexFileNames = { "README.md", "README.adoc" };
 
 	private File documentationPath = new File("src");
 
@@ -53,7 +53,7 @@ public class MarkdownDocumentationServlet extends HttpServlet {
 	private AsciiDoctorTool asciiDoctorTool = null;
 
 	private final MimetypesFileTypeMap mimeTypeMap = new MimetypesFileTypeMap(
-			getClass().getResourceAsStream("/com/qwazr/webapps/mime.types"));
+					getClass().getResourceAsStream("/com/qwazr/webapps/mime.types"));
 
 	private String templatePath = "src/main/resources/templates/documentation.ftl";
 
@@ -62,9 +62,9 @@ public class MarkdownDocumentationServlet extends HttpServlet {
 		String p = config.getInitParameter("remotePrefix");
 		if (!StringUtils.isEmpty(p))
 			remotePrefix = p;
-		p = config.getInitParameter("indexFileName");
+		p = config.getInitParameter("indexFileNames");
 		if (!StringUtils.isEmpty(p))
-			indexFileName = p;
+			indexFileNames = StringUtils.split(p, " ");
 		p = config.getInitParameter("documentationPath");
 		if (!StringUtils.isEmpty(p))
 			documentationPath = new File(p);
@@ -73,7 +73,7 @@ public class MarkdownDocumentationServlet extends HttpServlet {
 		p = config.getInitParameter("markdownTool");
 		markdownTool = LibraryManager.getInstance().getLibrary(StringUtils.isEmpty(p) ? "markdown" : p);
 		p = config.getInitParameter("asciiDoctorTool");
-		asciiDoctorTool = LibraryManager.getInstance().getLibrary(StringUtils.isEmpty(p) ? "asciiDoctorTool" : p);
+		asciiDoctorTool = LibraryManager.getInstance().getLibrary(StringUtils.isEmpty(p) ? "adoc" : p);
 		p = config.getInitParameter("templatePath");
 		if (!StringUtils.isEmpty(p))
 			templatePath = p;
@@ -94,9 +94,13 @@ public class MarkdownDocumentationServlet extends HttpServlet {
 				response.sendRedirect(request.getPathInfo() + '/');
 				return;
 			}
-			File readMefile = new File(file, indexFileName);
-			if (readMefile.exists())
-				file = readMefile;
+			for (String indexFileName : indexFileNames) {
+				File readMefile = new File(file, indexFileName);
+				if (readMefile.exists()) {
+					file = readMefile;
+					break;
+				}
+			}
 		}
 
 		Pair<String, String[]> paths = getRemoteLink(path);
@@ -115,7 +119,7 @@ public class MarkdownDocumentationServlet extends HttpServlet {
 			request.setAttribute("markdown", markdownTool.toHtml(file));
 			request.setAttribute("filelist", fileList);
 		} else if ("adoc".equals(extension)) {
-			request.setAttribute("markdown", asciiDoctorTool.convertFile(file));
+			request.setAttribute("adoc", asciiDoctorTool.convertFile(file));
 			request.setAttribute("filelist", fileList);
 		} else if (file.isFile()) {
 			String type = mimeTypeMap.getContentType(file);
