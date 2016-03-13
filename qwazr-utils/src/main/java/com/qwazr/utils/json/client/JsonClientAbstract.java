@@ -21,6 +21,8 @@ import com.qwazr.utils.http.HttpResponseEntityException;
 import com.qwazr.utils.json.JsonHttpResponseHandler;
 import com.qwazr.utils.json.JsonMapper;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.Credentials;
+import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
@@ -53,7 +55,9 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	protected final int port;
 	private final int timeout;
 
-	protected JsonClientAbstract(String url, Integer msTimeOut) throws URISyntaxException {
+	private final Executor executor;
+
+	protected JsonClientAbstract(String url, Integer msTimeOut, Credentials credentials) throws URISyntaxException {
 		this.url = url;
 		URI u = new URI(url);
 		String path = u.getPath();
@@ -66,6 +70,12 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		this.path = u.getPath();
 		this.port = u.getPort() == -1 ? 80 : u.getPort();
 		this.timeout = msTimeOut == null ? DEFAULT_TIMEOUT : msTimeOut;
+		this.executor = credentials == null ? Executor.newInstance() : Executor.newInstance().auth(credentials);
+
+	}
+
+	protected JsonClientAbstract(String url, Integer msTimeOut) throws URISyntaxException {
+		this(url, msTimeOut, null);
 	}
 
 	/**
@@ -83,8 +93,8 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 					.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
 		JsonHttpResponseHandler.JsonValueResponse<T> responseHandler = new JsonHttpResponseHandler.JsonValueResponse<T>(
 				ContentType.APPLICATION_JSON, jsonResultClass, expectedCodes);
-		return request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
-				.addHeader("Accept", ContentType.APPLICATION_JSON.toString()).execute().handleResponse(responseHandler);
+		return executor.execute(request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
+				.addHeader("Accept", ContentType.APPLICATION_JSON.toString())).handleResponse(responseHandler);
 	}
 
 	/**
@@ -100,10 +110,10 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		if (bodyObject != null)
 			request = request
 					.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
-		return request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
-				.addHeader("accept", ContentType.APPLICATION_JSON.toString()).execute().handleResponse(
-						new JsonHttpResponseHandler.JsonValueTypeRefResponse<T>(ContentType.APPLICATION_JSON, typeRef,
-								expectedCodes));
+		return executor.execute(request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
+				.addHeader("accept", ContentType.APPLICATION_JSON.toString())).handleResponse(
+				new JsonHttpResponseHandler.JsonValueTypeRefResponse<T>(ContentType.APPLICATION_JSON, typeRef,
+						expectedCodes));
 	}
 
 	/**
@@ -119,9 +129,9 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		if (bodyObject != null)
 			request = request
 					.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
-		return request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
-				.addHeader("accept", ContentType.APPLICATION_JSON.toString()).execute().handleResponse(
-						new JsonHttpResponseHandler.JsonTreeResponse(ContentType.APPLICATION_JSON, expectedCodes));
+		return executor.execute(request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
+				.addHeader("accept", ContentType.APPLICATION_JSON.toString())).handleResponse(
+				new JsonHttpResponseHandler.JsonTreeResponse(ContentType.APPLICATION_JSON, expectedCodes));
 	}
 
 	/**
@@ -142,7 +152,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 				request = request
 						.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
 		}
-		return request.connectTimeout(msTimeOut).socketTimeout(msTimeOut).execute().returnResponse();
+		return executor.execute(request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)).returnResponse();
 	}
 
 	final public <T> T commonServiceRequest(Request request, Object body, Integer msTimeOut, Class<T> objectClass,
