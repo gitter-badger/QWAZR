@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.server;
 
+import com.qwazr.utils.json.JsonErrorHandler;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.UndertowOptions;
@@ -27,8 +28,6 @@ import io.undertow.security.handlers.SecurityInitialHandler;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.impl.BasicAuthenticationMechanism;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.handlers.GracefulShutdownHandler;
-import io.undertow.server.handlers.PathHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
@@ -111,17 +110,23 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		return identityManager;
 	}
 
-	private final void startServer(ServerConfiguration.Connector connector, DeploymentInfo deploymentInfo, String path)
-					throws IOException, ServletException {
+	private final void startServer(ServerConfiguration.Connector connector, DeploymentInfo deploymentInfo,
+					boolean jsonErrorHandler) throws IOException, ServletException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
+
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
 		manager.deploy();
+
 		HttpHandler httpHandler = start(manager);
+
 		if (identityManager != null)
 			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
-		PathHandler pathHandler = new PathHandler();
-		pathHandler.addPrefixPath(path, httpHandler);
+
+		if (jsonErrorHandler)
+			httpHandler = new JsonErrorHandler(httpHandler);
+
 		logger.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
+
 		Builder servletBuilder = Undertow.builder().addHttpListener(connector.port, serverConfiguration.listenAddress)
 						.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
 		start(servletBuilder.build());
@@ -148,12 +153,11 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 
 		// Launch the servlet application if any
 		if (servletApplication != null)
-			startServer(serverConfiguration.webAppConnector, servletApplication.getDeploymentInfo(),
-							servletApplication.getApplicationPath());
+			startServer(serverConfiguration.webAppConnector, servletApplication.getDeploymentInfo(), false);
 
 		// Launch the jaxrs application if any
 		if (!services.isEmpty())
-			startServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(), "/");
+			startServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(), true);
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {

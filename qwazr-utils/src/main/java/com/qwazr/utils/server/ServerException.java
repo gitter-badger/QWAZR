@@ -17,6 +17,7 @@ package com.qwazr.utils.server;
 
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.json.JsonExceptionReponse;
+import io.undertow.server.HttpServerExchange;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
@@ -35,16 +36,16 @@ public class ServerException extends Exception {
 	private final int statusCode;
 	private final String message;
 
-	public ServerException(Status status, String message, Throwable throwable) {
-		super(message, throwable);
-		if (status == null && throwable != null && throwable instanceof WebApplicationException) {
-			WebApplicationException wae = (WebApplicationException) throwable;
+	public ServerException(Status status, String message, Exception exception) {
+		super(message, exception);
+		if (status == null && exception != null && exception instanceof WebApplicationException) {
+			WebApplicationException wae = (WebApplicationException) exception;
 			this.statusCode = wae.getResponse().getStatus();
 		} else
 			this.statusCode = status != null ? status.getStatusCode() : Status.INTERNAL_SERVER_ERROR.getStatusCode();
 		if (StringUtils.isEmpty(message)) {
-			if (throwable != null)
-				message = throwable.getMessage();
+			if (exception != null)
+				message = exception.getMessage();
 			if (StringUtils.isEmpty(message) && status != null)
 				message = status.getReasonPhrase();
 		}
@@ -67,8 +68,8 @@ public class ServerException extends Exception {
 		this(null, message, null);
 	}
 
-	public ServerException(Throwable throwable) {
-		this(null, null, throwable);
+	public ServerException(Exception exception) {
+		this(null, null, exception);
 	}
 
 	public int getStatusCode() {
@@ -84,15 +85,19 @@ public class ServerException extends Exception {
 
 	private Response getTextResponse() {
 		return Response.status(statusCode).type(MediaType.TEXT_PLAIN)
-				.entity(message == null ? StringUtils.EMPTY : message).build();
+						.entity(message == null ? StringUtils.EMPTY : message).build();
 	}
 
 	private Response getJsonResponse() {
 		return new JsonExceptionReponse(statusCode, message).toResponse();
 	}
 
-	private void toJsonResponse(HttpServletResponse response) throws IOException {
+	private void toJsonResponse(final HttpServletResponse response) throws IOException {
 		new JsonExceptionReponse(statusCode, message).toResponse(response);
+	}
+
+	private boolean toJsonResponse(final HttpServerExchange exchange) throws IOException {
+		return new JsonExceptionReponse(statusCode, message).toResponse(exchange);
 	}
 
 	public WebApplicationException getTextException() {
@@ -145,7 +150,12 @@ public class ServerException extends Exception {
 		return getServerException(e).getJsonException();
 	}
 
-	public static void toJsonResponse(Throwable throwable, HttpServletResponse response) throws IOException {
-		new ServerException(throwable).toJsonResponse(response);
+	public static void toJsonResponse(Exception exception, HttpServletResponse response) throws IOException {
+		new ServerException(exception).toJsonResponse(response);
 	}
+
+	public static boolean toJsonResponse(Exception exception, HttpServerExchange exchange) throws IOException {
+		return new ServerException(exception).toJsonResponse(exchange);
+	}
+
 }

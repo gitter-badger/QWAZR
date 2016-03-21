@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.qwazr.utils.ExceptionUtils;
 import com.qwazr.utils.server.ServiceInterface;
+import io.undertow.io.Sender;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
@@ -80,22 +83,35 @@ public class JsonExceptionReponse {
 		try {
 			String jsonMessage = JsonMapper.MAPPER.writeValueAsString(this);
 			return Response.status(status_code).type(ServiceInterface.APPLICATION_JSON_UTF8).entity(jsonMessage)
-					.build();
+							.build();
 		} catch (JsonProcessingException e) {
 			return Response.status(status_code).type(MediaType.TEXT_PLAIN).entity(message).build();
 		}
 	}
 
-	public void toResponse(HttpServletResponse response) throws IOException {
+	public void toResponse(final HttpServletResponse response) throws IOException {
 		try {
-			String jsonMessage = JsonMapper.MAPPER.writeValueAsString(this);
+			final String jsonMessage = JsonMapper.MAPPER.writeValueAsString(this);
 			response.setContentType(ServiceInterface.APPLICATION_JSON_UTF8);
 			response.setCharacterEncoding("UTF-8");
 			response.sendError(status_code, jsonMessage);
 		} catch (JsonProcessingException e) {
 			response.sendError(status_code, MediaType.TEXT_PLAIN);
 		}
+	}
 
+	public boolean toResponse(final HttpServerExchange exchange) {
+		final String jsonMessage;
+		try {
+			jsonMessage = JsonMapper.MAPPER.writeValueAsString(this);
+		} catch (JsonProcessingException e) {
+			return false;
+		}
+		exchange.getResponseHeaders().put(Headers.CONTENT_LENGTH, "" + jsonMessage.length());
+		exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, ServiceInterface.APPLICATION_JSON_UTF8);
+		Sender sender = exchange.getResponseSender();
+		sender.send(jsonMessage);
+		return true;
 	}
 
 }
