@@ -45,7 +45,7 @@ public class JsonExceptionReponse {
 		this.stackTraces = null;
 	}
 
-	public JsonExceptionReponse(Status status, Exception e) {
+	public JsonExceptionReponse(Status status, Throwable e) {
 		this.error = status == null ? null : status.name();
 		this.reason_phrase = status == null ? null : status.getReasonPhrase();
 		this.status_code = status == null ? null : status.getStatusCode();
@@ -55,7 +55,7 @@ public class JsonExceptionReponse {
 		this.stackTraces = cause == null ? null : ExceptionUtils.getStackTraces(cause);
 	}
 
-	public JsonExceptionReponse(Status status, String error, Exception e) {
+	public JsonExceptionReponse(Status status, String error, Throwable e) {
 		this.error = error;
 		this.reason_phrase = status == null ? null : status.getReasonPhrase();
 		this.status_code = status == null ? null : status.getStatusCode();
@@ -78,7 +78,7 @@ public class JsonExceptionReponse {
 		try {
 			String jsonMessage = JsonMapper.MAPPER.writeValueAsString(this);
 			return Response.status(status_code).type(ServiceInterface.APPLICATION_JSON_UTF8).entity(jsonMessage)
-							.build();
+					.build();
 		} catch (JsonProcessingException e) {
 			return Response.status(status_code).type(MediaType.TEXT_PLAIN).entity(message).build();
 		}

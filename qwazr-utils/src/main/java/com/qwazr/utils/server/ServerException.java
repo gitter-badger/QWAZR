@@ -82,7 +82,7 @@ public class ServerException extends Exception {
 
 	private Response getTextResponse() {
 		return Response.status(statusCode).type(MediaType.TEXT_PLAIN)
-						.entity(message == null ? StringUtils.EMPTY : message).build();
+				.entity(message == null ? StringUtils.EMPTY : message).build();
 	}
 
 	private Response getJsonResponse() {
@@ -138,4 +138,5 @@ public class ServerException extends Exception {
 			return wae;
 		return getServerException(e).getJsonException();
 	}
+
 }
