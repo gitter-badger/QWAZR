@@ -15,28 +15,16 @@
  */
 package com.qwazr.utils.json;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.qwazr.utils.server.ServerException;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
 
-public class JsonErrorHandler implements HttpHandler {
+import javax.ws.rs.core.Response;
+import javax.ws.rs.ext.ExceptionMapper;
 
-	private final HttpHandler next;
-
-	public JsonErrorHandler(final HttpHandler next) {
-		this.next = next;
-	}
+public class JsonMappingExceptionMapper implements ExceptionMapper<JsonMappingException> {
 
 	@Override
-	public void handleRequest(final HttpServerExchange exchange) throws Exception {
-		try {
-			next.handleRequest(exchange);
-		} catch (Exception exception) {
-			if (!exchange.isResponseChannelAvailable())
-				throw exception;
-			if (!(ServerException.toJsonResponse(exception, exchange)))
-				throw exception;
-		}
+	public Response toResponse(JsonMappingException exception) {
+		return new ServerException(exception).getJsonException().getResponse();
 	}
-
 }

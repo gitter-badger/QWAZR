@@ -17,14 +17,11 @@ package com.qwazr.utils.server;
 
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.json.JsonExceptionReponse;
-import io.undertow.server.HttpServerExchange;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.io.IOException;
 
 public class ServerException extends Exception {
 
@@ -85,19 +82,11 @@ public class ServerException extends Exception {
 
 	private Response getTextResponse() {
 		return Response.status(statusCode).type(MediaType.TEXT_PLAIN)
-						.entity(message == null ? StringUtils.EMPTY : message).build();
+				.entity(message == null ? StringUtils.EMPTY : message).build();
 	}
 
 	private Response getJsonResponse() {
 		return new JsonExceptionReponse(statusCode, message).toResponse();
-	}
-
-	private void toJsonResponse(final HttpServletResponse response) throws IOException {
-		new JsonExceptionReponse(statusCode, message).toResponse(response);
-	}
-
-	private boolean toJsonResponse(final HttpServerExchange exchange) throws IOException {
-		return new JsonExceptionReponse(statusCode, message).toResponse(exchange);
 	}
 
 	public WebApplicationException getTextException() {
@@ -148,14 +137,6 @@ public class ServerException extends Exception {
 		if (wae != null)
 			return wae;
 		return getServerException(e).getJsonException();
-	}
-
-	public static void toJsonResponse(Exception exception, HttpServletResponse response) throws IOException {
-		new ServerException(exception).toJsonResponse(response);
-	}
-
-	public static boolean toJsonResponse(Exception exception, HttpServerExchange exchange) throws IOException {
-		return new ServerException(exception).toJsonResponse(exchange);
 	}
 
 }

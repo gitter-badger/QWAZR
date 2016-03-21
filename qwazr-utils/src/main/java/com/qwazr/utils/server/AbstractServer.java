@@ -15,7 +15,6 @@
  */
 package com.qwazr.utils.server;
 
-import com.qwazr.utils.json.JsonErrorHandler;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;
 import io.undertow.UndertowOptions;
@@ -96,7 +95,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 	}
 
 	private final IdentityManager getIdentityManager(ServerConfiguration.Connector connector,
-					DeploymentInfo deploymentInfo) throws IOException {
+			DeploymentInfo deploymentInfo) throws IOException {
 		if (connector == null)
 			return null;
 		if (connector.realm == null)
@@ -104,14 +103,13 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		IdentityManager identityManager = getIdentityManager(connector.realm);
 		if (identityManager == null)
 			return null;
-		deploymentInfo.setIdentityManager(identityManager)
-						.setLoginConfig(new LoginConfig(connector.authType == null ? "BASIC" : connector.authType,
-										connector.realm));
+		deploymentInfo.setIdentityManager(identityManager).setLoginConfig(
+				new LoginConfig(connector.authType == null ? "BASIC" : connector.authType, connector.realm));
 		return identityManager;
 	}
 
-	private final void startServer(ServerConfiguration.Connector connector, DeploymentInfo deploymentInfo,
-					boolean jsonErrorHandler) throws IOException, ServletException {
+	private final void startServer(ServerConfiguration.Connector connector, DeploymentInfo deploymentInfo)
+			throws IOException, ServletException {
 		IdentityManager identityManager = getIdentityManager(connector, deploymentInfo);
 
 		DeploymentManager manager = Servlets.defaultContainer().addDeployment(deploymentInfo);
@@ -122,13 +120,10 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		if (identityManager != null)
 			httpHandler = addSecurity(httpHandler, identityManager, serverConfiguration.webAppConnector.realm);
 
-		if (jsonErrorHandler)
-			httpHandler = new JsonErrorHandler(httpHandler);
-
 		logger.info("Start the connector " + serverConfiguration.listenAddress + ":" + connector.port);
 
 		Builder servletBuilder = Undertow.builder().addHttpListener(connector.port, serverConfiguration.listenAddress)
-						.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
+				.setServerOption(UndertowOptions.NO_REQUEST_TIMEOUT, 10000).setHandler(httpHandler);
 		start(servletBuilder.build());
 	}
 
@@ -139,7 +134,7 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 	 * @throws ServletException if the servlet configuration failed
 	 */
 	final public void start(boolean shutdownHook)
-					throws IOException, ServletException, IllegalAccessException, InstantiationException {
+			throws IOException, ServletException, IllegalAccessException, InstantiationException {
 
 		java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 
@@ -153,11 +148,11 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 
 		// Launch the servlet application if any
 		if (servletApplication != null)
-			startServer(serverConfiguration.webAppConnector, servletApplication.getDeploymentInfo(), false);
+			startServer(serverConfiguration.webAppConnector, servletApplication.getDeploymentInfo());
 
 		// Launch the jaxrs application if any
 		if (!services.isEmpty())
-			startServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo(), true);
+			startServer(serverConfiguration.webServiceConnector, RestApplication.getDeploymentInfo());
 
 		if (shutdownHook) {
 			Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -172,14 +167,14 @@ public abstract class AbstractServer<T extends ServerConfiguration> {
 		handler = new AuthenticationCallHandler(handler);
 		handler = new AuthenticationConstraintHandler(handler);
 		final List<AuthenticationMechanism> mechanisms = Collections.<AuthenticationMechanism>singletonList(
-						new BasicAuthenticationMechanism(realm));
+				new BasicAuthenticationMechanism(realm));
 		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
 		handler = new SecurityInitialHandler(AuthenticationMode.PRO_ACTIVE, identityManager, handler);
 		return handler;
 	}
 
 	protected abstract ServletApplication load(Collection<Class<? extends ServiceInterface>> serviceClasses)
-					throws IOException;
+			throws IOException;
 
 	/**
 	 * @return the hostname and port on which the web application can be

@@ -17,8 +17,7 @@ package com.qwazr.utils.server;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.qwazr.utils.json.JacksonConfig;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
+import com.qwazr.utils.json.JsonMappingExceptionMapper;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ServletInfo;
@@ -40,6 +39,7 @@ class RestApplication extends Application {
 		Set<Class<?>> classes = new HashSet<Class<?>>();
 		classes.add(JacksonConfig.class);
 		classes.add(JacksonJsonProvider.class);
+		classes.add(JsonMappingExceptionMapper.class);
 		if (AbstractServer.INSTANCE != null && AbstractServer.INSTANCE.services != null)
 			classes.addAll(AbstractServer.INSTANCE.services);
 		return classes;
@@ -47,11 +47,11 @@ class RestApplication extends Application {
 
 	final static DeploymentInfo getDeploymentInfo() {
 		DeploymentInfo deploymentInfo = Servlets.deployment().setClassLoader(RestApplication.class.getClassLoader())
-						.setContextPath("/").setDeploymentName("REST");
+				.setContextPath("/").setDeploymentName("REST");
 		List<ServletInfo> servletInfos = new ArrayList<ServletInfo>();
 		servletInfos.add(new ServletInfo("REST", ServletContainer.class)
-						.addInitParam("javax.ws.rs.Application", RestApplication.class.getName())
-						.setAsyncSupported(true).addMapping("/*"));
+				.addInitParam("javax.ws.rs.Application", RestApplication.class.getName()).setAsyncSupported(true)
+				.addMapping("/*"));
 		deploymentInfo.addServlets(servletInfos);
 		return deploymentInfo;
 	}
