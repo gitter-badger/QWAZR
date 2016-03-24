@@ -160,6 +160,8 @@
                                 <transformer
                                         implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>META-INF/services/org.apache.lucene.codecs.Codec</resource>
+                                    <resource>META-INF/services/org.apache.lucene.codecs.DocValuesFormat</resource>
+                                    <resource>META-INF/services/org.apache.lucene.codecs.PostingsFormat</resource>
                                 </transformer>
                             </transformers>
                             <filters>
