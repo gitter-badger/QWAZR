@@ -157,6 +157,10 @@
                                         </Implementation-Version>
                                     </manifestEntries>
                                 </transformer>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <resource>META-INF/services/org.apache.lucene.codecs.Codec</resource>
+                                </ transformer>
                             </transformers>
                             <filters>
                                 <filter>
