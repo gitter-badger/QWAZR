@@ -1,6 +1,6 @@
-# Create/update an analyzer
+# Test an analyzer
 
-This API create a new analyzer or update an existing one:
+Use this API to submit a text to an analyzer:
 
 * **URL pattern**: http://{server_name}:9091/indexes/{schema_name}/{index_name}/analyzers/{analyzer_name}
 * **HTTP method**: POST
