@@ -15,6 +15,7 @@
  */
 package com.qwazr.utils.json.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.qwazr.utils.http.HttpResponseEntityException;
@@ -63,7 +64,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		String path = u.getPath();
 		if (path != null && path.endsWith("/"))
 			u = new URI(u.getScheme(), null, u.getHost(), u.getPort(), path.substring(0, path.length() - 1),
-							u.getQuery(), u.getFragment());
+					u.getQuery(), u.getFragment());
 		this.scheme = u.getScheme() == null ? "http" : u.getScheme();
 		this.host = u.getHost();
 		this.fragment = u.getFragment();
@@ -78,23 +79,32 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 		this(url, msTimeOut, null);
 	}
 
+	private Request setBodyString(Request request, Object bodyObject) throws JsonProcessingException {
+		if (bodyObject == null)
+			return request;
+		if (bodyObject instanceof String)
+			return request.bodyString(bodyObject.toString(), ContentType.TEXT_PLAIN);
+		else if (bodyObject instanceof InputStream)
+			return request.bodyStream((InputStream) bodyObject, ContentType.APPLICATION_OCTET_STREAM);
+		else
+			return request.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
+	}
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	final public <T> T execute(Request request, Object bodyObject, Integer msTimeOut, Class<T> jsonResultClass,
-					int... expectedCodes) throws IOException {
+			int... expectedCodes) throws IOException {
 		if (logger.isDebugEnabled())
 			logger.debug(request.toString());
 		if (msTimeOut == null)
 			msTimeOut = this.timeout;
-		if (bodyObject != null)
-			request = request
-							.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
+		request = setBodyString(request, bodyObject);
 		JsonHttpResponseHandler.JsonValueResponse<T> responseHandler = new JsonHttpResponseHandler.JsonValueResponse<T>(
-						ContentType.APPLICATION_JSON, jsonResultClass, expectedCodes);
+				ContentType.APPLICATION_JSON, jsonResultClass, expectedCodes);
 		return executor.execute(request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
-						.addHeader("Accept", ContentType.APPLICATION_JSON.toString())).handleResponse(responseHandler);
+				.addHeader("Accept", ContentType.APPLICATION_JSON.toString())).handleResponse(responseHandler);
 	}
 
 	/**
@@ -102,18 +112,16 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	 */
 	@Override
 	final public <T> T execute(Request request, Object bodyObject, Integer msTimeOut, TypeReference<T> typeRef,
-					int... expectedCodes) throws IOException {
+			int... expectedCodes) throws IOException {
 		if (logger.isDebugEnabled())
 			logger.debug(request.toString());
 		if (msTimeOut == null)
 			msTimeOut = this.timeout;
-		if (bodyObject != null)
-			request = request
-							.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
+		request = setBodyString(request, bodyObject);
 		return executor.execute(request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
-						.addHeader("accept", ContentType.APPLICATION_JSON.toString()))
-						.handleResponse(new JsonHttpResponseHandler.JsonValueTypeRefResponse<T>(
-										ContentType.APPLICATION_JSON, typeRef, expectedCodes));
+				.addHeader("accept", ContentType.APPLICATION_JSON.toString())).handleResponse(
+				new JsonHttpResponseHandler.JsonValueTypeRefResponse<T>(ContentType.APPLICATION_JSON, typeRef,
+						expectedCodes));
 	}
 
 	/**
@@ -121,18 +129,15 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	 */
 	@Override
 	final public JsonNode execute(Request request, Object bodyObject, Integer msTimeOut, int... expectedCodes)
-					throws IOException {
+			throws IOException {
 		if (logger.isDebugEnabled())
 			logger.debug(request.toString());
 		if (msTimeOut == null)
 			msTimeOut = this.timeout;
-		if (bodyObject != null)
-			request = request
-							.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject), ContentType.APPLICATION_JSON);
+		request = setBodyString(request, bodyObject);
 		return executor.execute(request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)
-						.addHeader("accept", ContentType.APPLICATION_JSON.toString()))
-						.handleResponse(new JsonHttpResponseHandler.JsonTreeResponse(ContentType.APPLICATION_JSON,
-										expectedCodes));
+				.addHeader("accept", ContentType.APPLICATION_JSON.toString())).handleResponse(
+				new JsonHttpResponseHandler.JsonTreeResponse(ContentType.APPLICATION_JSON, expectedCodes));
 	}
 
 	/**
@@ -144,20 +149,12 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 			logger.debug(request.toString());
 		if (msTimeOut == null)
 			msTimeOut = this.timeout;
-		if (bodyObject != null) {
-			if (bodyObject instanceof String)
-				request = request.bodyString(bodyObject.toString(), ContentType.TEXT_PLAIN);
-			else if (bodyObject instanceof InputStream)
-				request = request.bodyStream((InputStream) bodyObject, ContentType.APPLICATION_OCTET_STREAM);
-			else
-				request = request.bodyString(JsonMapper.MAPPER.writeValueAsString(bodyObject),
-								ContentType.APPLICATION_JSON);
-		}
+		request = setBodyString(request, bodyObject);
 		return executor.execute(request.connectTimeout(msTimeOut).socketTimeout(msTimeOut)).returnResponse();
 	}
 
 	final public <T> T commonServiceRequest(Request request, Object body, Integer msTimeOut, Class<T> objectClass,
-					int... expectedCodes) {
+			int... expectedCodes) {
 		try {
 			return execute(request, body, msTimeOut, objectClass, expectedCodes);
 		} catch (HttpResponseEntityException e) {
@@ -168,7 +165,7 @@ public abstract class JsonClientAbstract implements JsonClientInterface {
 	}
 
 	final public <T> T commonServiceRequest(Request request, Object body, Integer msTimeOut, TypeReference<T> typeRef,
-					int... expectedCodes) {
+			int... expectedCodes) {
 		try {
 			return execute(request, body, msTimeOut, typeRef, expectedCodes);
 		} catch (HttpResponseEntityException e) {
