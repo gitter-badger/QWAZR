@@ -42,6 +42,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class HttpUtils {
 
@@ -147,4 +149,48 @@ public class HttpUtils {
 		unsecureHttpClientBuilder.setConnectionManager(connMgr);
 		return unsecureHttpClientBuilder.build();
 	}
+
+	/**
+	 * Extract the parameters from a header content.
+	 *
+	 * @param headerContent The header value
+	 * @return a map with all parameters
+	 */
+	public static Map<String, String> getHeaderParameters(String headerContent) {
+		if (headerContent == null)
+			return null;
+		final String[] params = StringUtils.split(headerContent, ';');
+		if (params == null || params.length == 0)
+			return null;
+		final Map<String, String> nameValues = new LinkedHashMap<>();
+		for (String param : params) {
+			if (param == null)
+				continue;
+			String[] nameValue = StringUtils.split(param, "=");
+			if (nameValue == null || nameValue.length != 2)
+				continue;
+			String value = nameValue[1].trim();
+			if (value.startsWith("\"") && value.endsWith("\""))
+				value = value.substring(1, value.length() - 1);
+			nameValues.put(nameValue[0].trim().toLowerCase(), value);
+		}
+		return nameValues;
+	}
+
+	/**
+	 * Extract the given parameter from a header content.
+	 *
+	 * @param headerContent the header value
+	 * @param paramName     the requested parameter
+	 * @return the parameter or null if it is not found
+	 */
+	public static String getHeaderParameter(String headerContent, String paramName) {
+		if (headerContent == null)
+			return null;
+		Map<String, String> headerParams = getHeaderParameters(headerContent);
+		if (headerParams == null)
+			return null;
+		return headerParams.get(paramName.trim().toLowerCase());
+	}
+
 }
