@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 
 public class StringUtils extends org.apache.commons.lang3.StringUtils {
@@ -284,5 +285,27 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
 		String[] search = ArrayUtils.toArray(replacements.keySet());
 		String[] replace = ArrayUtils.toStringArray(replacements.values());
 		return replaceEach(text, search, replace);
+	}
+
+	public static boolean anyDigit(CharSequence chars) {
+		if (chars == null)
+			return false;
+		return chars.chars().anyMatch(new IntPredicate() {
+			@Override
+			public boolean test(int value) {
+				return Character.isDigit(value);
+			}
+		});
+	}
+
+	public static boolean anyAlpha(CharSequence chars) {
+		if (chars == null)
+			return false;
+		return chars.chars().anyMatch(new IntPredicate() {
+			@Override
+			public boolean test(int value) {
+				return Character.isAlphabetic(value);
+			}
+		});
 	}
 }
