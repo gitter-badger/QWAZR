@@ -23,7 +23,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-public class ServerException extends Exception {
+public class ServerException extends RuntimeException {
 
 	/**
 	 *
@@ -82,7 +82,7 @@ public class ServerException extends Exception {
 
 	private Response getTextResponse() {
 		return Response.status(statusCode).type(MediaType.TEXT_PLAIN)
-				.entity(message == null ? StringUtils.EMPTY : message).build();
+						.entity(message == null ? StringUtils.EMPTY : message).build();
 	}
 
 	private Response getJsonResponse() {
