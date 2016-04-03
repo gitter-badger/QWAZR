@@ -45,6 +45,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.function.BiConsumer;
@@ -410,13 +411,32 @@ final public class IndexInstance implements Closeable {
 		}
 	}
 
-	final Object postDocument(Map<String, Object> document) throws IOException, ServerException, InterruptedException {
-		if (document == null || document.isEmpty())
+	private final RecordsPoster.UpdateObjectDocument getDocumentPoster(final Map<String, Field> fields) {
+		return new RecordsPoster.UpdateObjectDocument(fields, indexAnalyzer.getContext(), indexWriter);
+	}
+
+	private final RecordsPoster.UpdateMapDocument getDocumentPoster() {
+		return new RecordsPoster.UpdateMapDocument(indexAnalyzer.getContext(), indexWriter);
+	}
+
+	private final RecordsPoster.UpdateObjectDocValues getDocValuesPoster(final Map<String, Field> fields) {
+		return new RecordsPoster.UpdateObjectDocValues(fields, indexAnalyzer.getContext(), indexWriter);
+	}
+
+	private final RecordsPoster.UpdateMapDocValues getDocValuesPoster() {
+		return new RecordsPoster.UpdateMapDocValues(indexAnalyzer.getContext(), indexWriter);
+	}
+
+	final <T> Object postDocument(final Map<String, Field> fields, final T document)
+			throws IOException, InterruptedException {
+		if (document == null)
 			return null;
 		final Semaphore sem = schema.acquireWriteSemaphore();
 		try {
 			schema.checkSize(1);
-			Object id = IndexUtils.addNewLuceneDocument(indexAnalyzer.getContext(), document, indexWriter);
+			RecordsPoster.UpdateObjectDocument poster = getDocumentPoster(fields);
+			poster.accept(document);
+			Object id = poster.ids.isEmpty() ? null : poster.ids.iterator().next();
 			nrtCommit();
 			return id;
 		} finally {
@@ -425,32 +445,79 @@ final public class IndexInstance implements Closeable {
 		}
 	}
 
-	final List<Object> postDocuments(List<Map<String, Object>> documents)
-			throws IOException, ServerException, InterruptedException {
+	final Object postMappedDocument(final Map<String, Object> document) throws IOException, InterruptedException {
+		if (document == null || document.isEmpty())
+			return null;
+		final Semaphore sem = schema.acquireWriteSemaphore();
+		try {
+			schema.checkSize(1);
+			RecordsPoster.UpdateMapDocument poster = getDocumentPoster();
+			poster.accept(document);
+			Object id = poster.ids.isEmpty() ? null : poster.ids.iterator().next();
+			nrtCommit();
+			return id;
+		} finally {
+			if (sem != null)
+				sem.release();
+		}
+	}
+
+	final Collection<Object> postMappedDocuments(final Collection<Map<String, Object>> documents)
+			throws IOException, InterruptedException {
 		if (documents == null || documents.isEmpty())
 			return null;
 		final Semaphore sem = schema.acquireWriteSemaphore();
 		try {
 			schema.checkSize(documents.size());
-			final AnalyzerContext context = indexAnalyzer.getContext();
-			List<Object> ids = new ArrayList<Object>(documents.size());
-			for (Map<String, Object> document : documents)
-				ids.add(IndexUtils.addNewLuceneDocument(context, document, indexWriter));
+			RecordsPoster.UpdateMapDocument poster = getDocumentPoster();
+			documents.forEach(poster);
 			nrtCommit();
-			return ids;
+			return poster.ids;
 		} finally {
 			if (sem != null)
 				sem.release();
 		}
 	}
 
-	final void updateDocumentValues(Map<String, Object> document)
-			throws IOException, ServerException, InterruptedException {
+	final <T> Collection<Object> postDocuments(final Map<String, Field> fields, final Collection<T> documents)
+			throws IOException, InterruptedException {
+		if (documents == null || documents.isEmpty())
+			return null;
+		final Semaphore sem = schema.acquireWriteSemaphore();
+		try {
+			schema.checkSize(documents.size());
+			RecordsPoster.UpdateObjectDocument poster = getDocumentPoster(fields);
+			documents.forEach(poster);
+			nrtCommit();
+			return poster.ids;
+		} finally {
+			if (sem != null)
+				sem.release();
+		}
+	}
+
+	final <T> void updateDocValues(final Map<String, Field> fields, final T document)
+			throws InterruptedException, IOException {
+		if (document == null)
+			return;
+		final Semaphore sem = schema.acquireWriteSemaphore();
+		try {
+			RecordsPoster.UpdateObjectDocValues poster = getDocValuesPoster(fields);
+			poster.accept(document);
+			nrtCommit();
+		} finally {
+			if (sem != null)
+				sem.release();
+		}
+	}
+
+	final void updateMappedDocValues(final Map<String, Object> document) throws IOException, InterruptedException {
 		if (document == null || document.isEmpty())
 			return;
 		final Semaphore sem = schema.acquireWriteSemaphore();
 		try {
-			IndexUtils.updateDocValues(indexAnalyzer.getContext(), document, indexWriter);
+			RecordsPoster.UpdateMapDocValues poster = getDocValuesPoster();
+			poster.accept(document);
 			nrtCommit();
 		} finally {
 			if (sem != null)
@@ -458,15 +525,29 @@ final public class IndexInstance implements Closeable {
 		}
 	}
 
-	final void updateDocumentsValues(List<Map<String, Object>> documents)
+	final <T> void updateDocsValues(final Map<String, Field> fields, final Collection<T> documents)
+			throws IOException, InterruptedException {
+		if (documents == null || documents.isEmpty())
+			return;
+		final Semaphore sem = schema.acquireWriteSemaphore();
+		try {
+			RecordsPoster.UpdateObjectDocValues poster = getDocValuesPoster(fields);
+			documents.forEach(poster);
+			nrtCommit();
+		} finally {
+			if (sem != null)
+				sem.release();
+		}
+	}
+
+	final void updateMappedDocsValues(final Collection<Map<String, Object>> documents)
 			throws IOException, ServerException, InterruptedException {
 		if (documents == null || documents.isEmpty())
 			return;
 		final Semaphore sem = schema.acquireWriteSemaphore();
 		try {
-			final AnalyzerContext context = indexAnalyzer.getContext();
-			for (Map<String, Object> document : documents)
-				IndexUtils.updateDocValues(context, document, indexWriter);
+			RecordsPoster.UpdateMapDocValues poster = getDocValuesPoster();
+			documents.forEach(poster);
 			nrtCommit();
 		} finally {
 			if (sem != null)
@@ -474,7 +555,7 @@ final public class IndexInstance implements Closeable {
 		}
 	}
 
-	final ResultDefinition deleteByQuery(QueryDefinition queryDefinition)
+	final ResultDefinition.WithMap deleteByQuery(final QueryDefinition queryDefinition)
 			throws IOException, InterruptedException, QueryNodeException, ParseException, ServerException,
 			ReflectiveOperationException {
 		final Semaphore sem = schema.acquireWriteSemaphore();
@@ -485,14 +566,15 @@ final public class IndexInstance implements Closeable {
 			indexWriter.deleteDocuments(query);
 			nrtCommit();
 			docs -= indexWriter.numDocs();
-			return new ResultDefinition(docs);
+			return new ResultDefinition.WithMap(docs);
 		} finally {
 			if (sem != null)
 				sem.release();
 		}
 	}
 
-	private synchronized SortedSetDocValuesReaderState getFacetsState(IndexReader indexReader) throws IOException {
+	private synchronized SortedSetDocValuesReaderState getFacetsState(final IndexReader indexReader)
+			throws IOException {
 		Pair<IndexReader, SortedSetDocValuesReaderState> current = facetsReaderStateCache;
 		if (current != null && current.getLeft() == indexReader)
 			return current.getRight();
@@ -501,18 +583,21 @@ final public class IndexInstance implements Closeable {
 		return newState;
 	}
 
-	final ResultDefinition search(QueryDefinition queryDefinition)
-			throws ServerException, IOException, QueryNodeException, InterruptedException, ParseException,
-			ReflectiveOperationException {
+	final private QueryContext buildQueryContext(final IndexSearcher indexSearcher,
+			final QueryDefinition queryDefinition) throws IOException {
+		indexSearcher.setSimilarity(indexWriterConfig.getSimilarity());
+		final SortedSetDocValuesReaderState facetsState = getFacetsState(indexSearcher.getIndexReader());
+		return new QueryContext(indexSearcher, queryAnalyzer, facetsState, queryDefinition);
+	}
+
+	final ResultDefinition search(final QueryDefinition queryDefinition,
+			ResultDocumentBuilder.BuilderFactory<?> documentBuilderFactory)
+			throws IOException, InterruptedException, ParseException, ReflectiveOperationException, QueryNodeException {
 		final Semaphore sem = schema.acquireReadSemaphore();
 		try {
 			final IndexSearcher indexSearcher = searcherManager.acquire();
 			try {
-				indexSearcher.setSimilarity(indexWriterConfig.getSimilarity());
-				final SortedSetDocValuesReaderState facetsState = getFacetsState(indexSearcher.getIndexReader());
-				final QueryContext queryContext = new QueryContext(indexSearcher, queryAnalyzer, facetsState,
-						queryDefinition);
-				return QueryUtils.search(queryContext);
+				return QueryUtils.search(buildQueryContext(indexSearcher, queryDefinition), documentBuilderFactory);
 			} finally {
 				searcherManager.release(indexSearcher);
 			}

@@ -35,7 +35,7 @@
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
-            <version>56.1</version>
+            <version>57.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>

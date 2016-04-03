@@ -30,10 +30,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class IndexSingleClient extends JsonClientAbstract implements IndexServiceInterface {
 
@@ -242,7 +239,7 @@ public class IndexSingleClient extends JsonClientAbstract implements IndexServic
 	}
 
 	@Override
-	public Response postDocument(String schema_name, String index_name, Map<String, Object> document) {
+	public Response postMappedDocument(String schema_name, String index_name, Map<String, Object> document) {
 		try {
 			UBuilder uriBuilder = new UBuilder("/indexes/", schema_name, "/", index_name, "/doc");
 			Request request = Request.Post(uriBuilder.build());
@@ -274,11 +271,12 @@ public class IndexSingleClient extends JsonClientAbstract implements IndexServic
 		return commonServiceRequest(request, null, null, ListBackupStatusTypeRef, 200);
 	}
 
-	public final static TypeReference<List<Map<String, Object>>> ListMapStringObjectTypeRef = new TypeReference<List<Map<String, Object>>>() {
+	public final static TypeReference<Collection<Map<String, Object>>> CollectionMapStringObjectTypeRef = new TypeReference<Collection<Map<String, Object>>>() {
 	};
 
 	@Override
-	public Response postDocuments(String schema_name, String index_name, List<Map<String, Object>> documents) {
+	public Response postMappedDocuments(String schema_name, String index_name,
+			Collection<Map<String, Object>> documents) {
 		try {
 			UBuilder uriBuilder = new UBuilder("/indexes/", schema_name, "/", index_name, "/docs");
 			Request request = Request.Post(uriBuilder.build());
@@ -293,7 +291,7 @@ public class IndexSingleClient extends JsonClientAbstract implements IndexServic
 	}
 
 	@Override
-	public Response updateDocumentValues(String schema_name, String index_name, Map<String, Object> document) {
+	public Response updateMappedDocValues(String schema_name, String index_name, Map<String, Object> document) {
 		try {
 			UBuilder uriBuilder = new UBuilder("/indexes/", schema_name, "/", index_name, "/doc/values");
 			Request request = Request.Post(uriBuilder.build());
@@ -308,7 +306,8 @@ public class IndexSingleClient extends JsonClientAbstract implements IndexServic
 	}
 
 	@Override
-	public Response updateDocumentsValues(String schema_name, String index_name, List<Map<String, Object>> documents) {
+	public Response updateMappedDocsValues(String schema_name, String index_name,
+			Collection<Map<String, Object>> documents) {
 		try {
 			UBuilder uriBuilder = new UBuilder("/indexes/", schema_name, "/", index_name, "/docs/values");
 			Request request = Request.Post(uriBuilder.build());
@@ -348,11 +347,12 @@ public class IndexSingleClient extends JsonClientAbstract implements IndexServic
 	}
 
 	@Override
-	public ResultDefinition searchQuery(String schema_name, String index_name, QueryDefinition query, Boolean delete) {
+	public ResultDefinition.WithMap searchQuery(String schema_name, String index_name, QueryDefinition query,
+			Boolean delete) {
 		final UBuilder uriBuilder = new UBuilder("/indexes/", schema_name, "/", index_name, "/search")
 				.setParameterObject("delete", delete);
 		Request request = Request.Post(uriBuilder.build());
-		return commonServiceRequest(request, query, null, ResultDefinition.class, 200);
+		return commonServiceRequest(request, query, null, ResultDefinition.WithMap.class, 200);
 	}
 
 }

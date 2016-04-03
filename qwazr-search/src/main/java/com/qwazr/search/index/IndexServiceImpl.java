@@ -27,13 +27,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.security.Principal;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-class IndexServiceImpl implements IndexServiceInterface {
+class IndexServiceImpl implements IndexServiceInterface, AnnotatedServiceInterface {
 
 	private static final Logger logger = LoggerFactory.getLogger(IndexServiceImpl.class);
 
@@ -76,7 +74,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Set<String> getIndexes(String schema_name) {
+	final public Set<String> getIndexes(final String schema_name) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).nameSet();
@@ -87,7 +85,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public SchemaSettingsDefinition createUpdateSchema(String schema_name) {
+	final public SchemaSettingsDefinition createUpdateSchema(final String schema_name) {
 		try {
 			checkRight(null);
 			IndexManager.INSTANCE.createUpdate(schema_name, null);
@@ -99,7 +97,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public SchemaSettingsDefinition createUpdateSchema(String schema_name, SchemaSettingsDefinition settings) {
+	final public SchemaSettingsDefinition createUpdateSchema(final String schema_name,
+			final SchemaSettingsDefinition settings) {
 		try {
 			checkRight(null);
 			return IndexManager.INSTANCE.createUpdate(schema_name, settings);
@@ -110,7 +109,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Set<String> getSchemas() {
+	final public Set<String> getSchemas() {
 		try {
 			checkRight(null);
 			return IndexManager.INSTANCE.nameSet();
@@ -121,7 +120,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response deleteSchema(String schema_name) {
+	final public Response deleteSchema(final String schema_name) {
 		try {
 			checkRight(null);
 			IndexManager.INSTANCE.delete(schema_name);
@@ -133,7 +132,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public IndexStatus createUpdateIndex(String schema_name, String index_name, IndexSettingsDefinition settings) {
+	final public IndexStatus createUpdateIndex(final String schema_name, final String index_name,
+			final IndexSettingsDefinition settings) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).createUpdate(index_name, settings);
@@ -144,12 +144,12 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public IndexStatus createUpdateIndex(String schema_name, String index_name) {
+	final public IndexStatus createUpdateIndex(final String schema_name, final String index_name) {
 		return createUpdateIndex(schema_name, index_name, null);
 	}
 
 	@Override
-	public LinkedHashMap<String, FieldDefinition> getFields(String schema_name, String index_name) {
+	final public LinkedHashMap<String, FieldDefinition> getFields(final String schema_name, final String index_name) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).get(index_name).getFields();
@@ -161,7 +161,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public FieldDefinition getField(String schema_name, String index_name, String field_name) {
+	final public FieldDefinition getField(final String schema_name, final String index_name, final String field_name) {
 		try {
 			checkRight(schema_name);
 			Map<String, FieldDefinition> fieldMap = IndexManager.INSTANCE.get(schema_name).get(index_name).getFields();
@@ -176,8 +176,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 		}
 	}
 
-	public LinkedHashMap<String, FieldDefinition> setFields(String schema_name, String index_name,
-			LinkedHashMap<String, FieldDefinition> fields) {
+	final public LinkedHashMap<String, FieldDefinition> setFields(final String schema_name, final String index_name,
+			final LinkedHashMap<String, FieldDefinition> fields) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).setFields(fields);
@@ -189,8 +189,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 		}
 	}
 
-	private List<TermDefinition> doAnalyzer(String schema_name, String index_name, String field_name, String text,
-			boolean index) throws ServerException, IOException {
+	private List<TermDefinition> doAnalyzer(final String schema_name, final String index_name, final String field_name,
+			final String text, final boolean index) throws ServerException, IOException {
 		checkRight(schema_name);
 		IndexInstance indexInstance = IndexManager.INSTANCE.get(schema_name).get(index_name);
 		Analyzer analyzer = index ?
@@ -202,7 +202,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public List<TermDefinition> doAnalyzeIndex(String schema_name, String index_name, String field_name, String text) {
+	final public List<TermDefinition> doAnalyzeIndex(final String schema_name, final String index_name,
+			final String field_name, final String text) {
 		try {
 			return doAnalyzer(schema_name, index_name, field_name, text, true);
 		} catch (Exception e) {
@@ -213,7 +214,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public List<TermDefinition> doAnalyzeQuery(String schema_name, String index_name, String field_name, String text) {
+	final public List<TermDefinition> doAnalyzeQuery(final String schema_name, final String index_name,
+			final String field_name, final String text) {
 		try {
 			return doAnalyzer(schema_name, index_name, field_name, text, false);
 		} catch (Exception e) {
@@ -224,7 +226,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public FieldDefinition setField(String schema_name, String index_name, String field_name, FieldDefinition field) {
+	final public FieldDefinition setField(final String schema_name, final String index_name, final String field_name,
+			final FieldDefinition field) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).setField(field_name, field);
@@ -237,7 +240,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response deleteField(String schema_name, String index_name, String field_name) {
+	final public Response deleteField(final String schema_name, final String index_name, final String field_name) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).deleteField(field_name);
@@ -250,7 +253,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public LinkedHashMap<String, AnalyzerDefinition> getAnalyzers(String schema_name, String index_name) {
+	final public LinkedHashMap<String, AnalyzerDefinition> getAnalyzers(final String schema_name,
+			final String index_name) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).get(index_name).getAnalyzers();
@@ -262,7 +266,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public AnalyzerDefinition getAnalyzer(String schema_name, String index_name, String analyzer_name) {
+	final public AnalyzerDefinition getAnalyzer(final String schema_name, final String index_name,
+			final String analyzer_name) {
 		try {
 			checkRight(schema_name);
 			Map<String, AnalyzerDefinition> analyzerMap = IndexManager.INSTANCE.get(schema_name).get(index_name)
@@ -279,8 +284,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public AnalyzerDefinition setAnalyzer(String schema_name, String index_name, String analyzer_name,
-			AnalyzerDefinition analyzer) {
+	final public AnalyzerDefinition setAnalyzer(final String schema_name, final String index_name,
+			final String analyzer_name, AnalyzerDefinition analyzer) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).setAnalyzer(analyzer_name, analyzer);
@@ -292,8 +297,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 		}
 	}
 
-	public LinkedHashMap<String, AnalyzerDefinition> setAnalyzers(String schema_name, String index_name,
-			LinkedHashMap<String, AnalyzerDefinition> analyzers) {
+	final public LinkedHashMap<String, AnalyzerDefinition> setAnalyzers(final String schema_name,
+			final String index_name, final LinkedHashMap<String, AnalyzerDefinition> analyzers) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).setAnalyzers(analyzers);
@@ -306,7 +311,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response deleteAnalyzer(String schema_name, String index_name, String analyzer_name) {
+	final public Response deleteAnalyzer(final String schema_name, final String index_name,
+			final String analyzer_name) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).deleteAnalyzer(analyzer_name);
@@ -319,7 +325,8 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public List<TermDefinition> testAnalyzer(String schema_name, String index_name, String analyzer_name, String text) {
+	final public List<TermDefinition> testAnalyzer(final String schema_name, final String index_name,
+			final String analyzer_name, final String text) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).get(index_name).testAnalyzer(analyzer_name, text);
@@ -331,7 +338,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public IndexStatus getIndex(String schema_name, String index_name) {
+	final public IndexStatus getIndex(final String schema_name, final String index_name) {
 		try {
 			checkRight(schema_name);
 			return IndexManager.INSTANCE.get(schema_name).get(index_name).getStatus();
@@ -343,7 +350,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response deleteIndex(String schema_name, String index_name) {
+	final public Response deleteIndex(final String schema_name, final String index_name) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).delete(index_name);
@@ -356,12 +363,13 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response postDocument(String schema_name, String index_name, Map<String, Object> document) {
+	final public Response postMappedDocument(final String schema_name, final String index_name,
+			final Map<String, Object> document) {
 		try {
 			checkRight(schema_name);
 			if (document == null || document.isEmpty())
 				return Response.notModified().build();
-			IndexManager.INSTANCE.get(schema_name).get(index_name).postDocument(document);
+			IndexManager.INSTANCE.get(schema_name).get(index_name).postMappedDocument(document);
 			return Response.ok().build();
 		} catch (Exception e) {
 			if (logger.isWarnEnabled())
@@ -371,12 +379,13 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response postDocuments(String schema_name, String index_name, List<Map<String, Object>> documents) {
+	final public Response postMappedDocuments(final String schema_name, final String index_name,
+			final Collection<Map<String, Object>> documents) {
 		try {
 			checkRight(schema_name);
 			if (documents == null || documents.isEmpty())
 				return Response.notModified().build();
-			IndexManager.INSTANCE.get(schema_name).get(index_name).postDocuments(documents);
+			IndexManager.INSTANCE.get(schema_name).get(index_name).postMappedDocuments(documents);
 			return Response.ok().build();
 		} catch (Exception e) {
 			if (logger.isWarnEnabled())
@@ -386,12 +395,31 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response updateDocumentValues(String schema_name, String index_name, Map<String, Object> document) {
+	final public <T> Object postDocument(final String schemaName, final String indexName,
+			final Map<String, Field> fields, final T document) throws IOException, InterruptedException {
+		checkRight(schemaName);
+		if (document == null)
+			return null;
+		return IndexManager.INSTANCE.get(schemaName).get(indexName).postDocument(fields, document);
+	}
+
+	@Override
+	final public <T> Collection<Object> postDocuments(final String schemaName, final String indexName,
+			final Map<String, Field> fields, final Collection<T> documents) throws IOException, InterruptedException {
+		checkRight(schemaName);
+		if (documents == null || documents.isEmpty())
+			return null;
+		return IndexManager.INSTANCE.get(schemaName).get(indexName).postDocuments(fields, documents);
+	}
+
+	@Override
+	final public Response updateMappedDocValues(final String schema_name, final String index_name,
+			final Map<String, Object> document) {
 		try {
 			checkRight(schema_name);
 			if (document == null || document.isEmpty())
 				return Response.notModified().build();
-			IndexManager.INSTANCE.get(schema_name).get(index_name).updateDocumentValues(document);
+			IndexManager.INSTANCE.get(schema_name).get(index_name).updateMappedDocValues(document);
 			return Response.ok().build();
 		} catch (Exception e) {
 			logger.warn(e.getMessage(), e);
@@ -400,12 +428,13 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response updateDocumentsValues(String schema_name, String index_name, List<Map<String, Object>> documents) {
+	final public Response updateMappedDocsValues(final String schema_name, final String index_name,
+			final Collection<Map<String, Object>> documents) {
 		try {
 			checkRight(schema_name);
 			if (documents == null || documents.isEmpty())
 				return Response.notModified().build();
-			IndexManager.INSTANCE.get(schema_name).get(index_name).updateDocumentsValues(documents);
+			IndexManager.INSTANCE.get(schema_name).get(index_name).updateMappedDocsValues(documents);
 			return Response.ok().build();
 		} catch (Exception e) {
 			if (logger.isWarnEnabled())
@@ -415,7 +444,26 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public BackupStatus doBackup(String schema_name, String index_name, Integer keep_last_count) {
+	final public <T> void updateDocValues(final String schemaName, final String indexName,
+			final Map<String, Field> fields, final T document) throws IOException, InterruptedException {
+		checkRight(schemaName);
+		if (document == null)
+			return;
+		IndexManager.INSTANCE.get(schemaName).get(indexName).updateDocValues(fields, document);
+	}
+
+	@Override
+	final public <T> void updateDocsValues(final String schemaName, final String indexName,
+			final Map<String, Field> fields, final Collection<T> documents) throws IOException, InterruptedException {
+		checkRight(schemaName);
+		if (documents == null || documents.isEmpty())
+			return;
+		IndexManager.INSTANCE.get(schemaName).get(indexName).updateDocsValues(fields, documents);
+	}
+
+	@Override
+	final public BackupStatus doBackup(final String schema_name, final String index_name,
+			final Integer keep_last_count) {
 		try {
 			checkRight(null);
 			if ("*".equals(schema_name) && "*".equals(index_name)) {
@@ -431,7 +479,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public List<BackupStatus> getBackups(String schema_name, String index_name) {
+	final public List<BackupStatus> getBackups(final String schema_name, final String index_name) {
 		try {
 			checkRight(null);
 			return IndexManager.INSTANCE.get(schema_name).get(index_name).getBackups();
@@ -443,7 +491,7 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public Response deleteAll(String schema_name, String index_name) {
+	final public Response deleteAll(final String schema_name, final String index_name) {
 		try {
 			checkRight(schema_name);
 			IndexManager.INSTANCE.get(schema_name).get(index_name).deleteAll();
@@ -455,24 +503,29 @@ class IndexServiceImpl implements IndexServiceInterface {
 		}
 	}
 
+	private QueryDefinition getDocumentQuery(IndexInstance index, Object id) {
+		QueryBuilder builder = new QueryBuilder();
+		builder.setQuery(new TermQuery(FieldDefinition.ID_FIELD, BytesRefUtils.fromAny(id)));
+		builder.setRows(1);
+		Map<String, FieldDefinition> fields = index.getFields();
+		if (fields != null)
+			builder.addReturned_field(fields.keySet());
+		return builder.build();
+	}
+
 	@Override
-	public Map<String, Object> getDocument(String schema_name, String index_name, String doc_id) {
+	final public Map<String, Object> getDocument(final String schema_name, final String index_name, final String id) {
 		try {
 			checkRight(schema_name);
 			IndexInstance index = IndexManager.INSTANCE.get(schema_name).get(index_name);
-			QueryBuilder builder = new QueryBuilder();
-			builder.setQuery(new TermQuery(FieldDefinition.ID_FIELD, doc_id));
-			builder.setRows(1);
-			Map<String, FieldDefinition> fields = index.getFields();
-			if (fields != null)
-				builder.addReturned_field(fields.keySet());
-			ResultDefinition result = index.search(builder.build());
+			ResultDefinition result = index
+					.search(getDocumentQuery(index, id), ResultDocumentBuilder.MapBuilderFactory.INSTANCE);
 			if (result != null) {
-				List<ResultDocument> docs = result.getDocuments();
+				List<ResultDocumentMap> docs = result.getDocuments();
 				if (docs != null && !docs.isEmpty())
 					return docs.get(0).getFields();
 			}
-			throw new ServerException(Response.Status.NOT_FOUND, "Document not found: " + doc_id);
+			throw new ServerException(Response.Status.NOT_FOUND, "Document not found: " + id);
 		} catch (Exception e) {
 			if (logger.isWarnEnabled())
 				logger.warn(e.getMessage(), e);
@@ -481,16 +534,58 @@ class IndexServiceImpl implements IndexServiceInterface {
 	}
 
 	@Override
-	public ResultDefinition searchQuery(String schema_name, String index_name, QueryDefinition query, Boolean delete) {
+	final public <T> T getDocument(String schemaName, String indexName, String id, Map<String, Field> fields,
+			Class<T> indexDefinitionClass) {
+		try {
+			checkRight(schemaName);
+			final IndexInstance index = IndexManager.INSTANCE.get(schemaName).get(indexName);
+			ResultDefinition result = index.search(getDocumentQuery(index, id),
+					ResultDocumentBuilder.ObjectBuilderFactory.createFactory(fields, indexDefinitionClass));
+			if (result == null)
+				return null;
+			List<ResultDocumentObject<T>> docs = result.getDocuments();
+			if (docs == null || docs.isEmpty())
+				return null;
+			return docs.get(0).record;
+		} catch (Exception e) {
+			if (logger.isWarnEnabled())
+				logger.warn(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
+	}
+
+	@Override
+	final public ResultDefinition.WithMap searchQuery(final String schema_name, final String index_name,
+			final QueryDefinition query, final Boolean delete) {
 		try {
 			checkRight(schema_name);
 			if ("*".equals(index_name))
-				return IndexManager.INSTANCE.get(schema_name).search(query);
+				return (ResultDefinition.WithMap) IndexManager.INSTANCE.get(schema_name)
+						.search(query, ResultDocumentBuilder.MapBuilderFactory.INSTANCE);
 			IndexInstance index = IndexManager.INSTANCE.get(schema_name).get(index_name);
 			if (delete != null && delete)
 				return index.deleteByQuery(query);
 			else
-				return index.search(query);
+				return (ResultDefinition.WithMap) index.search(query, ResultDocumentBuilder.MapBuilderFactory.INSTANCE);
+		} catch (Exception e) {
+			if (logger.isWarnEnabled())
+				logger.warn(e.getMessage(), e);
+			throw ServerException.getJsonException(e);
+		}
+	}
+
+	@Override
+	final public <T> ResultDefinition.WithObject<T> searchQuery(final String schema_name, final String index_name,
+			final QueryDefinition query, final Map<String, Field> fields, final Class<T> indexDefinitionClass) {
+		try {
+			checkRight(schema_name);
+			final ResultDocumentBuilder.ObjectBuilderFactory documentBuilerFactory = ResultDocumentBuilder.ObjectBuilderFactory
+					.createFactory(fields, indexDefinitionClass);
+			if ("*".equals(index_name))
+				return (ResultDefinition.WithObject<T>) IndexManager.INSTANCE.get(schema_name)
+						.search(query, documentBuilerFactory);
+			IndexInstance index = IndexManager.INSTANCE.get(schema_name).get(index_name);
+			return (ResultDefinition.WithObject<T>) index.search(query, documentBuilerFactory);
 		} catch (Exception e) {
 			if (logger.isWarnEnabled())
 				logger.warn(e.getMessage(), e);

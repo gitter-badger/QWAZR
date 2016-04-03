@@ -15,8 +15,6 @@
  */
 package com.qwazr.search.test;
 
-import com.google.common.io.Files;
-import com.qwazr.search.SearchServer;
 import com.qwazr.search.analysis.AnalyzerDefinition;
 import com.qwazr.search.field.FieldDefinition;
 import com.qwazr.search.index.*;
@@ -29,20 +27,18 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class FullTest {
+public class JsonTest {
 
 	private static volatile boolean started;
 
-	public static final String BASE_URL = "http://localhost:9091";
-	public static final String SCHEMA_NAME = "schema-test";
-	public static final String INDEX_NAME = "index-test";
+	public static final String SCHEMA_NAME = "schema-test-full";
+	public static final String INDEX_NAME = "index-test-full";
 	public static final LinkedHashMap<String, FieldDefinition> FIELDS_JSON = getFieldMap("fields.json");
 	public static final FieldDefinition FIELD_NAME_JSON = getField("field_name.json");
 	public static final LinkedHashMap<String, AnalyzerDefinition> ANALYZERS_JSON = getAnalyzerMap("analyzers.json");
@@ -58,19 +54,17 @@ public class FullTest {
 	public static final QueryDefinition QUERY_CHECK_FUNCTIONS = getQuery("query_check_functions.json");
 	public static final QueryDefinition DELETE_QUERY = getQuery("query_delete.json");
 	public static final Map<String, Object> UPDATE_DOC = getDoc("update_doc.json");
-	public static final List<Map<String, Object>> UPDATE_DOCS = getDocs("update_docs.json");
+	public static final Collection<Map<String, Object>> UPDATE_DOCS = getDocs("update_docs.json");
 	public static final Map<String, Object> UPDATE_DOC_VALUE = getDoc("update_doc_value.json");
-	public static final List<Map<String, Object>> UPDATE_DOCS_VALUES = getDocs("update_docs_values.json");
-
-	private IndexServiceInterface getClient() throws URISyntaxException {
-		return new IndexSingleClient(BASE_URL, 60000);
-	}
+	public static final Collection<Map<String, Object>> UPDATE_DOCS_VALUES = getDocs("update_docs_values.json");
 
 	@BeforeClass
 	public static void startSearchServer() throws Exception {
-		final File dataDir = Files.createTempDir();
-		System.setProperty("QWAZR_DATA", dataDir.getAbsolutePath());
-		SearchServer.main(new String[] {});
+		TestServer.startServer();
+	}
+
+	public IndexServiceInterface getClient() throws URISyntaxException {
+		return TestServer.getSingleClient();
 	}
 
 	@Test
@@ -97,7 +91,7 @@ public class FullTest {
 	}
 
 	private static LinkedHashMap<String, FieldDefinition> getFieldMap(String res) {
-		InputStream is = FullTest.class.getResourceAsStream(res);
+		InputStream is = JsonTest.class.getResourceAsStream(res);
 		try {
 			return FieldDefinition.newFieldMap(IOUtils.toString(is));
 		} catch (IOException e) {
@@ -108,7 +102,7 @@ public class FullTest {
 	}
 
 	private static FieldDefinition getField(String res) {
-		InputStream is = FullTest.class.getResourceAsStream(res);
+		InputStream is = JsonTest.class.getResourceAsStream(res);
 		try {
 			return FieldDefinition.newField(IOUtils.toString(is));
 		} catch (IOException e) {
@@ -119,7 +113,7 @@ public class FullTest {
 	}
 
 	private static LinkedHashMap<String, AnalyzerDefinition> getAnalyzerMap(String res) {
-		InputStream is = FullTest.class.getResourceAsStream(res);
+		InputStream is = JsonTest.class.getResourceAsStream(res);
 		try {
 			return AnalyzerDefinition.newAnalyzerMap(IOUtils.toString(is));
 		} catch (IOException e) {
@@ -130,7 +124,7 @@ public class FullTest {
 	}
 
 	private static AnalyzerDefinition getAnalyzer(String res) {
-		InputStream is = FullTest.class.getResourceAsStream(res);
+		InputStream is = JsonTest.class.getResourceAsStream(res);
 		try {
 			return AnalyzerDefinition.newAnalyzer(IOUtils.toString(is));
 		} catch (IOException e) {
@@ -141,7 +135,7 @@ public class FullTest {
 	}
 
 	private static IndexSettingsDefinition getIndexSettings(String res) {
-		InputStream is = FullTest.class.getResourceAsStream(res);
+		InputStream is = JsonTest.class.getResourceAsStream(res);
 		try {
 			return JsonMapper.MAPPER.readValue(is, IndexSettingsDefinition.class);
 		} catch (IOException e) {
@@ -243,7 +237,7 @@ public class FullTest {
 	}
 
 	private static QueryDefinition getQuery(String res) {
-		InputStream is = FullTest.class.getResourceAsStream(res);
+		InputStream is = JsonTest.class.getResourceAsStream(res);
 		try {
 			return QueryDefinition.newQuery(IOUtils.toString(is));
 		} catch (IOException e) {
@@ -253,18 +247,18 @@ public class FullTest {
 		}
 	}
 
-	private ResultDefinition checkQuerySchema(IndexServiceInterface client, QueryDefinition queryDef, int expectedCount)
+	private ResultDefinition.WithMap checkQuerySchema(IndexServiceInterface client, QueryDefinition queryDef, int expectedCount)
 			throws IOException {
-		ResultDefinition result = client.searchQuery(SCHEMA_NAME, "*", queryDef, null);
+		ResultDefinition.WithMap result = client.searchQuery(SCHEMA_NAME, "*", queryDef, null);
 		Assert.assertNotNull(result);
 		Assert.assertNotNull(result.total_hits);
 		Assert.assertEquals(expectedCount, result.total_hits.intValue());
 		return result;
 	}
 
-	private ResultDefinition checkQueryIndex(IndexServiceInterface client, QueryDefinition queryDef, int expectedCount)
-			throws IOException {
-		ResultDefinition result = client.searchQuery(SCHEMA_NAME, INDEX_NAME, queryDef, null);
+	private ResultDefinition.WithMap checkQueryIndex(IndexServiceInterface client, QueryDefinition queryDef,
+			int expectedCount) throws IOException {
+		ResultDefinition.WithMap result = client.searchQuery(SCHEMA_NAME, INDEX_NAME, queryDef, null);
 		Assert.assertNotNull(result);
 		Assert.assertNotNull(result.total_hits);
 		Assert.assertEquals(expectedCount, result.total_hits.intValue());
@@ -284,10 +278,10 @@ public class FullTest {
 		checkIndexSize(client, expectedSize);
 	}
 
-	private static List<Map<String, Object>> getDocs(String res) {
-		InputStream is = FullTest.class.getResourceAsStream(res);
+	private static Collection<Map<String, Object>> getDocs(String res) {
+		InputStream is = JsonTest.class.getResourceAsStream(res);
 		try {
-			return JsonMapper.MAPPER.readValue(is, IndexSingleClient.ListMapStringObjectTypeRef);
+			return JsonMapper.MAPPER.readValue(is, IndexSingleClient.CollectionMapStringObjectTypeRef);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} finally {
@@ -295,8 +289,8 @@ public class FullTest {
 		}
 	}
 
-	private static Map<String, Object> getDoc(String res) {
-		InputStream is = FullTest.class.getResourceAsStream(res);
+	private static HashMap<String, Object> getDoc(String res) {
+		InputStream is = JsonTest.class.getResourceAsStream(res);
 		try {
 			return JsonMapper.MAPPER.readValue(is, IndexSingleClient.MapStringObjectTypeRef);
 		} catch (Exception e) {
@@ -306,7 +300,7 @@ public class FullTest {
 		}
 	}
 
-	private Map<String, Number> checkFacetSize(ResultDefinition result, String dimName, int size) {
+	private Map<String, Number> checkFacetSize(ResultDefinition.WithMap result, String dimName, int size) {
 		Assert.assertTrue(result.facets.containsKey(dimName));
 		final Map<String, Number> facetCounts = result.facets.get(dimName);
 		Assert.assertNotNull(facetCounts);
@@ -314,7 +308,7 @@ public class FullTest {
 		return facetCounts;
 	}
 
-	private void checkEmptyFacets(ResultDefinition result) {
+	private void checkEmptyFacets(ResultDefinition.WithMap result) {
 		Assert.assertNotNull(result.facets);
 		checkFacetSize(result, "category", 0);
 		checkFacetSize(result, "format", 0);
@@ -331,7 +325,7 @@ public class FullTest {
 	public void test200UpdateDocs() throws URISyntaxException, IOException {
 		IndexServiceInterface client = getClient();
 		for (int i = 0; i < 6; i++) { // Yes, six times: we said "testing" !
-			Response response = client.postDocuments(SCHEMA_NAME, INDEX_NAME, UPDATE_DOCS);
+			Response response = client.postMappedDocuments(SCHEMA_NAME, INDEX_NAME, UPDATE_DOCS);
 			Assert.assertNotNull(response);
 			Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
 			checkAllSizes(client, 4);
@@ -370,7 +364,7 @@ public class FullTest {
 	public void test300UpdateDoc() throws URISyntaxException, IOException {
 		IndexServiceInterface client = getClient();
 		for (int i = 0; i < 7; i++) { // Seven times: we said "testing" !
-			Response response = client.postDocument(SCHEMA_NAME, INDEX_NAME, UPDATE_DOC);
+			Response response = client.postMappedDocument(SCHEMA_NAME, INDEX_NAME, UPDATE_DOC);
 			Assert.assertNotNull(response);
 			Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
 			checkAllSizes(client, 5);
@@ -382,22 +376,22 @@ public class FullTest {
 		IndexServiceInterface client = getClient();
 
 		// Check that the initial stock is 0 for all documents
-		ResultDefinition result = checkQueryIndex(client, QUERY_CHECK_RETURNED, 5);
+		ResultDefinition.WithMap result = checkQueryIndex(client, QUERY_CHECK_RETURNED, 5);
 		Assert.assertNotNull(result.documents);
-		for (ResultDocument document : result.documents) {
+		for (ResultDocumentMap document : result.documents) {
 			Integer stock = (Integer) document.fields.get("stock");
 			Assert.assertNotNull(stock);
 			Assert.assertEquals(0, (int) stock);
 		}
 
 		// Update one document value
-		Response response = client.updateDocumentValues(SCHEMA_NAME, INDEX_NAME, UPDATE_DOC_VALUE);
+		Response response = client.updateMappedDocValues(SCHEMA_NAME, INDEX_NAME, UPDATE_DOC_VALUE);
 		Assert.assertNotNull(response);
 		Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
 		checkAllSizes(client, 5);
 
 		// Update a list of documents values
-		response = client.updateDocumentsValues(SCHEMA_NAME, INDEX_NAME, UPDATE_DOCS_VALUES);
+		response = client.updateMappedDocsValues(SCHEMA_NAME, INDEX_NAME, UPDATE_DOCS_VALUES);
 		Assert.assertNotNull(response);
 		Assert.assertEquals(200, response.getStatusInfo().getStatusCode());
 		checkAllSizes(client, 5);
@@ -405,7 +399,7 @@ public class FullTest {
 		// Check the result
 		result = checkQueryIndex(client, QUERY_CHECK_RETURNED, 5);
 		Assert.assertNotNull(result.documents);
-		for (ResultDocument document : result.documents) {
+		for (ResultDocumentMap document : result.documents) {
 			// Check that the price is still here
 			Assert.assertNotNull(document.fields);
 			Double price = (Double) document.fields.get("price");
@@ -418,10 +412,10 @@ public class FullTest {
 		}
 	}
 
-	private void checkFacetRowsQuery(ResultDefinition result) {
+	private void checkFacetRowsQuery(ResultDefinition.WithMap result) {
 		Assert.assertNotNull(result.documents);
 		Assert.assertEquals(3, result.documents.size());
-		for (ResultDocument doc : result.documents) {
+		for (ResultDocumentMap doc : result.documents) {
 			Assert.assertNotNull(doc.fields);
 			Assert.assertEquals(2, doc.fields.size());
 			Assert.assertTrue(doc.fields.containsKey("name"));
@@ -444,7 +438,7 @@ public class FullTest {
 		checkFacetRowsQuery(checkQuerySchema(client, FACETS_ROWS_QUERY, 5));
 	}
 
-	private void checkFacetFiltersResult(ResultDefinition result) {
+	private void checkFacetFiltersResult(ResultDefinition.WithMap result) {
 		Assert.assertNotNull(result.documents);
 		Assert.assertEquals(2, result.documents.size());
 		Assert.assertNotNull(result.documents.get(0).fields);
@@ -464,9 +458,9 @@ public class FullTest {
 	}
 
 	private <T extends Comparable> void checkDescending(T startValue, String field,
-			Collection<ResultDocument> documents) {
+			Collection<ResultDocumentMap> documents) {
 		T old = startValue;
-		for (ResultDocument document : documents) {
+		for (ResultDocumentMap document : documents) {
 			Assert.assertNotNull(document.fields);
 			T val = (T) document.fields.get(field);
 			Assert.assertNotNull(val);
@@ -476,9 +470,9 @@ public class FullTest {
 	}
 
 	private <T extends Comparable> void checkAscending(T startValue, String field,
-			Collection<ResultDocument> documents) {
+			Collection<ResultDocumentMap> documents) {
 		T old = startValue;
-		for (ResultDocument document : documents) {
+		for (ResultDocumentMap document : documents) {
 			Assert.assertNotNull(document.fields);
 			T val = (T) document.fields.get(field);
 			Assert.assertNotNull(val);
@@ -501,7 +495,7 @@ public class FullTest {
 	public void test430QueryFunctionsDoc() throws URISyntaxException, IOException {
 		Object[] results = new Object[] { 1.1D, 10.5D, 10, 14 };
 		IndexServiceInterface client = getClient();
-		ResultDefinition result = checkQueryIndex(client, QUERY_CHECK_FUNCTIONS, 5);
+		ResultDefinition.WithMap result = checkQueryIndex(client, QUERY_CHECK_FUNCTIONS, 5);
 		Assert.assertNotNull(result.functions);
 		Assert.assertEquals(results.length, result.functions.size());
 		for (int i = 0; i < result.functions.size(); i++) {
@@ -515,8 +509,8 @@ public class FullTest {
 	@Test
 	public void test440QueryHighlight() throws URISyntaxException, IOException {
 		IndexServiceInterface client = getClient();
-		ResultDefinition result = checkQueryIndex(client, QUERY_HIGHLIGHT, 1);
-		ResultDocument document = result.getDocuments().get(0);
+		ResultDefinition<ResultDocumentMap> result = checkQueryIndex(client, QUERY_HIGHLIGHT, 1);
+		ResultDocumentMap document = result.getDocuments().get(0);
 		String snippet = document.getHighlights().get("my_custom_snippet");
 		Assert.assertNotNull(snippet);
 		Assert.assertTrue(snippet.contains("<strong>search</strong>"));
