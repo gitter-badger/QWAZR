@@ -56,6 +56,7 @@
         <jersey.version>2.22.2</jersey.version>
         <jackson.version>2.7.3</jackson.version>
         <surefire.version>2.19.1</surefire.version>
+        <poi.version>3.14</poi.version>
     </properties>
 
     <modules>
